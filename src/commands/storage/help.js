@@ -1,4 +1,4 @@
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder } = require('discord.js');
 const { t } = require('../../utils/languages');
 
 async function execute(interaction, langCode) {
@@ -6,116 +6,98 @@ async function execute(interaction, langCode) {
         ? `https://${process.env.REPLIT_DEV_DOMAIN}`
         : 'http://localhost:3000';
 
-    const helpContent = `**${await t('Welcome, this is my help menu', langCode)}**
-⌄ـــــــــــــــــــــــــــProEmojiـــــــــــــــــــــــــــــ⌄
-
-${await t('Get emoji suggestions if you do not have Nitro', langCode)}: **/suggest_emojis**
-
-⌄ـــــــــــــــــــــــــــProEmojiـــــــــــــــــــــــــــــ⌄
-
-${await t('Search for specific emojis by name', langCode)}: **/emoji_search**
-
-⌄ـــــــــــــــــــــــــــProEmojiـــــــــــــــــــــــــــــ⌄
-
-${await t('Add a new emoji to your server', langCode)}: **/add_emoji**
-
-⌄ـــــــــــــــــــــــــــProEmojiـــــــــــــــــــــــــــــ⌄
-
-${await t('Convert an image URL or attachment into an emoji', langCode)}: **/image_to_emoji**
-
-⌄ـــــــــــــــــــــــــــProEmojiـــــــــــــــــــــــــــــ⌄
-
-${await t('Rename an existing server emoji', langCode)}: **/rename_emoji**
-
-⌄ـــــــــــــــــــــــــــProEmojiـــــــــــــــــــــــــــــ⌄
-
-${await t('Delete an emoji from your server', langCode)}: **/delete_emoji**
-
-⌄ـــــــــــــــــــــــــــProEmojiـــــــــــــــــــــــــــــ⌄
-
-${await t('Delete all emojis from your server', langCode)}: **/delete_all_emojis**
-
-⌄ـــــــــــــــــــــــــــProEmojiـــــــــــــــــــــــــــــ⌄
-
-${await t('List all current server emojis', langCode)}: **/list_emojis**
-
-⌄ـــــــــــــــــــــــــــProEmojiـــــــــــــــــــــــــــــ⌄
-
-${await t('Improve an emoji\'s quality and add it', langCode)}: **/enhance_emoji**
-
-⌄ـــــــــــــــــــــــــــProEmojiـــــــــــــــــــــــــــــ⌄
-
-${await t('Convert an existing emoji into a beautiful sticker', langCode)}: **/emoji_to_sticker**
-
-⌄ـــــــــــــــــــــــــــProEmojiـــــــــــــــــــــــــــــ⌄
-
-${await t('Convert an emoji back into an image file', langCode)}: **/emoji_to_image**
-
-⌄ـــــــــــــــــــــــــــProEmojiـــــــــــــــــــــــــــــ⌄
-
-${await t('Add a new sticker to your server', langCode)}: **/add_sticker**
-
-⌄ـــــــــــــــــــــــــــProEmojiــــــــــــــــــــــــــــ--⌄
-
-${await t('Convert an image URL or attachment into a sticker', langCode)}: **/image_to_sticker**
-
-⌄ـــــــــــــــــــــــــــProEmojiـــــــــــــــــــــــــــــ⌄
-
-${await t('Rename an existing server sticker', langCode)}: **/rename_sticker**
-
-⌄ـــــــــــــــــــــــــــProEmojiـــــــــــــــــــــــــــــ⌄
-
-${await t('Delete a sticker from your server', langCode)}: **/delete_sticker**
-
-⌄ـــــــــــــــــــــــــــProEmojiـــــــــــــــــــــــــــــ⌄
-
-${await t('Delete all stickers from your server', langCode)}: **/delete_all_stickers**
-
-⌄ـــــــــــــــــــــــــــProEmojiـــــــــــــــــــــــــــــ⌄
-
-${await t('List all current server stickers', langCode)}: **/list_stickers**
-
-⌄ـــــــــــــــــــــــــــProEmojiـــــــــــــــــــــــــــــ⌄
-
-${await t('Convert a sticker into a server emoji', langCode)}: **/sticker_to_emoji**
-
-⌄ـــــــــــــــــــــــــــProEmojiـــــــــــــــــــــــــــــ⌄
-
-${await t('Convert a sticker back into an image file', langCode)}: **/sticker_to_image**
-
-⌄ـــــــــــــــــــــــــــProEmojiـــــــــــــــــــــــــــــ⌄
-
-${await t('Improve a sticker\'s quality and save it', langCode)}: **/enhance_sticker**
-
-⌄ـــــــــــــــــــــــــــProEmojiـــــــــــــــــــــــــــــ⌄
-
-${await t('Set suggestion permissions (Owner only)', langCode)}: **/permission**
-
-⌄ـــــــــــــــــــــــــــProEmojiـــــــــــــــــــــــــــــ⌄
-
-${await t('Change the bot\'s language setting (Owner only)', langCode)}: **/language**
-
-⌄ـــــــــــــــــــــــــــProEmojiـــــــــــــــــــــــــــــ⌄
-
-${await t('View bot status, latency, and vote status', langCode)}: **/status**
-
-⌄ـــــــــــــــــــــــــــProEmojiـــــــــــــــــــــــــــــ⌄
-
-${await t('Access the bot\'s control panel', langCode)}: 🔗 [ProEmoji dashboard](${WEBSITE_URL})`;
-
     const embed = new EmbedBuilder()
         .setTitle('📖 ' + await t('ProEmoji Help', langCode))
-        .setDescription(helpContent)
+        .setDescription(await t('Select a category from the menu below to see the available commands.', langCode))
         .setColor('#0099ff');
 
+    const selectMenu = new StringSelectMenuBuilder()
+        .setCustomId('help_category')
+        .setPlaceholder(await t('Select a category', langCode))
+        .addOptions([
+            {
+                label: await t('Sticker Commands', langCode),
+                description: await t('Commands related to stickers', langCode),
+                value: 'sticker_help',
+                emoji: '✨'
+            },
+            {
+                label: await t('Emoji Commands', langCode),
+                description: await t('Commands related to emojis', langCode),
+                value: 'emoji_help',
+                emoji: '😀'
+            },
+            {
+                label: await t('Info Commands', langCode),
+                description: await t('Utility and status commands', langCode),
+                value: 'info_help',
+                emoji: 'ℹ️'
+            }
+        ]);
+
+    const row = new ActionRowBuilder().addComponents(selectMenu);
+
     try {
-        await interaction.user.send({ embeds: [embed] });
+        const dm = await interaction.user.send({ embeds: [embed], components: [row] });
+        
+        const collector = dm.createMessageComponentCollector({ time: 300000 });
+
+        collector.on('collect', async i => {
+            if (i.customId !== 'help_category') return;
+
+            let content = '';
+            let title = '';
+
+            if (i.values[0] === 'sticker_help') {
+                title = await t('Sticker Commands', langCode);
+                content = `
+${await t('Add a new sticker to your server', langCode)}: **/add_sticker**
+${await t('Convert an image URL or attachment into a sticker', langCode)}: **/image_to_sticker**
+${await t('Rename an existing server sticker', langCode)}: **/rename_sticker**
+${await t('Delete a sticker from your server', langCode)}: **/delete_sticker**
+${await t('Delete all stickers from your server', langCode)}: **/delete_all_stickers**
+${await t('List all current server stickers', langCode)}: **/list_stickers**
+${await t('Convert a sticker into a server emoji', langCode)}: **/sticker_to_emoji**
+${await t('Convert a sticker back into an image file', langCode)}: **/sticker_to_image**
+${await t('Improve a sticker\'s quality and save it', langCode)}: **/enhance_sticker**`;
+            } else if (i.values[0] === 'emoji_help') {
+                title = await t('Emoji Commands', langCode);
+                content = `
+${await t('Get emoji suggestions if you do not have Nitro', langCode)}: **/suggest_emojis**
+${await t('Search for specific emojis by name', langCode)}: **/emoji_search**
+${await t('Add a new emoji to your server', langCode)}: **/add_emoji**
+${await t('Convert an image URL or attachment into an emoji', langCode)}: **/image_to_emoji**
+${await t('Rename an existing server emoji', langCode)}: **/rename_emoji**
+${await t('Delete an emoji from your server', langCode)}: **/delete_emoji**
+${await t('Delete all emojis from your server', langCode)}: **/delete_all_emojis**
+${await t('List all current server emojis', langCode)}: **/list_emojis**
+${await t('Improve an emoji\'s quality and add it', langCode)}: **/enhance_emoji**
+${await t('Convert an existing emoji into a beautiful sticker', langCode)}: **/emoji_to_sticker**
+${await t('Convert an emoji back into an image file', langCode)}: **/emoji_to_image**`;
+            } else if (i.values[0] === 'info_help') {
+                title = await t('Info Commands', langCode);
+                content = `
+${await t('Set suggestion permissions (Owner only)', langCode)}: **/permission**
+${await t('Change the bot\'s language setting (Owner only)', langCode)}: **/language**
+${await t('View bot status, latency, and vote status', langCode)}: **/status**
+${await t('Access the bot\'s control panel', langCode)}: 🔗 [ProEmoji dashboard](${WEBSITE_URL})`;
+            }
+
+            const updatedEmbed = new EmbedBuilder()
+                .setTitle('📖 ' + title)
+                .setDescription(content)
+                .setColor('#0099ff');
+
+            await i.update({ embeds: [updatedEmbed] });
+        });
+
         const replyEmbed = new EmbedBuilder()
             .setTitle('✅ Help Sent')
             .setDescription('Check your private messages for the help menu!')
             .setColor('#10b981');
         await interaction.reply({ embeds: [replyEmbed], ephemeral: true });
     } catch (error) {
+        console.error('Error sending help DM:', error);
         const errorEmbed = new EmbedBuilder()
             .setTitle('❌ Could not send DM')
             .setDescription('Please enable DMs from server members and try again.')
