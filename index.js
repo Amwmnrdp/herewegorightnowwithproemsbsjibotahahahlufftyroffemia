@@ -356,7 +356,11 @@ client.on('messageCreate', async message => {
                     .setColor('#FF6B6B')
                     .setFooter({ text: await t('This message is only visible to you.', langCode) });
                 
-                await message.reply({ embeds: [embed] }).then(m => setTimeout(() => m.delete().catch(() => {}), 15000));
+                try {
+                    await message.author.send({ embeds: [embed] });
+                } catch (error) {
+                    await message.reply({ embeds: [embed] }).then(m => setTimeout(() => m.delete().catch(() => {}), 15000));
+                }
                 return;
             }
         }
