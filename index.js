@@ -166,7 +166,7 @@ async function checkVerification(interaction, langCode) {
             .setColor('#FF6B6B')
             .setFooter({ text: await t('This message is only visible to you.', langCode) });
         
-        await interaction.reply({ embeds: [embed], flags: [4096] });
+        await interaction.reply({ embeds: [embed], ephemeral: true });
         return false;
     }
     return true;
@@ -190,7 +190,7 @@ async function checkPermissions(interaction, langCode) {
                 .setTitle('🚫 ' + await t('Permission Denied', langCode))
                 .setDescription(await t('Only the server owner can use this command.', langCode))
                 .setColor('#FF0000');
-            await interaction.reply({ embeds: [embed], flags: [4096] });
+            await interaction.reply({ embeds: [embed], ephemeral: true });
             return false;
         }
         return true;
@@ -203,7 +203,7 @@ async function checkPermissions(interaction, langCode) {
                 .setTitle('🚫 ' + await t('Permission Denied', langCode))
                 .setDescription(await t('Only administrators can use this command.', langCode))
                 .setColor('#FF0000');
-            await interaction.reply({ embeds: [embed], flags: [4096] });
+            await interaction.reply({ embeds: [embed], ephemeral: true });
             return false;
         }
         return true;
@@ -218,7 +218,7 @@ async function checkPermissions(interaction, langCode) {
             .setTitle('🚫 ' + await t('Permission Denied', langCode))
             .setDescription(await t('You need the "Manage Emojis and Stickers" permission to use this command.', langCode))
             .setColor('#FF0000');
-        await interaction.reply({ embeds: [embed], flags: [4096] });
+        await interaction.reply({ embeds: [embed], ephemeral: true });
         return false;
     }
     
