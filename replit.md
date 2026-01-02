@@ -154,11 +154,11 @@ Chinese (zh), English (en), Arabic (ar), Spanish (es), Russian (ru), Turkish (tr
 
 # Recent Changes
 
-- Integrated PostgreSQL database replacing JSON file storage
-- Renamed all commands with underscores (e.g., addemoji → add_emoji)
-- Added permission checks: Manage Emoji/Sticker for most commands, owner-only for language/permission
-- Created admin panel with owner controls and admin assignment
-- Redesigned suggestions section with user profiles, likes/dislikes, comments
-- Redesigned issue reports section with image uploads and social features
-- Fixed menu scroll position preservation
-- Updated token variable to use `token` secret
+- Integrated PostgreSQL database replacing JSON file storage.
+- Renamed all commands with underscores (e.g., `addemoji` → `add_emoji`).
+- Added permission checks: Manage Emoji/Sticker for most commands, owner-only for language/permission.
+- Created admin panel with owner controls and admin assignment.
+- Redesigned suggestions and issue reports sections with social features.
+- Updated help command with an interactive dropdown menu and categorized sections.
+- Implemented persistent memory for emojis and stickers with startup synchronization and duplicate detection.
+- Added global error handlers to prevent crashes and improved DM safety for commands.
