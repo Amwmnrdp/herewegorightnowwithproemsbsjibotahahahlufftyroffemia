@@ -82,7 +82,18 @@ async function initDatabase() {
                 emoji_id VARCHAR(255) NOT NULL,
                 emoji_name VARCHAR(255),
                 added_by VARCHAR(255),
-                added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(server_id, emoji_id)
+            );
+
+            CREATE TABLE IF NOT EXISTS stickers_added (
+                id SERIAL PRIMARY KEY,
+                server_id VARCHAR(255) NOT NULL,
+                sticker_id VARCHAR(255) NOT NULL,
+                sticker_name VARCHAR(255),
+                added_by VARCHAR(255),
+                added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(server_id, sticker_id)
             );
         `);
         console.log('✅ Database tables initialized');
@@ -324,17 +335,32 @@ async function getVerifiedUsersCountDb() {
 
 async function addEmojiRecord(serverId, emojiId, emojiName, addedBy) {
     await pool.query(
-        'INSERT INTO emojis_added (server_id, emoji_id, emoji_name, added_by) VALUES ($1, $2, $3, $4)',
+        'INSERT INTO emojis_added (server_id, emoji_id, emoji_name, added_by) VALUES ($1, $2, $3, $4) ON CONFLICT (server_id, emoji_id) DO NOTHING',
         [serverId, emojiId, emojiName, addedBy]
     );
 }
 
-async function getServerEmojis(serverId) {
-    const result = await pool.query(
-        'SELECT * FROM emojis_added WHERE server_id = $1 ORDER BY added_at DESC',
-        [serverId]
+async function addStickerRecord(serverId, stickerId, stickerName, addedBy) {
+    await pool.query(
+        'INSERT INTO stickers_added (server_id, sticker_id, sticker_name, added_by) VALUES ($1, $2, $3, $4) ON CONFLICT (server_id, sticker_id) DO NOTHING',
+        [serverId, stickerId, stickerName, addedBy]
     );
-    return result.rows;
+}
+
+async function isEmojiInDb(serverId, emojiId) {
+    const result = await pool.query(
+        'SELECT * FROM emojis_added WHERE server_id = $1 AND emoji_id = $2',
+        [serverId, emojiId]
+    );
+    return result.rows.length > 0;
+}
+
+async function isStickerInDb(serverId, stickerId) {
+    const result = await pool.query(
+        'SELECT * FROM stickers_added WHERE server_id = $1 AND sticker_id = $2',
+        [serverId, stickerId]
+    );
+    return result.rows.length > 0;
 }
 
 module.exports = {
@@ -371,5 +397,8 @@ module.exports = {
     resetAllVerificationsDb,
     getVerifiedUsersCountDb,
     addEmojiRecord,
+    addStickerRecord,
+    isEmojiInDb,
+    isStickerInDb,
     getServerEmojis
 };

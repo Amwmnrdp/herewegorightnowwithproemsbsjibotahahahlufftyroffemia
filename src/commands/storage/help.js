@@ -2,15 +2,13 @@ const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder } = require('dis
 const { t } = require('../../utils/languages');
 
 async function execute(interaction, langCode) {
-    const WEBSITE_URL = process.env.REPLIT_DEV_DOMAIN 
-        ? `https://${process.env.REPLIT_DEV_DOMAIN}`
-        : 'http://localhost:3000';
-
+    // Embed أولي قصير فقط مع قائمة منسدلة
     const embed = new EmbedBuilder()
         .setTitle('📖 ' + await t('ProEmoji Help', langCode))
         .setDescription(await t('Select a category from the menu below to see the available commands.', langCode))
         .setColor('#0099ff');
 
+    // Select Menu
     const selectMenu = new StringSelectMenuBuilder()
         .setCustomId('help_category')
         .setPlaceholder(await t('Select a category', langCode))
@@ -38,6 +36,7 @@ async function execute(interaction, langCode) {
     const row = new ActionRowBuilder().addComponents(selectMenu);
 
     try {
+        // إرسال الرسالة الأولى فقط مع القائمة المنسدلة
         const dm = await interaction.user.send({ embeds: [embed], components: [row] });
         
         const collector = dm.createMessageComponentCollector({ time: 300000 });
@@ -47,10 +46,11 @@ async function execute(interaction, langCode) {
 
             let content = '';
             let title = '';
+            const separator = '\n⌄ـــــــــــــــــــــــــــProEmojiـــــــــــــــــــــــــــــ⌄\n';
 
+            // الأقسام
             if (i.values[0] === 'sticker_help') {
                 title = await t('Sticker Commands', langCode);
-                const separator = '\n⌄ـــــــــــــــــــــــــــProEmojiـــــــــــــــــــــــــــــ⌄\n';
                 content = `
 ${await t('Add a new sticker to your server', langCode)}: **/add_sticker**${separator}
 ${await t('Convert an image URL or attachment into a sticker', langCode)}: **/image_to_sticker**${separator}
@@ -63,7 +63,6 @@ ${await t('Convert a sticker back into an image file', langCode)}: **/sticker_to
 ${await t('Improve a sticker\'s quality and save it', langCode)}: **/enhance_sticker**`;
             } else if (i.values[0] === 'emoji_help') {
                 title = await t('Emoji Commands', langCode);
-                const separator = '\n⌄ـــــــــــــــــــــــــــProEmojiـــــــــــــــــــــــــــــ⌄\n';
                 content = `
 ${await t('Get emoji suggestions if you do not have Nitro', langCode)}: **/suggest_emojis**${separator}
 ${await t('Search for specific emojis by name', langCode)}: **/emoji_search**${separator}
@@ -78,12 +77,10 @@ ${await t('Convert an existing emoji into a beautiful sticker', langCode)}: **/e
 ${await t('Convert an emoji back into an image file', langCode)}: **/emoji_to_image**`;
             } else if (i.values[0] === 'info_help') {
                 title = await t('Info Commands', langCode);
-                const separator = '\n⌄ـــــــــــــــــــــــــــProEmojiـــــــــــــــــــــــــــــ⌄\n';
                 content = `
 ${await t('Set suggestion permissions (Owner only)', langCode)}: **/permission**${separator}
 ${await t('Change the bot\'s language setting (Owner only)', langCode)}: **/language**${separator}
-${await t('View bot status, latency, and vote status', langCode)}: **/status**${separator}
-${await t('Access the bot\'s control panel', langCode)}: 🔗 [ProEmoji dashboard](${WEBSITE_URL})`;
+${await t('View bot status, latency, and vote status', langCode)}: **/status**`;
             }
 
             const updatedEmbed = new EmbedBuilder()
@@ -94,6 +91,7 @@ ${await t('Access the bot\'s control panel', langCode)}: 🔗 [ProEmoji dashboar
             await i.update({ embeds: [updatedEmbed], components: [row] });
         });
 
+        // رسالة تأكيد قصيرة للمستخدم في السيرفر
         const replyEmbed = new EmbedBuilder()
             .setTitle('✅ Help Sent')
             .setDescription('Check your private messages for the help menu!')

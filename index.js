@@ -75,6 +75,23 @@ client.once('clientReady', async () => {
     console.log(`📊 Servers: ${client.guilds.cache.size}`);
     console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
 
+    // Sync emojis and stickers with DB
+    for (const guild of client.guilds.cache.values()) {
+        const emojis = await guild.emojis.fetch();
+        for (const emoji of emojis.values()) {
+            await db.addEmojiRecord(guild.id, emoji.id, emoji.name, 'system_sync');
+        }
+        try {
+            const stickers = await guild.stickers.fetch();
+            for (const sticker of stickers.values()) {
+                await db.addStickerRecord(guild.id, sticker.id, sticker.name, 'system_sync');
+            }
+        } catch (e) {
+            console.error(`Failed to sync stickers for ${guild.name}:`, e.message);
+        }
+    }
+    console.log('✅ Synchronized emojis and stickers with database');
+
     client.user.setPresence({
         status: 'idle',
         activities: [{
