@@ -32,6 +32,7 @@ async function execute(interaction, langCode, usedUrls) {
         return;
     }
 
+    const db = require('../../utils/database');
     const finalUrl = attachment ? attachment.url : urlOption;
 
     if (!finalUrl) {
@@ -43,13 +44,22 @@ async function execute(interaction, langCode, usedUrls) {
         return;
     }
 
-    // Discord creation often fails with direct URLs if they aren't parsed correctly
-    // or if the content type is weird. For stickers/emojis, we use the attachment URL.
+    // Memory check for images
+    const imageTrackingKey = `${interaction.guild.id}:${finalUrl}`;
+    if (usedUrls[imageTrackingKey]) {
+        const embed = new EmbedBuilder()
+            .setTitle('⚠️ ' + await t('Image Already Converted!', langCode))
+            .setDescription(await t('This image has already been converted to an emoji!', langCode))
+            .setColor('#FF9900')
+            .setFooter({ text: `${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
+        await interaction.reply({ embeds: [embed] });
+        return;
+    }
 
     try {
-        await interaction.guild.emojis.create({ attachment: finalUrl, name: cleanedName });
-        usedUrls[finalUrl] = usedUrls[finalUrl] || [];
-        usedUrls[finalUrl].push(interaction.guild.id);
+        const emj = await interaction.guild.emojis.create({ attachment: finalUrl, name: cleanedName });
+        usedUrls[imageTrackingKey] = emj.id;
+        await db.addEmojiRecord(interaction.guild.id, emj.id, emj.name, interaction.user.tag);
         const embed = new EmbedBuilder().setDescription('✅ ' + await t('Image converted to emoji!', langCode)).setColor('#00FF00').setFooter({ text: `${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
         await interaction.reply({ embeds: [embed] });
     } catch (error) {

@@ -32,6 +32,7 @@ async function execute(interaction, langCode, convertedImagesToStickers) {
         return;
     }
 
+    const db = require('../../utils/database');
     const finalUrl = attachment ? attachment.url : urlOption;
     if (!finalUrl) {
         const embed = new EmbedBuilder()
@@ -45,7 +46,6 @@ async function execute(interaction, langCode, convertedImagesToStickers) {
 
     const imageTrackingKey = `${interaction.guild.id}:${finalUrl}`;
     if (convertedImagesToStickers.has(imageTrackingKey)) {
-        const stickerInfo = convertedImagesToStickers.get(imageTrackingKey);
         const embed = new EmbedBuilder()
             .setTitle('⚠️ ' + await t('Image Already Converted!', langCode))
             .setDescription(await t('This image has already been converted to a sticker!', langCode))
@@ -97,6 +97,7 @@ async function execute(interaction, langCode, convertedImagesToStickers) {
             reason: `By ${interaction.user.tag}`
         });
 
+        await db.addStickerRecord(interaction.guild.id, sticker.id, sticker.name, interaction.user.tag);
         const embed = new EmbedBuilder()
             .setTitle('✅ ' + await t('Sticker Created!', langCode))
             .setDescription(await t('Successfully converted image to sticker!', langCode) + `\n**Name:** ${cleanedName}\n**Mode:** ${integrationOption ? 'Integration (Full 512x512)' : 'Original Form'}`)

@@ -363,6 +363,14 @@ async function isStickerInDb(serverId, stickerId) {
     return result.rows.length > 0;
 }
 
+async function getServerEmojis(serverId) {
+    const result = await pool.query(
+        'SELECT * FROM emojis_added WHERE server_id = $1 ORDER BY added_at DESC',
+        [serverId]
+    );
+    return result.rows;
+}
+
 module.exports = {
     pool,
     initDatabase,

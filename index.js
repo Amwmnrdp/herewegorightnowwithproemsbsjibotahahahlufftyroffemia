@@ -464,6 +464,18 @@ client.on('messageCreate', async message => {
         if (addSession && addSession.userId === message.author.id && addSession.guildId === message.guild.id) {
             const sessionLang = addSession.langCode || 'en';
             const sticker = message.stickers.first();
+
+            // Memory check
+            if (await db.isStickerInDb(message.guild.id, sticker.id) || message.guild.stickers.cache.has(sticker.id)) {
+                const embed = new EmbedBuilder()
+                    .setTitle('⚠️ ' + await t('Sticker Already Exists!', sessionLang))
+                    .setDescription(await t('This sticker already exists on the server!', sessionLang))
+                    .setColor('#FF9900');
+                await message.reply({ embeds: [embed] });
+                stickerAddSessions.delete(repliedTo.id);
+                return;
+            }
+
             const stickerName = addSession.customName || sticker.name;
             const serverStickers = message.guild.stickers.cache;
             const duplicateByName = serverStickers.find(s => s.name.toLowerCase() === stickerName.toLowerCase());
@@ -485,6 +497,8 @@ client.on('messageCreate', async message => {
                     description: await t('Added by', sessionLang) + ` ${message.author.username}`,
                     reason: `Added by ${message.author.tag}`
                 });
+
+                await db.addStickerRecord(message.guild.id, newSticker.id, newSticker.name, message.author.tag);
 
                 const embed = new EmbedBuilder()
                     .setTitle('✅ ' + await t('Sticker Added!', sessionLang))
