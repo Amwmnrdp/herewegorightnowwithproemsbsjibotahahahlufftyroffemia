@@ -45,7 +45,17 @@ const client = new Client({
     ],
 });
 
-const prefix = '+';
+process.on('unhandledRejection', error => {
+    console.error('Unhandled promise rejection:', error);
+});
+
+process.on('uncaughtException', error => {
+    console.error('Uncaught exception:', error);
+});
+
+client.on('error', error => {
+    console.error('Discord client error:', error);
+});
 const usedUrls = {};
 const stickerDeletionSessions = new Map();
 const stickerToEmojiSessions = new Map();
@@ -163,6 +173,14 @@ async function checkVerification(interaction, langCode) {
 }
 
 async function checkPermissions(interaction, langCode) {
+    if (!interaction.guild) {
+        const embed = new EmbedBuilder()
+            .setTitle('🚫 ' + await t('Error', langCode))
+            .setDescription(await t('Commands can only be used in servers.', langCode))
+            .setColor('#FF0000');
+        await interaction.reply({ embeds: [embed], ephemeral: true });
+        return false;
+    }
     const commandName = interaction.commandName;
     
     // Permission command: Only the Server Owner

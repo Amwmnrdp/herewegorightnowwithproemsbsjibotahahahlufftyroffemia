@@ -334,17 +334,25 @@ async function getVerifiedUsersCountDb() {
 }
 
 async function addEmojiRecord(serverId, emojiId, emojiName, addedBy) {
-    await pool.query(
-        'INSERT INTO emojis_added (server_id, emoji_id, emoji_name, added_by) VALUES ($1, $2, $3, $4) ON CONFLICT (server_id, emoji_id) DO NOTHING',
-        [serverId, emojiId, emojiName, addedBy]
-    );
+    try {
+        await pool.query(
+            'INSERT INTO emojis_added (server_id, emoji_id, emoji_name, added_by) VALUES ($1, $2, $3, $4) ON CONFLICT (server_id, emoji_id) DO NOTHING',
+            [serverId, emojiId, emojiName, addedBy]
+        );
+    } catch (error) {
+        console.error(`❌ Error adding emoji record: ${error.message}`);
+    }
 }
 
 async function addStickerRecord(serverId, stickerId, stickerName, addedBy) {
-    await pool.query(
-        'INSERT INTO stickers_added (server_id, sticker_id, sticker_name, added_by) VALUES ($1, $2, $3, $4) ON CONFLICT (server_id, sticker_id) DO NOTHING',
-        [serverId, stickerId, stickerName, addedBy]
-    );
+    try {
+        await pool.query(
+            'INSERT INTO stickers_added (server_id, sticker_id, sticker_name, added_by) VALUES ($1, $2, $3, $4) ON CONFLICT (server_id, sticker_id) DO NOTHING',
+            [serverId, stickerId, stickerName, addedBy]
+        );
+    } catch (error) {
+        console.error(`❌ Error adding sticker record: ${error.message}`);
+    }
 }
 
 async function isEmojiInDb(serverId, emojiId) {
