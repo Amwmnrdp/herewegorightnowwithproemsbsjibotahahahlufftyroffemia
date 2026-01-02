@@ -50,36 +50,39 @@ async function execute(interaction, langCode) {
 
             if (i.values[0] === 'sticker_help') {
                 title = await t('Sticker Commands', langCode);
+                const separator = '\n⌄ـــــــــــــــــــــــــــProEmojiـــــــــــــــــــــــــــــ⌄\n';
                 content = `
-${await t('Add a new sticker to your server', langCode)}: **/add_sticker**
-${await t('Convert an image URL or attachment into a sticker', langCode)}: **/image_to_sticker**
-${await t('Rename an existing server sticker', langCode)}: **/rename_sticker**
-${await t('Delete a sticker from your server', langCode)}: **/delete_sticker**
-${await t('Delete all stickers from your server', langCode)}: **/delete_all_stickers**
-${await t('List all current server stickers', langCode)}: **/list_stickers**
-${await t('Convert a sticker into a server emoji', langCode)}: **/sticker_to_emoji**
-${await t('Convert a sticker back into an image file', langCode)}: **/sticker_to_image**
+${await t('Add a new sticker to your server', langCode)}: **/add_sticker**${separator}
+${await t('Convert an image URL or attachment into a sticker', langCode)}: **/image_to_sticker**${separator}
+${await t('Rename an existing server sticker', langCode)}: **/rename_sticker**${separator}
+${await t('Delete a sticker from your server', langCode)}: **/delete_sticker**${separator}
+${await t('Delete all stickers from your server', langCode)}: **/delete_all_stickers**${separator}
+${await t('List all current server stickers', langCode)}: **/list_stickers**${separator}
+${await t('Convert a sticker into a server emoji', langCode)}: **/sticker_to_emoji**${separator}
+${await t('Convert a sticker back into an image file', langCode)}: **/sticker_to_image**${separator}
 ${await t('Improve a sticker\'s quality and save it', langCode)}: **/enhance_sticker**`;
             } else if (i.values[0] === 'emoji_help') {
                 title = await t('Emoji Commands', langCode);
+                const separator = '\n⌄ـــــــــــــــــــــــــــProEmojiـــــــــــــــــــــــــــــ⌄\n';
                 content = `
-${await t('Get emoji suggestions if you do not have Nitro', langCode)}: **/suggest_emojis**
-${await t('Search for specific emojis by name', langCode)}: **/emoji_search**
-${await t('Add a new emoji to your server', langCode)}: **/add_emoji**
-${await t('Convert an image URL or attachment into an emoji', langCode)}: **/image_to_emoji**
-${await t('Rename an existing server emoji', langCode)}: **/rename_emoji**
-${await t('Delete an emoji from your server', langCode)}: **/delete_emoji**
-${await t('Delete all emojis from your server', langCode)}: **/delete_all_emojis**
-${await t('List all current server emojis', langCode)}: **/list_emojis**
-${await t('Improve an emoji\'s quality and add it', langCode)}: **/enhance_emoji**
-${await t('Convert an existing emoji into a beautiful sticker', langCode)}: **/emoji_to_sticker**
+${await t('Get emoji suggestions if you do not have Nitro', langCode)}: **/suggest_emojis**${separator}
+${await t('Search for specific emojis by name', langCode)}: **/emoji_search**${separator}
+${await t('Add a new emoji to your server', langCode)}: **/add_emoji**${separator}
+${await t('Convert an image URL or attachment into an emoji', langCode)}: **/image_to_emoji**${separator}
+${await t('Rename an existing server emoji', langCode)}: **/rename_emoji**${separator}
+${await t('Delete an emoji from your server', langCode)}: **/delete_emoji**${separator}
+${await t('Delete all emojis from your server', langCode)}: **/delete_all_emojis**${separator}
+${await t('List all current server emojis', langCode)}: **/list_emojis**${separator}
+${await t('Improve an emoji\'s quality and add it', langCode)}: **/enhance_emoji**${separator}
+${await t('Convert an existing emoji into a beautiful sticker', langCode)}: **/emoji_to_sticker**${separator}
 ${await t('Convert an emoji back into an image file', langCode)}: **/emoji_to_image**`;
             } else if (i.values[0] === 'info_help') {
                 title = await t('Info Commands', langCode);
+                const separator = '\n⌄ـــــــــــــــــــــــــــProEmojiـــــــــــــــــــــــــــــ⌄\n';
                 content = `
-${await t('Set suggestion permissions (Owner only)', langCode)}: **/permission**
-${await t('Change the bot\'s language setting (Owner only)', langCode)}: **/language**
-${await t('View bot status, latency, and vote status', langCode)}: **/status**
+${await t('Set suggestion permissions (Owner only)', langCode)}: **/permission**${separator}
+${await t('Change the bot\'s language setting (Owner only)', langCode)}: **/language**${separator}
+${await t('View bot status, latency, and vote status', langCode)}: **/status**${separator}
 ${await t('Access the bot\'s control panel', langCode)}: 🔗 [ProEmoji dashboard](${WEBSITE_URL})`;
             }
 
@@ -88,7 +91,7 @@ ${await t('Access the bot\'s control panel', langCode)}: 🔗 [ProEmoji dashboar
                 .setDescription(content)
                 .setColor('#0099ff');
 
-            await i.update({ embeds: [updatedEmbed] });
+            await i.update({ embeds: [updatedEmbed], components: [row] });
         });
 
         const replyEmbed = new EmbedBuilder()
