@@ -213,6 +213,19 @@ async function checkPermissions(interaction, langCode) {
     const hasManageEmoji = interaction.member.permissions.has(PermissionsBitField.Flags.ManageGuildExpressions) ||
                            interaction.member.permissions.has(PermissionsBitField.Flags.ManageEmojisAndStickers);
     
+    // Commands that require Administrator specifically
+    if (ADMIN_ONLY_COMMANDS.includes(commandName)) {
+        if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+            const embed = new EmbedBuilder()
+                .setTitle('🚫 ' + await t('Permission Denied', langCode))
+                .setDescription(await t('Only administrators can use this command.', langCode))
+                .setColor('#FF0000');
+            await interaction.reply({ embeds: [embed], ephemeral: true });
+            return false;
+        }
+        return true;
+    }
+
     if (!hasManageEmoji) {
         const embed = new EmbedBuilder()
             .setTitle('🚫 ' + await t('Permission Denied', langCode))

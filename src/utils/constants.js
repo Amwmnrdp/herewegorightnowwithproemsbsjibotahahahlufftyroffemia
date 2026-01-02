@@ -290,7 +290,7 @@ const EMOJI_PERMISSION_COMMANDS = [
     'emoji_to_sticker', 'sticker_to_emoji', 'emoji_search', 'suggest_emojis',
     'list_emojis', 'delete_sticker', 'rename_sticker', 'image_to_sticker', 'list_stickers', 'add_sticker',
     'emoji_to_image', 'sticker_to_image', 'enhance_emoji', 'enhance_sticker',
-    'delete_all_emojis', 'delete_all_stickers', 'status'
+    'status'
 ];
 
 module.exports = {
