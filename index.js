@@ -196,12 +196,15 @@ async function checkPermissions(interaction, langCode) {
         return true;
     }
     
-    // Language command: Server Owner
+    // Language command: Administrator or Server Owner
     if (commandName === 'language') {
-        if (interaction.user.id !== interaction.guild.ownerId) {
+        const isOwner = interaction.user.id === interaction.guild.ownerId;
+        const isAdministrator = interaction.member.permissions.has(PermissionsBitField.Flags.Administrator);
+        
+        if (!isOwner && !isAdministrator) {
             const embed = new EmbedBuilder()
                 .setTitle('🚫 ' + await t('Permission Denied', langCode))
-                .setDescription(await t('Only the server owner can use this command.', langCode))
+                .setDescription(await t('Only administrators or the server owner can use this command.', langCode))
                 .setColor('#FF0000');
             await interaction.reply({ embeds: [embed], ephemeral: true });
             return false;
