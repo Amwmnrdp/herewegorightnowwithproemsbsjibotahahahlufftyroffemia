@@ -6,7 +6,7 @@ const { Client, GatewayIntentBits, EmbedBuilder, PermissionsBitField } = require
 app.use(express.json({ limit: '10mb' }));
 
 const db = require('./src/utils/database');
-const { SUPPORTED_LANGUAGES, COMMAND_DEFINITIONS, OWNER_ONLY_COMMANDS, ADMIN_ONLY_COMMANDS, PUBLIC_COMMANDS, EMOJI_PERMISSION_COMMANDS } = require('./src/utils/constants');
+const { SUPPORTED_LANGUAGES, COMMAND_DEFINITIONS, OWNER_ONLY_COMMANDS, ADMIN_ONLY_COMMANDS = [], PUBLIC_COMMANDS, EMOJI_PERMISSION_COMMANDS } = require('./src/utils/constants');
 const { t, preWarmCache } = require('./src/utils/languages');
 
 const deleteallemojis = require('./src/commands/emoji/deleteallemojis');
@@ -256,11 +256,6 @@ client.on('interactionCreate', async interaction => {
     
     const langCode = await db.getServerLanguage(interaction.guild.id);
 
-    if (!PUBLIC_COMMANDS.includes(interaction.commandName)) {
-        const isVerified = await checkVerification(interaction, langCode);
-        if (!isVerified) return;
-    }
-
     const hasPermission = await checkPermissions(interaction, langCode);
     if (!hasPermission) return;
 
@@ -348,34 +343,7 @@ client.on('messageCreate', async message => {
 
     try {
         if (message.content.startsWith(prefix)) {
-            const userId = message.author.id;
-            let hasVoted = false;
-            try {
-                if (TOP_GG_API_KEY && TOP_GG_BOT_ID) {
-                    const response = await axios.get(`https://top.gg/api/bots/${TOP_GG_BOT_ID}/check?userId=${userId}`, {
-                        headers: { 'Authorization': TOP_GG_API_KEY }
-                    });
-                    hasVoted = response.data.voted === 1;
-                }
-            } catch (error) {
-                console.error('⚠️ Top.gg vote check failed:', error.message);
-            }
-
-            if (!hasVoted) {
-                const embed = new EmbedBuilder()
-                    .setTitle('🔐 ' + await t('Verification Required', langCode))
-                    .setDescription(await t('You must vote for the bot on Top.gg to use this command.', langCode) + 
-                        `\n\n🔗 **${await t('Click here to vote:', langCode)}** https://top.gg/bot/${TOP_GG_BOT_ID}/vote`)
-                    .setColor('#FF6B6B')
-                    .setFooter({ text: await t('This message is only visible to you.', langCode) });
-                
-                try {
-                    await message.author.send({ embeds: [embed] });
-                } catch (error) {
-                    await message.reply({ embeds: [embed] }).then(m => setTimeout(() => m.delete().catch(() => {}), 15000));
-                }
-                return;
-            }
+            // Verification system removed
         }
 
         if (message.content === 'نعم' || message.content.toLowerCase() === 'yes') {
