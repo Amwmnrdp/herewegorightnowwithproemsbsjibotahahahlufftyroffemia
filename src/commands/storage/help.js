@@ -37,6 +37,7 @@ async function execute(interaction, langCode) {
 
     try {
         // إرسال الرسالة الأولى فقط مع القائمة المنسدلة
+        await interaction.deferReply({ ephemeral: true });
         const dm = await interaction.user.send({ embeds: [embed], components: [row] });
         
         const collector = dm.createMessageComponentCollector({ time: 300000 });
@@ -96,14 +97,19 @@ ${await t('View bot status, latency, and vote status', langCode)}: **/status**`;
             .setTitle('✅ Help Sent')
             .setDescription('Check your private messages for the help menu!')
             .setColor('#10b981');
-        await interaction.reply({ embeds: [replyEmbed], ephemeral: true });
+        await interaction.editReply({ embeds: [replyEmbed] });
     } catch (error) {
         console.error('Error sending help DM:', error);
         const errorEmbed = new EmbedBuilder()
             .setTitle('❌ Could not send DM')
             .setDescription('Please enable DMs from server members and try again.')
             .setColor('#FF6B6B');
-        await interaction.reply({ embeds: [errorEmbed], ephemeral: true });
+        
+        if (interaction.deferred) {
+            await interaction.editReply({ embeds: [errorEmbed] });
+        } else {
+            await interaction.reply({ embeds: [errorEmbed], ephemeral: true });
+        }
     }
 }
 

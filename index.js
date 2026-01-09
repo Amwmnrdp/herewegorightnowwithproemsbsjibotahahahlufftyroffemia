@@ -2,7 +2,7 @@ const express = require('express');
 const path = require('path');
 const app = express();
 const { Client, GatewayIntentBits, EmbedBuilder, PermissionsBitField } = require('discord.js');
-
+const prefix = '+';
 app.use(express.json({ limit: '10mb' }));
 
 const db = require('./src/utils/database');
@@ -986,6 +986,12 @@ app.post('/api/set-owner', async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
+});
+
+app.use(express.static('public'));
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 const PORT = process.env.PORT || 5000;
