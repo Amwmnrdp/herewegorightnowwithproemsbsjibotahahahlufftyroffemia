@@ -38,178 +38,259 @@ const COMMAND_DEFINITIONS = [
         description: 'Set permissions for emoji suggestions (Owner only)'
     },
     {
-        name: 'emoji',
-        description: 'Emoji management commands',
+        name: 'suggest_emojis',
+        description: 'Get 5 emoji suggestions'
+    },
+    {
+        name: 'emoji_search',
+        description: 'Search for emojis by name',
         options: [
             {
                 name: 'search',
-                description: 'Search for emojis by name',
-                type: 1,
-                options: [{ name: 'search', type: 3, description: 'Emoji name to search for', required: true }]
-            },
-            {
-                name: 'pack',
-                description: 'Get a pack of suggested emojis',
-                type: 1
-            },
-            {
-                name: 'add',
-                description: 'Add an emoji to server',
-                type: 1,
-                options: [
-                    { name: 'emoji', type: 3, description: 'The emoji to add', required: true },
-                    { name: 'name', type: 3, description: 'Custom name (optional)', required: false }
-                ]
-            },
-            {
-                name: 'list',
-                description: 'List all server emojis',
-                type: 1
-            },
-            {
-                name: 'delete',
-                description: 'Delete an emoji',
-                type: 1,
-                options: [{ name: 'emoji', type: 3, description: 'Emoji to delete', required: true }]
-            },
-            {
-                name: 'rename',
-                description: 'Rename an emoji',
-                type: 1,
-                options: [
-                    { name: 'emoji', type: 3, description: 'Emoji to rename', required: true },
-                    { name: 'name', type: 3, description: 'New name', required: true }
-                ]
-            },
-            {
-                name: 'suggest',
-                description: 'Get 5 emoji suggestions',
-                type: 1
-            },
-            {
-                name: 'tosticker',
-                description: 'Convert this emoji to a sticker',
-                type: 1,
-                options: [
-                    { name: 'emoji', type: 3, description: 'The emoji to convert', required: true },
-                    { name: 'name', type: 3, description: 'Sticker name', required: true }
-                ]
-            },
-            {
-                name: 'toimage',
-                description: 'Convert this emoji to an image',
-                type: 1,
-                options: [{ name: 'emoji', type: 3, description: 'The emoji to convert', required: true }]
+                type: 3,
+                description: 'Emoji name to search for',
+                required: true
             }
         ]
     },
     {
-        name: 'sticker',
-        description: 'Sticker management commands',
+        name: 'search_sticker',
+        description: 'Search for a sticker and add it',
         options: [
             {
                 name: 'search',
-                description: 'Search for a sticker and add it',
-                type: 1,
-                options: [{ name: 'search', type: 3, description: 'Sticker name to search for', required: true }]
-            },
-            {
-                name: 'add',
-                description: 'Add a sticker to server',
-                type: 1,
-                options: [{ name: 'name', type: 3, description: 'Custom sticker name (optional)', required: false }]
-            },
-            {
-                name: 'list',
-                description: 'List all server stickers',
-                type: 1
-            },
-            {
-                name: 'delete',
-                description: 'Delete a sticker',
-                type: 1
-            },
-            {
-                name: 'rename',
-                description: 'Rename a sticker',
-                type: 1,
-                options: [{ name: 'name', type: 3, description: 'New sticker name', required: true }]
-            },
-            {
-                name: 'toemoji',
-                description: 'Convert this sticker to an emoji',
-                type: 1,
-                options: [{ name: 'name', type: 3, description: 'Emoji name', required: true }]
-            },
-            {
-                name: 'toimage',
-                description: 'Convert this sticker to an image',
-                type: 1,
-                options: [{ name: 'sticker', type: 3, description: 'The sticker to convert (ID or name)', required: true }]
+                type: 3,
+                description: 'Sticker name to search for',
+                required: true
             }
         ]
     },
     {
-        name: 'image',
-        description: 'Image conversion commands',
-        options: [
-            {
-                name: 'toemoji',
-                description: 'Convert image to emoji',
-                type: 1,
-                options: [
-                    { name: 'name', type: 3, description: 'Emoji name', required: true },
-                    { name: 'attachment', type: 11, description: 'Upload an image', required: true },
-                    { name: 'url', type: 3, description: 'Image URL', required: false }
-                ]
-            },
-            {
-                name: 'tosticker',
-                description: 'Convert image to sticker',
-                type: 1,
-                options: [
-                    { name: 'name', type: 3, description: 'Sticker name', required: true },
-                    { name: 'attachment', type: 11, description: 'Upload an image', required: true },
-                    { name: 'url', type: 3, description: 'Image URL', required: false },
-                    {
-                        name: 'integration',
-                        type: 3,
-                        description: 'Enable official sticker integration (Yes/No)',
-                        required: false,
-                        choices: [{ name: 'Yes', value: 'true' }]
-                    }
-                ]
-            }
-        ]
+        name: 'emoji_pack',
+        description: 'Get a pack of suggested emojis'
     },
     {
-        name: 'enhance',
-        description: 'Quality enhancement commands',
+        name: 'add_emoji',
+        description: 'Add an emoji to server',
         options: [
             {
                 name: 'emoji',
-                description: 'Improve an emoji\'s quality',
-                type: 1,
-                options: [{ name: 'emoji', type: 3, description: 'The emoji to enhance', required: true }]
+                type: 3,
+                description: 'The emoji to add',
+                required: true
             },
             {
-                name: 'sticker',
-                description: 'Improve a sticker\'s quality',
-                type: 1
+                name: 'name',
+                type: 3,
+                description: 'Custom name (optional)',
+                required: false
             }
         ]
     },
     {
-        name: 'bulkdelete',
-        description: 'Bulk deletion commands',
+        name: 'image_to_emoji',
+        description: 'Convert image to emoji',
         options: [
-            { name: 'stickers', description: 'Delete all stickers', type: 1 },
-            { name: 'emojis', description: 'Delete all emojis', type: 1 }
+            {
+                name: 'name',
+                type: 3,
+                description: 'Emoji name',
+                required: true
+            },
+            {
+                name: 'attachment',
+                type: 11,
+                description: 'Upload an image',
+                required: true
+            },
+            {
+                name: 'url',
+                type: 3,
+                description: 'Image URL',
+                required: false
+            }
         ]
+    },
+    {
+        name: 'image_to_sticker',
+        description: 'Convert image to sticker',
+        options: [
+            {
+                name: 'name',
+                type: 3,
+                description: 'Sticker name',
+                required: true
+            },
+            {
+                name: 'attachment',
+                type: 11,
+                description: 'Upload an image',
+                required: true
+            },
+            {
+                name: 'url',
+                type: 3,
+                description: 'Image URL',
+                required: false
+            },
+            {
+                name: 'integration',
+                type: 3,
+                description: 'Enable official sticker integration (Yes/No)',
+                required: false,
+                choices: [
+                    { name: 'Yes', value: 'true' }
+                ]
+            }
+        ]
+    },
+    {
+        name: 'emoji_to_sticker',
+        description: 'Convert emoji to sticker',
+        options: [
+            {
+                name: 'emoji',
+                type: 3,
+                description: 'The emoji to convert',
+                required: true
+            },
+            {
+                name: 'name',
+                type: 3,
+                description: 'Sticker name',
+                required: true
+            }
+        ]
+    },
+    {
+        name: 'emoji_to_image',
+        description: 'Convert an emoji to an image',
+        options: [
+            {
+                name: 'emoji',
+                type: 3,
+                description: 'The emoji to convert',
+                required: true
+            }
+        ]
+    },
+    {
+        name: 'sticker_to_image',
+        description: 'Convert a sticker to an image',
+        options: [
+            {
+                name: 'sticker',
+                type: 3,
+                description: 'The sticker to convert (ID or name)',
+                required: true
+            }
+        ]
+    },
+    {
+        name: 'enhance_emoji',
+        description: 'Improve an emoji\'s quality and add it to the server',
+        options: [
+            {
+                name: 'emoji',
+                type: 3,
+                description: 'The emoji to enhance',
+                required: true
+            }
+        ]
+    },
+    {
+        name: 'enhance_sticker',
+        description: 'Improve a sticker\'s quality and save it to the server'
+    },
+    {
+        name: 'delete_all_stickers',
+        description: 'Delete all stickers in the server'
+    },
+    {
+        name: 'delete_all_emojis',
+        description: 'Delete all emojis in the server'
+    },
+    {
+        name: 'list_emojis',
+        description: 'List all server emojis'
     },
     {
         name: 'language',
         description: 'Change bot language (Owner only)'
+    },
+    {
+        name: 'delete_emoji',
+        description: 'Delete an emoji',
+        options: [
+            {
+                name: 'emoji',
+                type: 3,
+                description: 'Emoji to delete',
+                required: true
+            }
+        ]
+    },
+    {
+        name: 'rename_emoji',
+        description: 'Rename an emoji',
+        options: [
+            {
+                name: 'emoji',
+                type: 3,
+                description: 'Emoji to rename',
+                required: true
+            },
+            {
+                name: 'name',
+                type: 3,
+                description: 'New name',
+                required: true
+            }
+        ]
+    },
+    {
+        name: 'delete_sticker',
+        description: 'Delete a sticker'
+    },
+    {
+        name: 'rename_sticker',
+        description: 'Rename a sticker',
+        options: [
+            {
+                name: 'name',
+                type: 3,
+                description: 'New sticker name',
+                required: true
+            }
+        ]
+    },
+    {
+        name: 'sticker_to_emoji',
+        description: 'Convert sticker to emoji',
+        options: [
+            {
+                name: 'name',
+                type: 3,
+                description: 'Emoji name',
+                required: true
+            }
+        ]
+    },
+    {
+        name: 'list_stickers',
+        description: 'List all server stickers'
+    },
+    {
+        name: 'add_sticker',
+        description: 'Add a sticker to server',
+        options: [
+            {
+                name: 'name',
+                type: 3,
+                description: 'Custom sticker name (optional)',
+                required: false
+            }
+        ]
     },
     {
         name: 'status',
@@ -218,10 +299,14 @@ const COMMAND_DEFINITIONS = [
 ];
 
 const OWNER_ONLY_COMMANDS = ['language', 'permission'];
-const ADMIN_ONLY_COMMANDS = ['bulkdelete'];
+const ADMIN_ONLY_COMMANDS = ['delete_all_emojis', 'delete_all_stickers'];
 const PUBLIC_COMMANDS = ['status', 'help'];
 const EMOJI_PERMISSION_COMMANDS = [
-    'emoji', 'sticker', 'image', 'enhance', 'bulkdelete', 'status'
+    'add_emoji', 'delete_emoji', 'rename_emoji', 'image_to_emoji', 
+    'emoji_to_sticker', 'sticker_to_emoji', 'emoji_search', 'suggest_emojis',
+    'list_emojis', 'delete_sticker', 'rename_sticker', 'image_to_sticker', 'list_stickers', 'add_sticker',
+    'emoji_to_image', 'sticker_to_image', 'enhance_emoji', 'enhance_sticker',
+    'status', 'search_sticker', 'emoji_pack'
 ];
 
 module.exports = {
