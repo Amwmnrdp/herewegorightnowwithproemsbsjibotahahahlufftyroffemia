@@ -5,7 +5,7 @@ async function execute(interaction, langCode) {
     const embed = new EmbedBuilder()
         .setTitle('🙏 ' + await t('Thank You!', langCode))
         .setDescription(await t('Thank you for supporting ProEmoji! Your help keeps the bot growing.', langCode))
-        .setColor('#FFD700')
+        .setColor('#00FFFF')
         .setThumbnail(interaction.client.user.displayAvatarURL());
 
     const row = new ActionRowBuilder()

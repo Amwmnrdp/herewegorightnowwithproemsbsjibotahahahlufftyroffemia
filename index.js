@@ -260,7 +260,7 @@ client.on('interactionCreate', async interaction => {
         const embed = new EmbedBuilder()
             .setTitle(successTitle)
             .setDescription(`${langInfo.flag} ${langInfo.native} (${langInfo.name})`)
-            .setColor('#00FF00');
+            .setColor('#00FFFF');
         await interaction.update({ embeds: [embed], components: [] });
         return;
     }

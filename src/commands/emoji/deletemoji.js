@@ -33,7 +33,7 @@ async function execute(interaction, langCode, convertedStickersToEmojis) {
                 convertedStickersToEmojis.delete(key);
             }
         });
-        const embed = new EmbedBuilder().setDescription('✅ ' + await t('Emoji deleted!', langCode)).setColor('#00FF00').setFooter({ text: `${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
+        const embed = new EmbedBuilder().setDescription('✅ ' + await t('Emoji deleted!', langCode)).setColor('#00FFFF').setFooter({ text: `${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
         await interaction.reply({ embeds: [embed] });
     } catch (error) {
         const errorMsg = error.code === 50013 ?

@@ -29,7 +29,7 @@ async function execute(interaction, langCode) {
 
     try {
         await emj.edit({ name: newName });
-        const embed = new EmbedBuilder().setDescription('✅ ' + await t('Renamed to', langCode) + ' ' + newName + '! ' + emj.toString()).setColor('#00FF00').setFooter({ text: `${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
+        const embed = new EmbedBuilder().setDescription('✅ ' + await t('Renamed to', langCode) + ' ' + newName + '! ' + emj.toString()).setColor('#00FFFF').setFooter({ text: `${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
         await interaction.reply({ embeds: [embed] });
     } catch (error) {
         const errorMsg = error.code === 50013 ?

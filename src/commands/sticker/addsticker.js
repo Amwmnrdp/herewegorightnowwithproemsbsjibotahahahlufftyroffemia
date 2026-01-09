@@ -11,7 +11,7 @@ async function execute(interaction, langCode) {
     const embed = new EmbedBuilder()
         .setTitle('🎨 ' + await t('Add Sticker', langCode))
         .setDescription(await t('Reply to this message using the sticker you want to add to the server.', langCode))
-        .setColor('#667eea')
+        .setColor('#00FFFF')
         .setFooter({ text: await t('Waiting for your sticker...', langCode) + ` • ${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
 
     const msg = await interaction.reply({ embeds: [embed], fetchReply: true });

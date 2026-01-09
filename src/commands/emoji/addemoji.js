@@ -31,7 +31,7 @@ async function execute(interaction, langCode) {
         let url = `https://cdn.discordapp.com/emojis/${info.id + type}`;
         const emj = await interaction.guild.emojis.create({ attachment: url, name: name || info.name, reason: `By ${interaction.user.tag}` });
         await db.addEmojiRecord(interaction.guild.id, emj.id, emj.name, interaction.user.tag);
-        const embed = new EmbedBuilder().setDescription('✅ ' + await t('Added!', langCode) + ' ' + emj).setColor('#00FF00').setFooter({ text: `${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
+        const embed = new EmbedBuilder().setDescription('✅ ' + await t('Added!', langCode) + ' ' + emj.toString()).setColor('#00FFFF').setFooter({ text: `${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
         await interaction.reply({ embeds: [embed] });
     } catch (error) {
         const embed = new EmbedBuilder().setDescription('❌ ' + await t('Error:', langCode) + ' ' + error.message).setColor('#FF0000').setFooter({ text: `${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });

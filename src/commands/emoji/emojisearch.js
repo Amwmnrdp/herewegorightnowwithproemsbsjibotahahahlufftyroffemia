@@ -44,7 +44,7 @@ async function execute(interaction, langCode, client) {
     const embed = new EmbedBuilder()
         .setTitle('🔍 ' + await t('Emoji Search Results', langCode))
         .setDescription(await t('Found these emojis. Would you like to add them?', langCode) + '\n\n' + foundEmojis.map((e, i) => `${i+1}. ${e} (${e.name})`).join('\n'))
-        .setColor('#ADD8E6')
+        .setColor('#00FFFF')
         .setFooter({ text: `${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
 
     const row = new ActionRowBuilder()
@@ -78,7 +78,7 @@ async function execute(interaction, langCode, client) {
             }
             const successEmbed = new EmbedBuilder()
                 .setDescription('✅ ' + (await t('Successfully added emojis!', langCode)).replace('{count}', added))
-                .setColor('#ADD8E6');
+                .setColor('#00FFFF');
             await i.editReply({ embeds: [successEmbed], components: [] });
         } else {
             await i.deferUpdate();

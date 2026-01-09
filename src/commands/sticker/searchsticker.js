@@ -43,7 +43,7 @@ async function execute(interaction, langCode, client) {
         .setTitle('🔍 ' + await t('Sticker Search Result', langCode))
         .setDescription(await t('Found this sticker. Would you like to add it?', langCode) + `\n\n**${foundSticker.name}**`)
         .setImage(foundSticker.url)
-        .setColor('#ADD8E6')
+        .setColor('#00FFFF')
         .setFooter({ text: `${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
 
     const row = new ActionRowBuilder()
@@ -70,7 +70,7 @@ async function execute(interaction, langCode, client) {
                 await interaction.guild.stickers.create({ file: foundSticker.url, name: foundSticker.name, tags: foundSticker.tags || 'emoji' });
                 const successEmbed = new EmbedBuilder()
                     .setDescription('✅ ' + await t('Successfully added the sticker!', langCode))
-                    .setColor('#ADD8E6');
+                    .setColor('#00FFFF');
                 await i.editReply({ embeds: [successEmbed], components: [] });
             } catch (err) {
                 console.error('Error adding sticker:', err);
