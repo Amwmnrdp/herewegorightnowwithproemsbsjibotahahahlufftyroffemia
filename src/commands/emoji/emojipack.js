@@ -3,7 +3,7 @@ const { t } = require('../../utils/languages');
 
 // Storage for emojis in the code (IDs)
 const EMOJI_PACK_IDS = [
-    '1456696678470910065', // Example ID
+    '1456696678470910065','1450504931420278979' // Example ID
     // Add more emoji IDs here
 ];
 
