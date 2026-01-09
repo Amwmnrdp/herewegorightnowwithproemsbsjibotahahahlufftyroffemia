@@ -16,6 +16,7 @@ const listemoji = require('./src/commands/emoji/listemoji');
 const deletemoji = require('./src/commands/emoji/deletemoji');
 const renameemoji = require('./src/commands/emoji/renameemoji');
 const emojisearch = require('./src/commands/emoji/emojisearch');
+const emojipack = require('./src/commands/emoji/emojipack');
 const imagetoemoji = require('./src/commands/emoji/imagetoemoji');
 const emojiTosticker = require('./src/commands/emoji/emojiTosticker');
 const emojitoimage = require('./src/commands/emoji/emojitoimage');
@@ -30,6 +31,7 @@ const imagetosticker = require('./src/commands/sticker/imagetosticker');
 const stickertoimage = require('./src/commands/sticker/stickertoimage');
 const enhancesticker = require('./src/commands/sticker/enhancesticker');
 const liststicker = require('./src/commands/sticker/liststicker');
+const searchsticker = require('./src/commands/sticker/searchsticker');
 
 const help = require('./src/commands/storage/help');
 const status = require('./src/commands/storage/status');
@@ -270,19 +272,21 @@ client.on('interactionCreate', async interaction => {
     try {
         if (interaction.commandName === 'status') await status.execute(interaction, langCode);
         else if (interaction.commandName === 'help') await help.execute(interaction, langCode);
-        else if (interaction.commandName === 'delete_all_emojis') await deleteallemojis.execute(interaction, langCode);
-        else if (interaction.commandName === 'delete_all_stickers') await deleteallstickers.execute(interaction, langCode);
+        else if (interaction.commandName === 'delete all emojis') await deleteallemojis.execute(interaction, langCode);
+        else if (interaction.commandName === 'delete all stickers') await deleteallstickers.execute(interaction, langCode);
         else if (interaction.commandName === 'permission') await permission.execute(interaction, langCode);
-        else if (interaction.commandName === 'emoji_search') await emojisearch.execute(interaction, langCode, client);
-        else if (interaction.commandName === 'suggest_emojis') await suggestemojis.execute(interaction, langCode, client);
-        else if (interaction.commandName === 'add_emoji') await addemojiCmd.execute(interaction, langCode);
-        else if (interaction.commandName === 'image_to_emoji') await imagetoemoji.execute(interaction, langCode, usedUrls);
-        else if (interaction.commandName === 'emoji_to_sticker') await emojiTosticker.execute(interaction, langCode, convertedEmojisToStickers);
-        else if (interaction.commandName === 'list_emojis') await listemoji.execute(interaction, langCode);
+        else if (interaction.commandName === 'emoji search') await emojisearch.execute(interaction, langCode, client);
+        else if (interaction.commandName === 'search sticker') await searchsticker.execute(interaction, langCode, client);
+        else if (interaction.commandName === 'emoji pack') await emojipack.execute(interaction, langCode, client);
+        else if (interaction.commandName === 'suggest emojis') await suggestemojis.execute(interaction, langCode, client);
+        else if (interaction.commandName === 'add emoji') await addemojiCmd.execute(interaction, langCode);
+        else if (interaction.commandName === 'image to emoji') await imagetoemoji.execute(interaction, langCode, usedUrls);
+        else if (interaction.commandName === 'emoji to sticker') await emojiTosticker.execute(interaction, langCode, convertedEmojisToStickers);
+        else if (interaction.commandName === 'list emojis') await listemoji.execute(interaction, langCode);
         else if (interaction.commandName === 'language') await language.execute(interaction, langCode);
-        else if (interaction.commandName === 'delete_emoji') await deletemoji.execute(interaction, langCode, convertedStickersToEmojis);
-        else if (interaction.commandName === 'rename_emoji') await renameemoji.execute(interaction, langCode);
-        else if (interaction.commandName === 'delete_sticker') {
+        else if (interaction.commandName === 'delete emoji') await deletemoji.execute(interaction, langCode, convertedStickersToEmojis);
+        else if (interaction.commandName === 'rename emoji') await renameemoji.execute(interaction, langCode);
+        else if (interaction.commandName === 'delete sticker') {
             const msg = await deletesticker.execute(interaction, langCode);
             stickerDeletionSessions.set(msg.id, {
                 guildId: interaction.guild.id,
@@ -293,7 +297,7 @@ client.on('interactionCreate', async interaction => {
             });
             setTimeout(() => stickerDeletionSessions.has(msg.id) && stickerDeletionSessions.delete(msg.id), 60000);
         }
-        else if (interaction.commandName === 'rename_sticker') {
+        else if (interaction.commandName === 'rename sticker') {
             const msg = await renamesticker.execute(interaction, langCode);
             const newName = interaction.options.getString('name');
             stickerRenameSessions.set(msg.id, {
@@ -306,7 +310,7 @@ client.on('interactionCreate', async interaction => {
             });
             setTimeout(() => stickerRenameSessions.has(msg.id) && stickerRenameSessions.delete(msg.id), 60000);
         }
-        else if (interaction.commandName === 'sticker_to_emoji') {
+        else if (interaction.commandName === 'sticker to emoji') {
             const msg = await stickertoemi.execute(interaction, langCode);
             const emojiName = interaction.options.getString('name');
             stickerToEmojiSessions.set(msg.id, {
@@ -319,14 +323,13 @@ client.on('interactionCreate', async interaction => {
             });
             setTimeout(() => stickerToEmojiSessions.has(msg.id) && stickerToEmojiSessions.delete(msg.id), 60000);
         }
-        else if (interaction.commandName === 'image_to_sticker') await imagetosticker.execute(interaction, langCode, convertedImagesToStickers);
-        else if (interaction.commandName === 'emoji_to_sticker') await emojiTosticker.execute(interaction, langCode, convertedEmojisToStickers);
-        else if (interaction.commandName === 'emoji_to_image') await emojitoimage.execute(interaction, langCode);
-        else if (interaction.commandName === 'sticker_to_image') await stickertoimage.execute(interaction, langCode);
-        else if (interaction.commandName === 'enhance_emoji') await enhanceemoji.execute(interaction, langCode);
-        else if (interaction.commandName === 'enhance_sticker') await enhancesticker.execute(interaction, langCode);
-        else if (interaction.commandName === 'list_stickers') await liststicker.execute(interaction, langCode);
-        else if (interaction.commandName === 'add_sticker') {
+        else if (interaction.commandName === 'image to sticker') await imagetosticker.execute(interaction, langCode, convertedImagesToStickers);
+        else if (interaction.commandName === 'emoji to image') await emojitoimage.execute(interaction, langCode);
+        else if (interaction.commandName === 'sticker to image') await stickertoimage.execute(interaction, langCode);
+        else if (interaction.commandName === 'enhance emoji') await enhanceemoji.execute(interaction, langCode);
+        else if (interaction.commandName === 'enhance sticker') await enhancesticker.execute(interaction, langCode);
+        else if (interaction.commandName === 'list stickers') await liststicker.execute(interaction, langCode);
+        else if (interaction.commandName === 'add sticker') {
             const msg = await addsticker.execute(interaction, langCode);
             const customName = interaction.options.getString('name');
             stickerAddSessions.set(msg.id, {

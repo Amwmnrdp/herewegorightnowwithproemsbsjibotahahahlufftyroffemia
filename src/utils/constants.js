@@ -38,11 +38,11 @@ const COMMAND_DEFINITIONS = [
         description: 'Set permissions for emoji suggestions (Owner only)'
     },
     {
-        name: 'suggest_emojis',
+        name: 'suggest emojis',
         description: 'Get 5 emoji suggestions'
     },
     {
-        name: 'emoji_search',
+        name: 'emoji search',
         description: 'Search for emojis by name',
         options: [
             {
@@ -54,7 +54,23 @@ const COMMAND_DEFINITIONS = [
         ]
     },
     {
-        name: 'add_emoji',
+        name: 'search sticker',
+        description: 'Search for a sticker and add it',
+        options: [
+            {
+                name: 'search',
+                type: 3,
+                description: 'Sticker name to search for',
+                required: true
+            }
+        ]
+    },
+    {
+        name: 'emoji pack',
+        description: 'Get a pack of suggested emojis'
+    },
+    {
+        name: 'add emoji',
         description: 'Add an emoji to server',
         options: [
             {
@@ -72,7 +88,7 @@ const COMMAND_DEFINITIONS = [
         ]
     },
     {
-        name: 'image_to_emoji',
+        name: 'image to emoji',
         description: 'Convert image to emoji',
         options: [
             {
@@ -96,7 +112,7 @@ const COMMAND_DEFINITIONS = [
         ]
     },
     {
-        name: 'image_to_sticker',
+        name: 'image to sticker',
         description: 'Convert image to sticker',
         options: [
             {
@@ -129,7 +145,7 @@ const COMMAND_DEFINITIONS = [
         ]
     },
     {
-        name: 'emoji_to_sticker',
+        name: 'emoji to sticker',
         description: 'Convert emoji to sticker',
         options: [
             {
@@ -147,7 +163,7 @@ const COMMAND_DEFINITIONS = [
         ]
     },
     {
-        name: 'emoji_to_image',
+        name: 'emoji to image',
         description: 'Convert an emoji to an image',
         options: [
             {
@@ -159,7 +175,7 @@ const COMMAND_DEFINITIONS = [
         ]
     },
     {
-        name: 'sticker_to_image',
+        name: 'sticker to image',
         description: 'Convert a sticker to an image',
         options: [
             {
@@ -171,7 +187,7 @@ const COMMAND_DEFINITIONS = [
         ]
     },
     {
-        name: 'enhance_emoji',
+        name: 'enhance emoji',
         description: 'Improve an emoji\'s quality and add it to the server',
         options: [
             {
@@ -183,19 +199,19 @@ const COMMAND_DEFINITIONS = [
         ]
     },
     {
-        name: 'enhance_sticker',
+        name: 'enhance sticker',
         description: 'Improve a sticker\'s quality and save it to the server'
     },
     {
-        name: 'delete_all_stickers',
+        name: 'delete all stickers',
         description: 'Delete all stickers in the server'
     },
     {
-        name: 'delete_all_emojis',
+        name: 'delete all emojis',
         description: 'Delete all emojis in the server'
     },
     {
-        name: 'list_emojis',
+        name: 'list emojis',
         description: 'List all server emojis'
     },
     {
@@ -203,7 +219,7 @@ const COMMAND_DEFINITIONS = [
         description: 'Change bot language (Owner only)'
     },
     {
-        name: 'delete_emoji',
+        name: 'delete emoji',
         description: 'Delete an emoji',
         options: [
             {
@@ -215,7 +231,7 @@ const COMMAND_DEFINITIONS = [
         ]
     },
     {
-        name: 'rename_emoji',
+        name: 'rename emoji',
         description: 'Rename an emoji',
         options: [
             {
@@ -233,11 +249,11 @@ const COMMAND_DEFINITIONS = [
         ]
     },
     {
-        name: 'delete_sticker',
+        name: 'delete sticker',
         description: 'Delete a sticker'
     },
     {
-        name: 'rename_sticker',
+        name: 'rename sticker',
         description: 'Rename a sticker',
         options: [
             {
@@ -249,7 +265,7 @@ const COMMAND_DEFINITIONS = [
         ]
     },
     {
-        name: 'sticker_to_emoji',
+        name: 'sticker to emoji',
         description: 'Convert sticker to emoji',
         options: [
             {
@@ -261,11 +277,11 @@ const COMMAND_DEFINITIONS = [
         ]
     },
     {
-        name: 'list_stickers',
+        name: 'list stickers',
         description: 'List all server stickers'
     },
     {
-        name: 'add_sticker',
+        name: 'add sticker',
         description: 'Add a sticker to server',
         options: [
             {
@@ -283,14 +299,14 @@ const COMMAND_DEFINITIONS = [
 ];
 
 const OWNER_ONLY_COMMANDS = ['language', 'permission'];
-const ADMIN_ONLY_COMMANDS = ['delete_all_emojis', 'delete_all_stickers'];
+const ADMIN_ONLY_COMMANDS = ['delete all emojis', 'delete all stickers'];
 const PUBLIC_COMMANDS = ['status', 'help'];
 const EMOJI_PERMISSION_COMMANDS = [
-    'add_emoji', 'delete_emoji', 'rename_emoji', 'image_to_emoji', 
-    'emoji_to_sticker', 'sticker_to_emoji', 'emoji_search', 'suggest_emojis',
-    'list_emojis', 'delete_sticker', 'rename_sticker', 'image_to_sticker', 'list_stickers', 'add_sticker',
-    'emoji_to_image', 'sticker_to_image', 'enhance_emoji', 'enhance_sticker',
-    'status'
+    'add emoji', 'delete emoji', 'rename emoji', 'image to emoji', 
+    'emoji to sticker', 'sticker to emoji', 'emoji search', 'suggest emojis',
+    'list emojis', 'delete sticker', 'rename sticker', 'image to sticker', 'list stickers', 'add sticker',
+    'emoji to image', 'sticker to image', 'enhance emoji', 'enhance sticker',
+    'status', 'search sticker', 'emoji pack'
 ];
 
 module.exports = {
