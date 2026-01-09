@@ -36,15 +36,17 @@ function getServerLanguage(guildId) {
 }
 
 async function t(text, langCode) {
-    if (!text || langCode === 'en') return text;
+    if (!text || !langCode || langCode === 'en') return text;
     
+    const translateCode = SUPPORTED_LANGUAGES[langCode]?.translateCode || langCode;
+    if (translateCode === 'en') return text;
+
     const cacheKey = `${langCode}:${text}`;
     if (translationCache.has(cacheKey)) {
         return translationCache.get(cacheKey);
     }
     
     try {
-        const translateCode = SUPPORTED_LANGUAGES[langCode]?.translateCode || langCode;
         const timeoutPromise = new Promise((_, reject) => 
             setTimeout(() => reject(new Error('Translation timeout')), 5000)
         );

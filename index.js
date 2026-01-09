@@ -247,8 +247,12 @@ client.on('interactionCreate', async interaction => {
         const langInfo = SUPPORTED_LANGUAGES[langCode];
         await db.setServerLanguage(interaction.guild.id, langCode);
         
+        // Clear server specific translation cache if necessary
+        // In this implementation, we rely on the t function's langCode parameter
+        
+        const successTitle = await t('Language Updated!', langCode);
         const embed = new EmbedBuilder()
-            .setTitle(await t('Language Updated!', langCode))
+            .setTitle(successTitle)
             .setDescription(`${langInfo.flag} ${langInfo.native} (${langInfo.name})`)
             .setColor('#00FF00');
         await interaction.update({ embeds: [embed], components: [] });
@@ -258,7 +262,8 @@ client.on('interactionCreate', async interaction => {
     if (!interaction.isCommand()) return;
     
     const langCode = await db.getServerLanguage(interaction.guild.id);
-
+    
+    // Check permissions
     const hasPermission = await checkPermissions(interaction, langCode);
     if (!hasPermission) return;
 
@@ -988,12 +993,7 @@ app.post('/api/set-owner', async (req, res) => {
     }
 });
 
-app.use(express.static('public'));
-
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
+// Web server removed as per user request
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🌐 Web server running on port ${PORT}`);

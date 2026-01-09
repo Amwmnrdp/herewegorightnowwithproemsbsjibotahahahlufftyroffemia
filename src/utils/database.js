@@ -131,8 +131,13 @@ async function setServerLanguage(serverId, language) {
 }
 
 async function getServerLanguage(serverId) {
-    const result = await pool.query('SELECT language FROM servers WHERE server_id = $1', [serverId]);
-    return result.rows[0]?.language || 'en';
+    try {
+        const result = await pool.query('SELECT language FROM servers WHERE server_id = $1', [serverId]);
+        return result.rows[0]?.language || 'en';
+    } catch (error) {
+        console.error('Error fetching language from DB:', error.message);
+        return 'en';
+    }
 }
 
 async function setServerPermission(serverId, enabled) {
