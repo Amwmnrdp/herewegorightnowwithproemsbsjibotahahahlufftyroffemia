@@ -36,6 +36,7 @@ const searchsticker = require('./src/commands/sticker/searchsticker');
 
 const help = require('./src/commands/storage/help');
 const status = require('./src/commands/storage/status');
+const vote = require('./src/commands/storage/vote');
 const language = require('./src/commands/storage/language');
 const permission = require('./src/commands/storage/permission');
 
@@ -275,6 +276,7 @@ client.on('interactionCreate', async interaction => {
     try {
         if (interaction.commandName === 'status') await status.execute(interaction, langCode);
         else if (interaction.commandName === 'help') await help.execute(interaction, langCode);
+        else if (interaction.commandName === 'vote') await vote.execute(interaction, langCode);
         else if (interaction.commandName === 'delete_all_emojis') await deleteallemojis.execute(interaction, langCode);
         else if (interaction.commandName === 'delete_all_stickers') await deleteallstickers.execute(interaction, langCode);
         else if (interaction.commandName === 'permission') await permission.execute(interaction, langCode);

@@ -36,8 +36,15 @@ async function execute(interaction, langCode) {
     const row = new ActionRowBuilder().addComponents(selectMenu);
 
     try {
+        const footerText = await t('Vote ProEmoji', langCode);
+        const footerLink = 'https://top.gg/bot/1009426679061553162/vote'; // Placeholder link
+        
         // إرسال الرسالة الأولى فقط مع القائمة المنسدلة
-        const dm = await interaction.user.send({ embeds: [embed], components: [row] });
+        const dm = await interaction.user.send({ 
+            embeds: [embed], 
+            components: [row],
+            content: `\n[${footerText}](<${footerLink}>)`
+        });
         
         const collector = dm.createMessageComponentCollector({ time: 300000 });
 

@@ -34,7 +34,6 @@ async function execute(interaction, langCode) {
         .setTitle('📊 ' + await t('Bot Status', langCode))
         .addFields(
             { name: await t('Server Permissions', langCode), value: permStatus, inline: true },
-            { name: await t('Vote Status', langCode), value: voteStatus, inline: true },
             { name: await t('Ping', langCode), value: `${ping}ms`, inline: true }
         )
         .setColor(hasManageEmoji ? '#00FF00' : '#FF0000')

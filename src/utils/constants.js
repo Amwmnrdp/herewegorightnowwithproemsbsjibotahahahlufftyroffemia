@@ -294,19 +294,23 @@ const COMMAND_DEFINITIONS = [
     },
     {
         name: 'status',
-        description: 'Check bot status, vote status and ping'
+        description: 'Check bot status and ping'
+    },
+    {
+        name: 'vote',
+        description: 'Get links to vote and support the bot'
     }
 ];
 
 const OWNER_ONLY_COMMANDS = ['language', 'permission'];
 const ADMIN_ONLY_COMMANDS = ['delete_all_emojis', 'delete_all_stickers'];
-const PUBLIC_COMMANDS = ['status', 'help'];
+const PUBLIC_COMMANDS = ['status', 'help', 'vote'];
 const EMOJI_PERMISSION_COMMANDS = [
     'add_emoji', 'delete_emoji', 'rename_emoji', 'image_to_emoji', 
     'emoji_to_sticker', 'sticker_to_emoji', 'emoji_search', 'suggest_emojis',
     'list_emojis', 'delete_sticker', 'rename_sticker', 'image_to_sticker', 'list_stickers', 'add_sticker',
     'emoji_to_image', 'sticker_to_image', 'enhance_emoji', 'enhance_sticker',
-    'status', 'search_sticker', 'emoji_pack'
+    'status', 'search_sticker', 'emoji_pack', 'vote'
 ];
 
 module.exports = {
