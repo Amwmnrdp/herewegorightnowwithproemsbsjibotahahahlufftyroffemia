@@ -36,6 +36,8 @@ const searchsticker = require('./src/commands/sticker/searchsticker');
 
 const help = require('./src/commands/storage/help');
 const status = require('./src/commands/storage/status');
+const language = require('./src/commands/storage/language');
+const permission = require('./src/commands/storage/permission');
 
 const client = new Client({
     intents: [
@@ -276,16 +278,16 @@ client.on('interactionCreate', async interaction => {
 
         if (interaction.commandName === 'status') await status.execute(interaction, langCode);
         else if (interaction.commandName === 'help') await help.execute(interaction, langCode);
-        else if (fullCommand === 'delete_all emojis') await deleteallemojis.execute(interaction, langCode);
-        else if (fullCommand === 'delete_all stickers') await deleteallstickers.execute(interaction, langCode);
+        else if (fullCommand === 'bulkdelete emojis') await deleteallemojis.execute(interaction, langCode);
+        else if (fullCommand === 'bulkdelete stickers') await deleteallstickers.execute(interaction, langCode);
         else if (interaction.commandName === 'permission') await permission.execute(interaction, langCode);
         else if (fullCommand === 'emoji search') await emojisearch.execute(interaction, langCode, client);
         else if (fullCommand === 'sticker search') await searchsticker.execute(interaction, langCode, client);
         else if (fullCommand === 'emoji pack') await emojipack.execute(interaction, langCode, client);
         else if (fullCommand === 'emoji suggest') await suggestemojis.execute(interaction, langCode, client);
         else if (fullCommand === 'emoji add') await addemojiCmd.execute(interaction, langCode);
-        else if (fullCommand === 'image to_emoji') await imagetoemoji.execute(interaction, langCode, usedUrls);
-        else if (fullCommand === 'convert emoji_to_sticker') await emojiTosticker.execute(interaction, langCode, convertedEmojisToStickers);
+        else if (fullCommand === 'image toemoji') await imagetoemoji.execute(interaction, langCode, usedUrls);
+        else if (fullCommand === 'emoji tosticker') await emojiTosticker.execute(interaction, langCode, convertedEmojisToStickers);
         else if (fullCommand === 'emoji list') await listemoji.execute(interaction, langCode);
         else if (interaction.commandName === 'language') await language.execute(interaction, langCode);
         else if (fullCommand === 'emoji delete') await deletemoji.execute(interaction, langCode, convertedStickersToEmojis);
@@ -314,7 +316,7 @@ client.on('interactionCreate', async interaction => {
             });
             setTimeout(() => stickerRenameSessions.has(msg.id) && stickerRenameSessions.delete(msg.id), 60000);
         }
-        else if (fullCommand === 'convert sticker_to_emoji') {
+        else if (fullCommand === 'sticker toemoji') {
             const msg = await stickertoemi.execute(interaction, langCode);
             const emojiName = interaction.options.getString('name');
             stickerToEmojiSessions.set(msg.id, {
@@ -327,9 +329,9 @@ client.on('interactionCreate', async interaction => {
             });
             setTimeout(() => stickerToEmojiSessions.has(msg.id) && stickerToEmojiSessions.delete(msg.id), 60000);
         }
-        else if (fullCommand === 'image to_sticker') await imagetosticker.execute(interaction, langCode, convertedImagesToStickers);
-        else if (fullCommand === 'convert emoji_to_image') await emojitoimage.execute(interaction, langCode);
-        else if (fullCommand === 'convert sticker_to_image') await stickertoimage.execute(interaction, langCode);
+        else if (fullCommand === 'image tostcker') await imagetosticker.execute(interaction, langCode, convertedImagesToStickers);
+        else if (fullCommand === 'emoji toimage') await emojitoimage.execute(interaction, langCode);
+        else if (fullCommand === 'sticker toimage') await stickertoimage.execute(interaction, langCode);
         else if (fullCommand === 'enhance emoji') await enhanceemoji.execute(interaction, langCode);
         else if (fullCommand === 'enhance sticker') await enhancesticker.execute(interaction, langCode);
         else if (fullCommand === 'sticker list') await liststicker.execute(interaction, langCode);

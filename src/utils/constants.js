@@ -85,6 +85,21 @@ const COMMAND_DEFINITIONS = [
                 name: 'suggest',
                 description: 'Get 5 emoji suggestions',
                 type: 1
+            },
+            {
+                name: 'tosticker',
+                description: 'Convert this emoji to a sticker',
+                type: 1,
+                options: [
+                    { name: 'emoji', type: 3, description: 'The emoji to convert', required: true },
+                    { name: 'name', type: 3, description: 'Sticker name', required: true }
+                ]
+            },
+            {
+                name: 'toimage',
+                description: 'Convert this emoji to an image',
+                type: 1,
+                options: [{ name: 'emoji', type: 3, description: 'The emoji to convert', required: true }]
             }
         ]
     },
@@ -119,6 +134,18 @@ const COMMAND_DEFINITIONS = [
                 description: 'Rename a sticker',
                 type: 1,
                 options: [{ name: 'name', type: 3, description: 'New sticker name', required: true }]
+            },
+            {
+                name: 'toemoji',
+                description: 'Convert this sticker to an emoji',
+                type: 1,
+                options: [{ name: 'name', type: 3, description: 'Emoji name', required: true }]
+            },
+            {
+                name: 'toimage',
+                description: 'Convert this sticker to an image',
+                type: 1,
+                options: [{ name: 'sticker', type: 3, description: 'The sticker to convert (ID or name)', required: true }]
             }
         ]
     },
@@ -127,7 +154,7 @@ const COMMAND_DEFINITIONS = [
         description: 'Image conversion commands',
         options: [
             {
-                name: 'to_emoji',
+                name: 'toemoji',
                 description: 'Convert image to emoji',
                 type: 1,
                 options: [
@@ -137,7 +164,7 @@ const COMMAND_DEFINITIONS = [
                 ]
             },
             {
-                name: 'to_sticker',
+                name: 'tosticker',
                 description: 'Convert image to sticker',
                 type: 1,
                 options: [
@@ -152,39 +179,6 @@ const COMMAND_DEFINITIONS = [
                         choices: [{ name: 'Yes', value: 'true' }]
                     }
                 ]
-            }
-        ]
-    },
-    {
-        name: 'convert',
-        description: 'Conversion commands',
-        options: [
-            {
-                name: 'emoji_to_sticker',
-                description: 'Convert emoji to sticker',
-                type: 1,
-                options: [
-                    { name: 'emoji', type: 3, description: 'The emoji to convert', required: true },
-                    { name: 'name', type: 3, description: 'Sticker name', required: true }
-                ]
-            },
-            {
-                name: 'sticker_to_emoji',
-                description: 'Convert sticker to emoji',
-                type: 1,
-                options: [{ name: 'name', type: 3, description: 'Emoji name', required: true }]
-            },
-            {
-                name: 'emoji_to_image',
-                description: 'Convert an emoji to an image',
-                type: 1,
-                options: [{ name: 'emoji', type: 3, description: 'The emoji to convert', required: true }]
-            },
-            {
-                name: 'sticker_to_image',
-                description: 'Convert a sticker to an image',
-                type: 1,
-                options: [{ name: 'sticker', type: 3, description: 'The sticker to convert (ID or name)', required: true }]
             }
         ]
     },
@@ -206,7 +200,7 @@ const COMMAND_DEFINITIONS = [
         ]
     },
     {
-        name: 'delete_all',
+        name: 'bulkdelete',
         description: 'Bulk deletion commands',
         options: [
             { name: 'stickers', description: 'Delete all stickers', type: 1 },
@@ -224,10 +218,10 @@ const COMMAND_DEFINITIONS = [
 ];
 
 const OWNER_ONLY_COMMANDS = ['language', 'permission'];
-const ADMIN_ONLY_COMMANDS = ['delete_all'];
+const ADMIN_ONLY_COMMANDS = ['bulkdelete'];
 const PUBLIC_COMMANDS = ['status', 'help'];
 const EMOJI_PERMISSION_COMMANDS = [
-    'emoji', 'sticker', 'image', 'convert', 'enhance', 'delete_all', 'status'
+    'emoji', 'sticker', 'image', 'enhance', 'bulkdelete', 'status'
 ];
 
 module.exports = {
