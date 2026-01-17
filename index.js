@@ -217,9 +217,13 @@ client.on('interactionCreate', async interaction => {
                     .setColor('#FF0000');
                 
                 if (interaction.deferred || interaction.replied) {
-                    return await interaction.editReply({ embeds: [cooldownEmbed] });
+                    try {
+                        return await interaction.editReply({ embeds: [cooldownEmbed] });
+                    } catch (e) {}
                 } else {
-                    return await interaction.reply({ embeds: [cooldownEmbed], flags: MessageFlags.Ephemeral });
+                    try {
+                        return await interaction.reply({ embeds: [cooldownEmbed], flags: MessageFlags.Ephemeral });
+                    } catch (e) {}
                 }
             }
         }

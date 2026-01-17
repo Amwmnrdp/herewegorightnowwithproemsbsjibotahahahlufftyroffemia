@@ -27,17 +27,17 @@ async function execute(interaction, langCode) {
 
     const embed = await createEmbed(page);
     const row = new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId('prev').setLabel('◀️').setStyle(ButtonStyle.Primary).setDisabled(true),
-        new ButtonBuilder().setCustomId('next').setLabel('▶️').setStyle(ButtonStyle.Primary).setDisabled(stickers.length <= 1)
+        new ButtonBuilder().setCustomId('prev_sticker').setLabel('◀️').setStyle(ButtonStyle.Primary).setDisabled(true),
+        new ButtonBuilder().setCustomId('next_sticker').setLabel('▶️').setStyle(ButtonStyle.Primary).setDisabled(stickers.length <= 1)
     );
 
     await interaction.editReply({ embeds: [embed], components: [row] });
 
-    const filter = i => (i.customId === 'next' || i.customId === 'prev') && i.user.id === interaction.user.id;
+    const filter = i => (i.customId === 'next_sticker' || i.customId === 'prev_sticker') && i.user.id === interaction.user.id;
     const collector = interaction.channel.createMessageComponentCollector({ filter, time: 300000 });
 
     collector.on('collect', async i => {
-        if (i.customId === 'next') { 
+        if (i.customId === 'next_sticker') { 
             page++; 
             if (page >= stickers.length) page = 0; 
         } else { 
@@ -46,8 +46,8 @@ async function execute(interaction, langCode) {
         }
 
         const updatedEmbed = await createEmbed(page);
-        const prevButton = new ButtonBuilder().setCustomId('prev').setLabel('◀️').setStyle(ButtonStyle.Primary).setDisabled(page === 0 && stickers.length > 1 ? false : page === 0 && stickers.length === 1);
-        const nextButton = new ButtonBuilder().setCustomId('next').setLabel('▶️').setStyle(ButtonStyle.Primary).setDisabled(page === stickers.length - 1 && stickers.length > 1 ? false : page === stickers.length - 1 && stickers.length === 1);
+        const prevButton = new ButtonBuilder().setCustomId('prev_sticker').setLabel('◀️').setStyle(ButtonStyle.Primary).setDisabled(page === 0 && stickers.length > 1 ? false : page === 0 && stickers.length === 1);
+        const nextButton = new ButtonBuilder().setCustomId('next_sticker').setLabel('▶️').setStyle(ButtonStyle.Primary).setDisabled(page === stickers.length - 1 && stickers.length > 1 ? false : page === stickers.length - 1 && stickers.length === 1);
         const newRow = new ActionRowBuilder().addComponents(prevButton, nextButton);
 
         await i.update({ embeds: [updatedEmbed], components: [newRow] });
