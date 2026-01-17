@@ -1,13 +1,7 @@
-const { EmbedBuilder, PermissionsBitField } = require('discord.js');
+const { EmbedBuilder } = require('discord.js');
 const { t } = require('../../utils/languages');
 
 async function execute(interaction, langCode) {
-    if (!interaction.member.permissions.has(PermissionsBitField.Flags.ManageEmojisAndStickers)) {
-        const embed = new EmbedBuilder().setDescription('❌ ' + await t('Need permission!', langCode)).setColor('#FF0000');
-        await interaction.editReply({ embeds: [embed], flags: 64 });
-        return;
-    }
-
     const name = interaction.options.getString('name');
 
     const serverStickers = await interaction.guild.stickers.fetch();

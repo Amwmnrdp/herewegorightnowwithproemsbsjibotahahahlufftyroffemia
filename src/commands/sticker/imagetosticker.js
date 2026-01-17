@@ -1,15 +1,10 @@
-const { EmbedBuilder, PermissionsBitField } = require('discord.js');
+const { EmbedBuilder } = require('discord.js');
 const { t } = require('../../utils/languages');
 const axios = require('axios');
 const sharp = require('sharp');
+const db = require('../../utils/database');
 
 async function execute(interaction, langCode, convertedImagesToStickers) {
-    if (!interaction.member.permissions.has(PermissionsBitField.Flags.ManageEmojisAndStickers)) {
-        const embed = new EmbedBuilder().setDescription('❌ ' + await t('Need permission!', langCode)).setColor('#FF0000');
-        await interaction.editReply({ embeds: [embed] });
-        return;
-    }
-
     const nameOption = interaction.options.getString('name');
     const urlOption = interaction.options.getString('url');
     const attachment = interaction.options.getAttachment('attachment');
@@ -32,7 +27,6 @@ async function execute(interaction, langCode, convertedImagesToStickers) {
         return;
     }
 
-    const db = require('../../utils/database');
     const finalUrl = attachment ? attachment.url : urlOption;
     if (!finalUrl) {
         const embed = new EmbedBuilder()

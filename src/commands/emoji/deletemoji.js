@@ -1,13 +1,7 @@
-const { EmbedBuilder, PermissionsBitField } = require('discord.js');
+const { EmbedBuilder } = require('discord.js');
 const { t } = require('../../utils/languages');
 
 async function execute(interaction, langCode, convertedStickersToEmojis) {
-    if (!interaction.member.permissions.has(PermissionsBitField.Flags.ManageEmojisAndStickers)) {
-        const embed = new EmbedBuilder().setDescription('❌ ' + await t('Need permission!', langCode)).setColor('#FF0000');
-        await interaction.editReply({ embeds: [embed] });
-        return;
-    }
-
     const emojisInput = interaction.options.getString('emojis');
     // Extract all emojis like <a:name:id> or <:name:id>
     const emojiMatches = Array.from(emojisInput.matchAll(/<(a)?:\w+:(\d+)>/g));

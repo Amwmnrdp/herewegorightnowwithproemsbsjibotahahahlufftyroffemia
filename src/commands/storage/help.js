@@ -1,13 +1,7 @@
-const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, MessageFlags } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder } = require('discord.js');
 const { t } = require('../../utils/languages');
 
 async function execute(interaction, langCode) {
-    // Embed أولي قصير فقط مع قائمة منسدلة
-    const embed = new EmbedBuilder()
-        .setTitle('📖 ' + await t('ProEmoji Help', langCode))
-        .setDescription(await t('Select a category from the menu below to see the available commands.', langCode))
-        .setColor('#0099ff');
-
     // Select Menu
     const selectMenu = new StringSelectMenuBuilder()
         .setCustomId('help_category')
@@ -52,12 +46,11 @@ async function execute(interaction, langCode) {
             .setColor('#10b981');
         await interaction.editReply({ embeds: [replyEmbed] });
     } catch (error) {
-        console.error('Error sending help DM:', error);
         const errorEmbed = new EmbedBuilder()
             .setTitle('❌ ' + await t('Could not send DM', langCode))
             .setDescription(await t('Please enable DMs from server members and try again.', langCode))
             .setColor('#FF6B6B');
-        await interaction.editReply({ embeds: [errorEmbed], flags: 64 });
+        await interaction.editReply({ embeds: [errorEmbed] });
     }
 }
 
