@@ -111,6 +111,7 @@ tabBtns.forEach(btn => {
 async function fetchStats() {
     try {
         const response = await fetch('/api/stats');
+        if (!response.ok) throw new Error('Network response was not ok');
         const data = await response.json();
         document.getElementById('serverCount').textContent = data.servers || 0;
         document.getElementById('verifiedCount').textContent = data.verifiedUsers || 0;
