@@ -241,7 +241,7 @@ client.on('interactionCreate', async interaction => {
 
         let content = '';
         let title = '';
-        const separator = '\n⌄ـــــــــــــــــــــــــــproemoji.botـــــــــــــــــــــــــــــ⌄\n';
+        const separator = '\n⌄ـــــــــــــــــــــــــــProEmojiـــــــــــــــــــــــــــــ⌄\n';
 
         if (interaction.values[0] === 'sticker_help') {
             title = await t('Sticker Commands', langCode);
