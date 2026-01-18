@@ -38,6 +38,8 @@ async function execute(interaction, langCode) {
 
     collector.on('collect', async i => {
         try {
+            if (!i.deferred && !i.replied) await i.deferUpdate().catch(() => {});
+            
             if (i.customId === 'next_emoji') { page++; if (page >= pages.length) page = 0; }
             else { page--; if (page < 0) page = pages.length - 1; }
 
@@ -54,17 +56,22 @@ async function execute(interaction, langCode) {
             const nextButton = new ButtonBuilder().setCustomId('next_emoji').setLabel('▶️').setStyle(ButtonStyle.Primary).setDisabled(page === pages.length - 1);
             const newRow = new ActionRowBuilder().addComponents(prevButton, nextButton);
 
-            await i.update({ embeds: [e], components: [newRow] });
-        } catch (e) {}
+            await i.editReply({ embeds: [e], components: [newRow] }).catch(() => {});
+        } catch (e) {
+            console.error('Error in listemoji collector:', e);
+        }
     });
 
     collector.on('end', async () => {
         try {
-            const disabledRow = new ActionRowBuilder().addComponents(
-                new ButtonBuilder().setCustomId('prev_emoji').setLabel('◀️').setStyle(ButtonStyle.Primary).setDisabled(true),
-                new ButtonBuilder().setCustomId('next_emoji').setLabel('▶️').setStyle(ButtonStyle.Primary).setDisabled(true)
-            );
-            await interaction.editReply({ components: [disabledRow] });
+            const currentMsg = await interaction.channel.messages.fetch(interaction.message.id).catch(() => null);
+            if (currentMsg) {
+                const disabledRow = new ActionRowBuilder().addComponents(
+                    new ButtonBuilder().setCustomId('prev_emoji').setLabel('◀️').setStyle(ButtonStyle.Primary).setDisabled(true),
+                    new ButtonBuilder().setCustomId('next_emoji').setLabel('▶️').setStyle(ButtonStyle.Primary).setDisabled(true)
+                );
+                await interaction.editReply({ components: [disabledRow] }).catch(() => {});
+            }
         } catch (e) {}
     });
 }

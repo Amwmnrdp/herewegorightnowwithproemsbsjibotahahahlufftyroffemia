@@ -42,7 +42,7 @@ async function execute(interaction, langCode, client) {
 
     const collector = response.createMessageComponentCollector({ 
         filter: i => i.user.id === interaction.user.id, 
-        time: 120000 
+        time: 180000 
     });
 
     let currentCategory = null;
@@ -93,34 +93,53 @@ async function execute(interaction, langCode, client) {
     };
 
     collector.on('collect', async i => {
-        if (i.isStringSelectMenu()) {
-            currentCategory = i.values[0];
-            const display = await generateDisplay(currentCategory);
-            await i.update(display);
-        } else if (i.isButton()) {
-            if (i.customId === 'pack_reset') {
+        try {
+            if (!i.deferred && !i.replied) await i.deferUpdate().catch(() => {});
+            
+            if (i.isStringSelectMenu()) {
+                currentCategory = i.values[0];
                 const display = await generateDisplay(currentCategory);
-                await i.update(display);
-            } else if (i.customId === 'pack_add') {
-                await i.deferUpdate();
-                let added = 0;
-                for (const e of currentEmojis) {
-                    try {
-                        const allEmoji = Array.from(client.guilds.cache.values()).flatMap(g => Array.from(g.emojis.cache.values()));
-                        const emojiObj = allEmoji.find(em => em.id === e.id);
-                        if (emojiObj && !interaction.guild.emojis.cache.find(em => em.name === emojiObj.name)) {
-                            await interaction.guild.emojis.create({ attachment: emojiObj.url, name: emojiObj.name });
-                            added++;
-                        }
-                    } catch (err) { console.error('Error adding emoji:', err); }
+                await i.editReply(display).catch(() => {});
+            } else if (i.isButton()) {
+                if (i.customId === 'pack_reset') {
+                    const display = await generateDisplay(currentCategory);
+                    await i.editReply(display).catch(() => {});
+                } else if (i.customId === 'pack_add') {
+                    let added = 0;
+                    for (const e of currentEmojis) {
+                        try {
+                            const allEmoji = Array.from(client.guilds.cache.values()).flatMap(g => Array.from(g.emojis.cache.values()));
+                            const emojiObj = allEmoji.find(em => em.id === e.id);
+                            if (emojiObj && !interaction.guild.emojis.cache.find(em => em.name === emojiObj.name)) {
+                                await interaction.guild.emojis.create({ attachment: emojiObj.url, name: emojiObj.name });
+                                added++;
+                            }
+                        } catch (err) { console.error('Error adding emoji:', err); }
+                    }
+                    const successText = await t('Successfully added {count} emojis from the pack!', langCode);
+                    const resultEmbed = new EmbedBuilder()
+                        .setDescription('✅ ' + successText.replace('{count}', added))
+                        .setColor('#00FFFF');
+                    await i.editReply({ embeds: [resultEmbed], components: [new ActionRowBuilder().addComponents(select)] }).catch(() => {});
                 }
-                const successText = await t('Successfully added {count} emojis from the pack!', langCode);
-                const resultEmbed = new EmbedBuilder()
-                    .setDescription('✅ ' + successText.replace('{count}', added))
-                    .setColor('#00FFFF');
-                await i.editReply({ embeds: [resultEmbed], components: [new ActionRowBuilder().addComponents(select)] });
             }
+        } catch (e) {
+            console.error('Error in emojipack collector:', e);
         }
+    });
+
+    collector.on('end', async () => {
+        try {
+            const currentMsg = await interaction.channel.messages.fetch(response.id).catch(() => null);
+            if (currentMsg) {
+                const disabledComponents = currentMsg.components.map(row => {
+                    const newRow = ActionRowBuilder.from(row);
+                    newRow.components.forEach(c => c.setDisabled(true));
+                    return newRow;
+                });
+                await interaction.editReply({ components: disabledComponents }).catch(() => {});
+            }
+        } catch (e) {}
     });
 }
 

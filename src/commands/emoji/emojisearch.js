@@ -64,37 +64,48 @@ async function execute(interaction, langCode, client) {
     const msg = await interaction.editReply({ embeds: [embed], components: [row] });
 
     const filter = i => i.user.id === interaction.user.id;
-    const collector = msg.createMessageComponentCollector({ filter, time: 60000 });
+    const collector = msg.createMessageComponentCollector({ filter, time: 180000 });
 
     collector.on('collect', async i => {
-        if (i.customId === 'confirm_search_add') {
-            await i.deferUpdate();
-            let added = 0;
-            for (const emoji of foundEmojis) {
-                try {
-                    await interaction.guild.emojis.create({ attachment: emoji.url, name: emoji.name });
-                    added++;
-                } catch (err) {
-                    console.error('Error adding emoji:', err);
+        try {
+            if (!i.deferred && !i.replied) await i.deferUpdate().catch(() => {});
+            
+            if (i.customId === 'confirm_search_add') {
+                let added = 0;
+                for (const emoji of foundEmojis) {
+                    try {
+                        await interaction.guild.emojis.create({ attachment: emoji.url, name: emoji.name });
+                        added++;
+                    } catch (err) {
+                        console.error('Error adding emoji:', err);
+                    }
                 }
+                const successEmbed = new EmbedBuilder()
+                    .setDescription('✅ ' + (await t('Successfully added emojis!', langCode)).replace('{count}', added))
+                    .setColor('#00FFFF');
+                await i.editReply({ embeds: [successEmbed], components: [] }).catch(() => {});
+            } else {
+                const cancelEmbed = new EmbedBuilder()
+                    .setDescription('❌ ' + await t('Cancelled.', langCode))
+                    .setColor('#FF0000');
+                await i.editReply({ embeds: [cancelEmbed], components: [] }).catch(() => {});
             }
-            const successEmbed = new EmbedBuilder()
-                .setDescription('✅ ' + (await t('Successfully added emojis!', langCode)).replace('{count}', added))
-                .setColor('#00FFFF');
-            await i.editReply({ embeds: [successEmbed], components: [] });
-        } else {
-            await i.deferUpdate();
-            const cancelEmbed = new EmbedBuilder()
-                .setDescription('❌ ' + await t('Cancelled.', langCode))
-                .setColor('#FF0000');
-            await i.editReply({ embeds: [cancelEmbed], components: [], flags: 64 });
+            collector.stop();
+        } catch (e) {
+            console.error('Error in emojisearch collector:', e);
         }
-        collector.stop();
     });
 
-    collector.on('end', (_, reason) => {
+    collector.on('end', async (_, reason) => {
         if (reason === 'time') {
-            interaction.editReply({ components: [] }).catch(() => {});
+            try {
+                const currentMsg = await interaction.channel.messages.fetch(msg.id).catch(() => null);
+                if (currentMsg) {
+                    const disabledRow = ActionRowBuilder.from(row);
+                    disabledRow.components.forEach(c => c.setDisabled(true));
+                    await interaction.editReply({ components: [disabledRow] }).catch(() => {});
+                }
+            } catch (e) {}
         }
     });
 }
