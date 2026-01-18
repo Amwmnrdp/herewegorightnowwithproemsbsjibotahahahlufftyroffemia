@@ -34,26 +34,38 @@ async function execute(interaction, langCode) {
 
     const storedLangCode = langCode;
     const filter = i => (i.customId === 'next_emoji' || i.customId === 'prev_emoji') && i.user.id === interaction.user.id;
-    const collector = interaction.channel.createMessageComponentCollector({ filter, time: 300000 });
+    const collector = interaction.channel.createMessageComponentCollector({ filter, time: 180000 });
 
     collector.on('collect', async i => {
-        if (i.customId === 'next_emoji') { page++; if (page >= pages.length) page = 0; }
-        else { page--; if (page < 0) page = pages.length - 1; }
+        try {
+            if (i.customId === 'next_emoji') { page++; if (page >= pages.length) page = 0; }
+            else { page--; if (page < 0) page = pages.length - 1; }
 
-        const pageTextUpdate = await t('Page', storedLangCode);
-        const emojisTitleUpdate = await t('Emojis', storedLangCode);
-        const e = new EmbedBuilder()
-            .setAuthor({ name: interaction.guild.name, iconURL: interaction.guild.iconURL() })
-            .setTitle(`📋 ${emojisTitleUpdate}`)
-            .setColor('#00FFFF')
-            .setDescription(pages[page])
-            .setFooter({ text: `${pageTextUpdate} ${page + 1}/${pages.length} • ${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
+            const pageTextUpdate = await t('Page', storedLangCode);
+            const emojisTitleUpdate = await t('Emojis', storedLangCode);
+            const e = new EmbedBuilder()
+                .setAuthor({ name: interaction.guild.name, iconURL: interaction.guild.iconURL() })
+                .setTitle(`📋 ${emojisTitleUpdate}`)
+                .setColor('#00FFFF')
+                .setDescription(pages[page])
+                .setFooter({ text: `${pageTextUpdate} ${page + 1}/${pages.length} • ${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
 
-        const prevButton = new ButtonBuilder().setCustomId('prev_emoji').setLabel('◀️').setStyle(ButtonStyle.Primary).setDisabled(page === 0);
-        const nextButton = new ButtonBuilder().setCustomId('next_emoji').setLabel('▶️').setStyle(ButtonStyle.Primary).setDisabled(page === pages.length - 1);
-        const newRow = new ActionRowBuilder().addComponents(prevButton, nextButton);
+            const prevButton = new ButtonBuilder().setCustomId('prev_emoji').setLabel('◀️').setStyle(ButtonStyle.Primary).setDisabled(page === 0);
+            const nextButton = new ButtonBuilder().setCustomId('next_emoji').setLabel('▶️').setStyle(ButtonStyle.Primary).setDisabled(page === pages.length - 1);
+            const newRow = new ActionRowBuilder().addComponents(prevButton, nextButton);
 
-        await i.update({ embeds: [e], components: [newRow] });
+            await i.update({ embeds: [e], components: [newRow] });
+        } catch (e) {}
+    });
+
+    collector.on('end', async () => {
+        try {
+            const disabledRow = new ActionRowBuilder().addComponents(
+                new ButtonBuilder().setCustomId('prev_emoji').setLabel('◀️').setStyle(ButtonStyle.Primary).setDisabled(true),
+                new ButtonBuilder().setCustomId('next_emoji').setLabel('▶️').setStyle(ButtonStyle.Primary).setDisabled(true)
+            );
+            await interaction.editReply({ components: [disabledRow] });
+        } catch (e) {}
     });
 }
 

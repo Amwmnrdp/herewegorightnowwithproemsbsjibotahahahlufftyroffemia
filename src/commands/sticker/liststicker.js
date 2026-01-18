@@ -34,23 +34,35 @@ async function execute(interaction, langCode) {
     await interaction.editReply({ embeds: [embed], components: [row] });
 
     const filter = i => (i.customId === 'next_sticker' || i.customId === 'prev_sticker') && i.user.id === interaction.user.id;
-    const collector = interaction.channel.createMessageComponentCollector({ filter, time: 300000 });
+    const collector = interaction.channel.createMessageComponentCollector({ filter, time: 180000 });
 
     collector.on('collect', async i => {
-        if (i.customId === 'next_sticker') { 
-            page++; 
-            if (page >= stickers.length) page = 0; 
-        } else { 
-            page--; 
-            if (page < 0) page = stickers.length - 1; 
-        }
+        try {
+            if (i.customId === 'next_sticker') { 
+                page++; 
+                if (page >= stickers.length) page = 0; 
+            } else { 
+                page--; 
+                if (page < 0) page = stickers.length - 1; 
+            }
 
-        const updatedEmbed = await createEmbed(page);
-        const prevButton = new ButtonBuilder().setCustomId('prev_sticker').setLabel('◀️').setStyle(ButtonStyle.Primary).setDisabled(page === 0 && stickers.length > 1 ? false : page === 0 && stickers.length === 1);
-        const nextButton = new ButtonBuilder().setCustomId('next_sticker').setLabel('▶️').setStyle(ButtonStyle.Primary).setDisabled(page === stickers.length - 1 && stickers.length > 1 ? false : page === stickers.length - 1 && stickers.length === 1);
-        const newRow = new ActionRowBuilder().addComponents(prevButton, nextButton);
+            const updatedEmbed = await createEmbed(page);
+            const prevButton = new ButtonBuilder().setCustomId('prev_sticker').setLabel('◀️').setStyle(ButtonStyle.Primary).setDisabled(page === 0 && stickers.length > 1 ? false : page === 0 && stickers.length === 1);
+            const nextButton = new ButtonBuilder().setCustomId('next_sticker').setLabel('▶️').setStyle(ButtonStyle.Primary).setDisabled(page === stickers.length - 1 && stickers.length > 1 ? false : page === stickers.length - 1 && stickers.length === 1);
+            const newRow = new ActionRowBuilder().addComponents(prevButton, nextButton);
 
-        await i.update({ embeds: [updatedEmbed], components: [newRow] });
+            await i.update({ embeds: [updatedEmbed], components: [newRow] });
+        } catch (e) {}
+    });
+
+    collector.on('end', async () => {
+        try {
+            const disabledRow = new ActionRowBuilder().addComponents(
+                new ButtonBuilder().setCustomId('prev_sticker').setLabel('◀️').setStyle(ButtonStyle.Primary).setDisabled(true),
+                new ButtonBuilder().setCustomId('next_sticker').setLabel('▶️').setStyle(ButtonStyle.Primary).setDisabled(true)
+            );
+            await interaction.editReply({ components: [disabledRow] });
+        } catch (e) {}
     });
 }
 
