@@ -38,6 +38,8 @@ async function execute(interaction, langCode) {
 
     collector.on('collect', async i => {
         try {
+            if (!i.deferred && !i.replied) await i.deferUpdate().catch(() => {});
+            
             if (i.customId === 'next_sticker') { 
                 page++; 
                 if (page >= stickers.length) page = 0; 
@@ -47,21 +49,26 @@ async function execute(interaction, langCode) {
             }
 
             const updatedEmbed = await createEmbed(page);
-            const prevButton = new ButtonBuilder().setCustomId('prev_sticker').setLabel('◀️').setStyle(ButtonStyle.Primary).setDisabled(page === 0 && stickers.length > 1 ? false : page === 0 && stickers.length === 1);
-            const nextButton = new ButtonBuilder().setCustomId('next_sticker').setLabel('▶️').setStyle(ButtonStyle.Primary).setDisabled(page === stickers.length - 1 && stickers.length > 1 ? false : page === stickers.length - 1 && stickers.length === 1);
+            const prevButton = new ButtonBuilder().setCustomId('prev_sticker').setLabel('◀️').setStyle(ButtonStyle.Primary).setDisabled(page === 0);
+            const nextButton = new ButtonBuilder().setCustomId('next_sticker').setLabel('▶️').setStyle(ButtonStyle.Primary).setDisabled(page === stickers.length - 1);
             const newRow = new ActionRowBuilder().addComponents(prevButton, nextButton);
 
-            await i.update({ embeds: [updatedEmbed], components: [newRow] });
-        } catch (e) {}
+            await i.editReply({ embeds: [updatedEmbed], components: [newRow] }).catch(() => {});
+        } catch (e) {
+            console.error('Error in liststicker collector:', e);
+        }
     });
 
     collector.on('end', async () => {
         try {
-            const disabledRow = new ActionRowBuilder().addComponents(
-                new ButtonBuilder().setCustomId('prev_sticker').setLabel('◀️').setStyle(ButtonStyle.Primary).setDisabled(true),
-                new ButtonBuilder().setCustomId('next_sticker').setLabel('▶️').setStyle(ButtonStyle.Primary).setDisabled(true)
-            );
-            await interaction.editReply({ components: [disabledRow] });
+            const currentMsg = await interaction.channel.messages.fetch(interaction.message.id).catch(() => null);
+            if (currentMsg) {
+                const disabledRow = new ActionRowBuilder().addComponents(
+                    new ButtonBuilder().setCustomId('prev_sticker').setLabel('◀️').setStyle(ButtonStyle.Primary).setDisabled(true),
+                    new ButtonBuilder().setCustomId('next_sticker').setLabel('▶️').setStyle(ButtonStyle.Primary).setDisabled(true)
+                );
+                await interaction.editReply({ components: [disabledRow] }).catch(() => {});
+            }
         } catch (e) {}
     });
 }

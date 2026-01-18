@@ -27,47 +27,59 @@ async function execute(interaction, langCode) {
     const response = await interaction.editReply({ embeds: [embed], components: [row] });
 
     const filter = i => i.user.id === interaction.user.id;
-    const collector = response.createMessageComponentCollector({ filter, time: 30000 });
+    const collector = response.createMessageComponentCollector({ filter, time: 180000 });
 
     collector.on('collect', async i => {
-        if (i.customId === 'confirm_delete_all_stickers') {
-            await i.deferUpdate();
-            try {
-                const stickers = await interaction.guild.stickers.fetch();
-                if (stickers.size === 0) {
-                    const noStickersText = await t('No stickers found to delete.', langCode);
-                    const e = new EmbedBuilder().setDescription('ℹ️ ' + noStickersText).setColor('#0000FF');
-                    return await i.editReply({ embeds: [e], components: [] });
-                }
+        try {
+            if (!i.deferred && !i.replied) await i.deferUpdate().catch(() => {});
+            
+            if (i.customId === 'confirm_delete_all_stickers') {
+                try {
+                    const stickers = await interaction.guild.stickers.fetch();
+                    if (stickers.size === 0) {
+                        const noStickersText = await t('No stickers found to delete.', langCode);
+                        const e = new EmbedBuilder().setDescription('ℹ️ ' + noStickersText).setColor('#0000FF');
+                        return await i.editReply({ embeds: [e], components: [] }).catch(() => {});
+                    }
 
-                let count = 0;
-                for (const sticker of stickers.values()) {
-                    await sticker.delete();
-                    count++;
-                }
+                    let count = 0;
+                    for (const sticker of stickers.values()) {
+                        await sticker.delete();
+                        count++;
+                    }
 
-                const successText = await t('Successfully deleted all stickers!', langCode);
-                const e = new EmbedBuilder()
-                    .setDescription('✅ ' + successText.replace('{count}', count))
-                    .setColor('#ADD8E6');
-                await i.editReply({ embeds: [e], components: [] });
-            } catch (error) {
-                const errorPrefix = await t('Error:', langCode);
-                const e = new EmbedBuilder()
-                    .setDescription('❌ ' + errorPrefix + ' ' + error.message)
-                    .setColor('#FF0000');
-                await i.editReply({ embeds: [e], components: [] });
+                    const successText = await t('Successfully deleted all stickers!', langCode);
+                    const e = new EmbedBuilder()
+                        .setDescription('✅ ' + successText.replace('{count}', count))
+                        .setColor('#ADD8E6');
+                    await i.editReply({ embeds: [e], components: [] }).catch(() => {});
+                } catch (error) {
+                    const errorPrefix = await t('Error:', langCode);
+                    const e = new EmbedBuilder()
+                        .setDescription('❌ ' + errorPrefix + ' ' + error.message)
+                        .setColor('#FF0000');
+                    await i.editReply({ embeds: [e], components: [] }).catch(() => {});
+                }
+            } else {
+                const cancelledText = await t('Action cancelled.', langCode);
+                await i.editReply({ content: '❌ ' + cancelledText, embeds: [], components: [] }).catch(() => {});
             }
-        } else {
-            const cancelledText = await t('Action cancelled.', langCode);
-            await i.update({ content: '❌ ' + cancelledText, embeds: [], components: [] });
+            collector.stop();
+        } catch (e) {
+            console.error('Error in deleteallstickers collector:', e);
         }
-        collector.stop();
     });
 
-    collector.on('end', collected => {
-        if (collected.size === 0) {
-            interaction.editReply({ components: [] }).catch(() => {});
+    collector.on('end', async (collected, reason) => {
+        if (reason === 'time' || collected.size === 0) {
+            try {
+                const currentMsg = await interaction.channel.messages.fetch(response.id).catch(() => null);
+                if (currentMsg) {
+                    const disabledRow = ActionRowBuilder.from(row);
+                    disabledRow.components.forEach(c => c.setDisabled(true));
+                    await interaction.editReply({ components: [disabledRow] }).catch(() => {});
+                }
+            } catch (e) {}
         }
     });
 }

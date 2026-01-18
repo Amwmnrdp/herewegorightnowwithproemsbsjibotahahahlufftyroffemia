@@ -63,37 +63,48 @@ async function execute(interaction, langCode, client) {
     const msg = await interaction.editReply({ embeds: [embed], components: [row] });
 
     const filter = i => i.user.id === interaction.user.id;
-    const collector = msg.createMessageComponentCollector({ filter, time: 60000 });
+    const collector = msg.createMessageComponentCollector({ filter, time: 180000 });
 
     collector.on('collect', async i => {
-        if (i.customId === 'confirm_sticker_search_add') {
-            await i.deferUpdate();
-            try {
-                await interaction.guild.stickers.create({ file: foundSticker.url, name: foundSticker.name, tags: foundSticker.tags || 'emoji' });
-                const successEmbed = new EmbedBuilder()
-                    .setDescription('✅ ' + await t('Successfully added the sticker!', langCode))
-                    .setColor('#00FFFF');
-                await i.editReply({ embeds: [successEmbed], components: [] });
-            } catch (err) {
-                console.error('Error adding sticker:', err);
-                const errorEmbed = new EmbedBuilder()
-                    .setDescription('❌ ' + await t('Error adding sticker:', langCode) + ' ' + err.message)
+        try {
+            if (!i.deferred && !i.replied) await i.deferUpdate().catch(() => {});
+            
+            if (i.customId === 'confirm_sticker_search_add') {
+                try {
+                    await interaction.guild.stickers.create({ file: foundSticker.url, name: foundSticker.name, tags: foundSticker.tags || 'emoji' });
+                    const successEmbed = new EmbedBuilder()
+                        .setDescription('✅ ' + await t('Successfully added the sticker!', langCode))
+                        .setColor('#00FFFF');
+                    await i.editReply({ embeds: [successEmbed], components: [] }).catch(() => {});
+                } catch (err) {
+                    console.error('Error adding sticker:', err);
+                    const errorEmbed = new EmbedBuilder()
+                        .setDescription('❌ ' + await t('Error adding sticker:', langCode) + ' ' + err.message)
+                        .setColor('#FF0000');
+                    await i.editReply({ embeds: [errorEmbed], components: [] }).catch(() => {});
+                }
+            } else {
+                const cancelEmbed = new EmbedBuilder()
+                    .setDescription('❌ ' + await t('Cancelled.', langCode))
                     .setColor('#FF0000');
-                await i.editReply({ embeds: [errorEmbed], components: [] });
+                await i.editReply({ embeds: [cancelEmbed], components: [] }).catch(() => {});
             }
-        } else {
-            await i.deferUpdate();
-            const cancelEmbed = new EmbedBuilder()
-                .setDescription('❌ ' + await t('Cancelled.', langCode))
-                .setColor('#FF0000');
-            await i.editReply({ embeds: [cancelEmbed], components: [] });
+            collector.stop();
+        } catch (e) {
+            console.error('Error in searchsticker collector:', e);
         }
-        collector.stop();
     });
 
-    collector.on('end', (_, reason) => {
+    collector.on('end', async (_, reason) => {
         if (reason === 'time') {
-            interaction.editReply({ components: [] }).catch(() => {});
+            try {
+                const currentMsg = await interaction.channel.messages.fetch(msg.id).catch(() => null);
+                if (currentMsg) {
+                    const disabledRow = ActionRowBuilder.from(row);
+                    disabledRow.components.forEach(c => c.setDisabled(true));
+                    await interaction.editReply({ components: [disabledRow] }).catch(() => {});
+                }
+            } catch (e) {}
         }
     });
 }

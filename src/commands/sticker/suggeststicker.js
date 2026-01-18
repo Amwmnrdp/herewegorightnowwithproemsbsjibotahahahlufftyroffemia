@@ -79,19 +79,20 @@ async function execute(interaction, langCode, client) {
 
     const collector = msg.createMessageComponentCollector({
         filter: i => i.user.id === interaction.user.id,
-        time: 120000
+        time: 180000
     });
 
     collector.on('collect', async i => {
         try {
+            if (!i.deferred && !i.replied) await i.deferUpdate().catch(() => {});
+            
             if (i.customId === 'prev_sticker') {
                 currentPage--;
-                await i.update({ embeds: [await createEmbed(currentPage)], components: [await createRow(currentPage)] });
+                await i.editReply({ embeds: [await createEmbed(currentPage)], components: [await createRow(currentPage)] }).catch(() => {});
             } else if (i.customId === 'next_sticker') {
                 currentPage++;
-                await i.update({ embeds: [await createEmbed(currentPage)], components: [await createRow(currentPage)] });
+                await i.editReply({ embeds: [await createEmbed(currentPage)], components: [await createRow(currentPage)] }).catch(() => {});
             } else if (i.customId === 'add_suggested_sticker') {
-                await i.deferUpdate();
                 const stickerToAdd = suggested[currentPage];
                 try {
                     await interaction.guild.stickers.create({
@@ -101,14 +102,14 @@ async function execute(interaction, langCode, client) {
                     });
                     await i.editReply({
                         components: [await createRow(currentPage, true)]
-                    });
+                    }).catch(() => {});
                     collector.stop();
                 } catch (err) {
                     console.error('Error adding sticker:', err);
                     const errorEmbed = new EmbedBuilder()
                         .setDescription('❌ ' + await t('Error adding sticker:', langCode) + ' ' + err.message)
                         .setColor('#FF0000');
-                    await i.followUp({ embeds: [errorEmbed], ephemeral: true });
+                    await i.followUp({ embeds: [errorEmbed], ephemeral: true }).catch(() => {});
                 }
             }
         } catch (err) {
@@ -116,10 +117,14 @@ async function execute(interaction, langCode, client) {
         }
     });
 
-    collector.on('end', (_, reason) => {
-        if (reason === 'time') {
-            interaction.editReply({ components: [] }).catch(() => {});
-        }
+    collector.on('end', async (_, reason) => {
+        try {
+            const currentMsg = await interaction.channel.messages.fetch(msg.id).catch(() => null);
+            if (currentMsg) {
+                const disabledRow = await createRow(currentPage, true);
+                await interaction.editReply({ components: [disabledRow] }).catch(() => {});
+            }
+        } catch (e) {}
     });
 }
 
