@@ -217,13 +217,9 @@ client.on('interactionCreate', async interaction => {
                     .setColor('#FF0000');
                 
                 if (interaction.deferred || interaction.replied) {
-                    try {
-                        return await interaction.editReply({ embeds: [cooldownEmbed] });
-                    } catch (e) {}
+                    return await interaction.editReply({ embeds: [cooldownEmbed] });
                 } else {
-                    try {
-                        return await interaction.reply({ embeds: [cooldownEmbed], flags: MessageFlags.Ephemeral });
-                    } catch (e) {}
+                    return await interaction.reply({ embeds: [cooldownEmbed], flags: MessageFlags.Ephemeral });
                 }
             }
         }
@@ -258,22 +254,10 @@ client.on('interactionCreate', async interaction => {
             content = `${await t('Set permissions for emoji suggestions (Owner only)', langCode)}: **/emoji_permission**${separator}${await t('Set permissions for sticker suggestions (Owner only)', langCode)}: **/sticker_permission**${separator}${await t('Change the bot\'s language setting (Owner only)', langCode)}: **/language**${separator}${await t('View bot status, latency, and vote status', langCode)}: **/status**${separator}[${await t('Vote ProEmoji', langCode)}](https://top.gg/bot/1009426679061553162/vote)`;
         }
 
-        try {
-            await interaction.update({ 
-                embeds: [new EmbedBuilder().setTitle('📖 ' + title).setDescription(content).setColor('#0099ff')], 
-                components: [row] 
-            });
-            const collector = interaction.message.createMessageComponentCollector({ time: 180000 });
-            collector.on('end', async () => {
-                try {
-                    const msg = await interaction.channel.messages.fetch(interaction.message.id);
-                    const disabledRow = ActionRowBuilder.from(row);
-                    disabledRow.components.forEach(c => c.setDisabled(true));
-                    await msg.edit({ components: [disabledRow] });
-                } catch (e) {}
-            });
-        } catch (e) {}
-        return;
+        return await interaction.update({ 
+            embeds: [new EmbedBuilder().setTitle('📖 ' + title).setDescription(content).setColor('#0099ff')], 
+            components: [row] 
+        });
     }
 
     if (interaction.isStringSelectMenu() && interaction.customId === 'language_select') {
@@ -286,9 +270,7 @@ client.on('interactionCreate', async interaction => {
             .setTitle(successTitle)
             .setDescription(`${langInfo.flag} ${langInfo.native} (${langInfo.name})`)
             .setColor('#00FFFF');
-        try {
-            await interaction.update({ embeds: [embed], components: [] });
-        } catch (e) {}
+        await interaction.update({ embeds: [embed], components: [] });
         return;
     }
     
@@ -323,84 +305,79 @@ client.on('interactionCreate', async interaction => {
         }
         else if (interaction.commandName === 'status') {
             await interaction.deferReply();
-            await status.execute(interaction, langCode).catch(err => console.error(`Error in status: ${err.message}`));
+            await status.execute(interaction, langCode);
         }
         else if (interaction.commandName === 'help') {
             await interaction.deferReply();
-            await help.execute(interaction, langCode).catch(err => console.error(`Error in help: ${err.message}`));
+            await help.execute(interaction, langCode);
         }
         else if (interaction.commandName === 'vote') {
             await interaction.deferReply();
-            await vote.execute(interaction, langCode).catch(err => console.error(`Error in vote: ${err.message}`));
+            await vote.execute(interaction, langCode);
         }
         else if (interaction.commandName === 'delete_all_emojis') {
             await interaction.deferReply();
-            await deleteallemojis.execute(interaction, langCode).catch(err => console.error(`Error in delete_all_emojis: ${err.message}`));
+            await deleteallemojis.execute(interaction, langCode);
         }
         else if (interaction.commandName === 'delete_all_stickers') {
             await interaction.deferReply();
-            await deleteallstickers.execute(interaction, langCode).catch(err => console.error(`Error in delete_all_stickers: ${err.message}`));
+            await deleteallstickers.execute(interaction, langCode);
         }
         else if (interaction.commandName === 'emoji_permission') {
             await interaction.deferReply();
-            await emojiPermission.execute(interaction, langCode).catch(err => console.error(`Error in emoji_permission: ${err.message}`));
+            await emojiPermission.execute(interaction, langCode);
         }
         else if (interaction.commandName === 'sticker_permission') {
             await interaction.deferReply();
-            await stickerPermission.execute(interaction, langCode).catch(err => console.error(`Error in sticker_permission: ${err.message}`));
+            await stickerPermission.execute(interaction, langCode);
         }
         else if (interaction.commandName === 'emoji_search') {
             await interaction.deferReply();
-            await emojisearch.execute(interaction, langCode, client).catch(err => console.error(`Error in emoji_search: ${err.message}`));
+            await emojisearch.execute(interaction, langCode, client);
         }
         else if (interaction.commandName === 'search_sticker') {
             await interaction.deferReply();
-            await searchsticker.execute(interaction, langCode, client).catch(err => console.error(`Error in search_sticker: ${err.message}`));
+            await searchsticker.execute(interaction, langCode, client);
         }
         else if (interaction.commandName === 'emoji_pack') {
             await interaction.deferReply();
-            await emojipack.execute(interaction, langCode, client).catch(err => console.error(`Error in emoji_pack: ${err.message}`));
+            await emojipack.execute(interaction, langCode, client);
         }
         else if (interaction.commandName === 'suggest_emojis') {
             await interaction.deferReply();
-            await suggestemojis.execute(interaction, langCode, client).catch(async err => {
-                console.error(`Error in suggest_emojis: ${err.message}`);
-                try {
-                    await interaction.editReply({ content: '❌ ' + await t('An error occurred while executing this command.', langCode) });
-                } catch (e) {}
-            });
+            await suggestemojis.execute(interaction, langCode, client);
         }
         else if (interaction.commandName === 'add_emoji') {
             await interaction.deferReply();
-            await addemojiCmd.execute(interaction, langCode).catch(err => console.error(`Error in add_emoji: ${err.message}`));
+            await addemojiCmd.execute(interaction, langCode);
         }
         else if (interaction.commandName === 'image_to_emoji') {
             await interaction.deferReply();
-            await imagetoemoji.execute(interaction, langCode, usedUrls).catch(err => console.error(`Error in image_to_emoji: ${err.message}`));
+            await imagetoemoji.execute(interaction, langCode, usedUrls);
         }
         else if (interaction.commandName === 'emoji_to_sticker') {
             await interaction.deferReply();
-            await emojiTosticker.execute(interaction, langCode, convertedEmojisToStickers).catch(err => console.error(`Error in emoji_to_sticker: ${err.message}`));
+            await emojiTosticker.execute(interaction, langCode, convertedEmojisToStickers);
         }
         else if (interaction.commandName === 'list_emojis') {
             await interaction.deferReply();
-            await listemoji.execute(interaction, langCode).catch(err => console.error(`Error in list_emojis: ${err.message}`));
+            await listemoji.execute(interaction, langCode);
         }
         else if (interaction.commandName === 'language') {
             await interaction.deferReply();
-            await language.execute(interaction, langCode).catch(err => console.error(`Error in language: ${err.message}`));
+            await language.execute(interaction, langCode);
         }
         else if (interaction.commandName === 'delete_emoji') {
             await interaction.deferReply();
-            await deletemoji.execute(interaction, langCode, convertedStickersToEmojis).catch(err => console.error(`Error in delete_emoji: ${err.message}`));
+            await deletemoji.execute(interaction, langCode, convertedStickersToEmojis);
         }
         else if (interaction.commandName === 'rename_emoji') {
             await interaction.deferReply();
-            await renameemoji.execute(interaction, langCode).catch(err => console.error(`Error in rename_emoji: ${err.message}`));
+            await renameemoji.execute(interaction, langCode);
         }
         else if (interaction.commandName === 'delete_sticker') {
             await interaction.deferReply();
-            const response = await deletesticker.execute(interaction, langCode).catch(err => console.error(`Error in delete_sticker: ${err.message}`));
+            const response = await deletesticker.execute(interaction, langCode);
             if (response && response.id) {
                 const msg = response;
                 stickerDeletionSessions.set(msg.id, {
@@ -410,12 +387,12 @@ client.on('interactionCreate', async interaction => {
                     messageId: msg.id,
                     channelId: msg.channel.id
                 });
-                setTimeout(() => stickerDeletionSessions.has(msg.id) && stickerDeletionSessions.delete(msg.id), 180000);
+                setTimeout(() => stickerDeletionSessions.has(msg.id) && stickerDeletionSessions.delete(msg.id), 60000);
             }
         }
         else if (interaction.commandName === 'rename_sticker') {
             await interaction.deferReply();
-            const response = await renamesticker.execute(interaction, langCode).catch(err => console.error(`Error in rename_sticker: ${err.message}`));
+            const response = await renamesticker.execute(interaction, langCode);
             if (response && response.id) {
                 const msg = response;
                 const newName = interaction.options.getString('name');
@@ -427,12 +404,12 @@ client.on('interactionCreate', async interaction => {
                     channelId: msg.channel.id,
                     newName: newName
                 });
-                setTimeout(() => stickerRenameSessions.has(msg.id) && stickerRenameSessions.delete(msg.id), 180000);
+                setTimeout(() => stickerRenameSessions.has(msg.id) && stickerRenameSessions.delete(msg.id), 60000);
             }
         }
         else if (interaction.commandName === 'sticker_to_emoji') {
             await interaction.deferReply();
-            const response = await stickertoemi.execute(interaction, langCode).catch(err => console.error(`Error in sticker_to_emoji: ${err.message}`));
+            const response = await stickertoemi.execute(interaction, langCode);
             if (response && response.id) {
                 const msg = response;
                 const emojiName = interaction.options.getString('name');
@@ -444,20 +421,20 @@ client.on('interactionCreate', async interaction => {
                     channelId: msg.channel.id,
                     emojiName: emojiName
                 });
-                setTimeout(() => stickerToEmojiSessions.has(msg.id) && stickerToEmojiSessions.delete(msg.id), 180000);
+                setTimeout(() => stickerToEmojiSessions.has(msg.id) && stickerToEmojiSessions.delete(msg.id), 60000);
             }
         }
         else if (interaction.commandName === 'image_to_sticker') {
             await interaction.deferReply();
-            await imagetosticker.execute(interaction, langCode, convertedImagesToStickers).catch(err => console.error(`Error in image_to_sticker: ${err.message}`));
+            await imagetosticker.execute(interaction, langCode, convertedImagesToStickers);
         }
         else if (interaction.commandName === 'emoji_to_image') {
             await interaction.deferReply();
-            await emojitoimage.execute(interaction, langCode).catch(err => console.error(`Error in emoji_to_image: ${err.message}`));
+            await emojitoimage.execute(interaction, langCode);
         }
         else if (interaction.commandName === 'sticker_to_image') {
             await interaction.deferReply();
-            const response = await stickertoimage.execute(interaction, langCode).catch(err => console.error(`Error in sticker_to_image: ${err.message}`));
+            const response = await stickertoimage.execute(interaction, langCode);
             if (response && response.id) {
                 const msg = response;
                 convertedStickersToEmojis.set(msg.id, {
@@ -468,16 +445,16 @@ client.on('interactionCreate', async interaction => {
                     channelId: msg.channel.id,
                     type: 'image'
                 });
-                setTimeout(() => convertedStickersToEmojis.has(msg.id) && convertedStickersToEmojis.delete(msg.id), 180000);
+                setTimeout(() => convertedStickersToEmojis.has(msg.id) && convertedStickersToEmojis.delete(msg.id), 60000);
             }
         }
         else if (interaction.commandName === 'enhance_emoji') {
             await interaction.deferReply();
-            await enhanceemoji.execute(interaction, langCode).catch(err => console.error(`Error in enhance_emoji: ${err.message}`));
+            await enhanceemoji.execute(interaction, langCode);
         }
         else if (interaction.commandName === 'enhance_sticker') {
             await interaction.deferReply();
-            const response = await enhancesticker.execute(interaction, langCode).catch(err => console.error(`Error in enhance_sticker: ${err.message}`));
+            const response = await enhancesticker.execute(interaction, langCode);
             if (response && response.id) {
                 const msg = response;
                 stickerEnhanceSessions.set(msg.id, {
@@ -487,16 +464,16 @@ client.on('interactionCreate', async interaction => {
                     messageId: msg.id,
                     channelId: msg.channel.id
                 });
-                setTimeout(() => stickerEnhanceSessions.has(msg.id) && stickerEnhanceSessions.delete(msg.id), 180000);
+                setTimeout(() => stickerEnhanceSessions.has(msg.id) && stickerEnhanceSessions.delete(msg.id), 60000);
             }
         }
         else if (interaction.commandName === 'list_stickers') {
             await interaction.deferReply();
-            await liststicker.execute(interaction, langCode).catch(err => console.error(`Error in list_stickers: ${err.message}`));
+            await liststicker.execute(interaction, langCode);
         }
         else if (interaction.commandName === 'add_sticker') {
             await interaction.deferReply();
-            const response = await addsticker.execute(interaction, langCode).catch(err => console.error(`Error in add_sticker: ${err.message}`));
+            const response = await addsticker.execute(interaction, langCode);
             if (response && response.id) {
                 const msg = response;
                 const stickerName = interaction.options.getString('name');
@@ -508,12 +485,12 @@ client.on('interactionCreate', async interaction => {
                     channelId: msg.channel.id,
                     stickerName: stickerName
                 });
-                setTimeout(() => stickerAddSessions.has(msg.id) && stickerAddSessions.delete(msg.id), 180000);
+                setTimeout(() => stickerAddSessions.has(msg.id) && stickerAddSessions.delete(msg.id), 60000);
             }
         }
         else if (interaction.commandName === 'suggest_sticker') {
             await interaction.deferReply();
-            await suggeststicker.execute(interaction, langCode, client).catch(err => console.error(`Error in suggest_sticker: ${err.message}`));
+            await suggeststicker.execute(interaction, langCode, client);
         }
     } catch (error) {
         console.error('⚠️ Interaction error:', error.message);

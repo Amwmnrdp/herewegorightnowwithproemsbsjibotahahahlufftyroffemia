@@ -1,0 +1,142 @@
+const { EmbedBuilder, PermissionsBitField } = require('discord.js');
+const { t } = require('../../utils/languages');
+const axios = require('axios');
+const sharp = require('sharp');
+
+async function execute(interaction, langCode, convertedImagesToStickers) {
+    if (!interaction.member.permissions.has(PermissionsBitField.Flags.ManageEmojisAndStickers)) {
+        const embed = new EmbedBuilder().setDescription('❌ ' + await t('Need permission!', langCode)).setColor('#FF0000');
+        await interaction.editReply({ embeds: [embed] });
+        return;
+    }
+
+    const nameOption = interaction.options.getString('name');
+    const urlOption = interaction.options.getString('url');
+    const attachment = interaction.options.getAttachment('attachment');
+    const integrationOption = interaction.options.getString('integration') === 'true';
+
+    const cleanedName = nameOption.substring(0, 32);
+    if (cleanedName.length < 2) {
+        const embed = new EmbedBuilder()
+            .setDescription('❌ ' + await t('Sticker name must be between 2 and 32 characters.', langCode))
+            .setColor('#FF0000');
+        await interaction.editReply({ embeds: [embed] });
+        return;
+    }
+
+    if (urlOption && attachment) {
+        const embed = new EmbedBuilder()
+            .setDescription('❌ ' + await t('You cannot provide both a URL and an attachment!', langCode))
+            .setColor('#FF0000');
+        await interaction.editReply({ embeds: [embed] });
+        return;
+    }
+
+    const db = require('../../utils/database');
+    const finalUrl = attachment ? attachment.url : urlOption;
+    if (!finalUrl) {
+        const embed = new EmbedBuilder()
+            .setDescription('❌ ' + await t('You must provide either a URL or an attachment!', langCode))
+            .setColor('#FF0000');
+        await interaction.editReply({ embeds: [embed] });
+        return;
+    }
+
+    const imageTrackingKey = `${interaction.guild.id}:${finalUrl}`;
+    if (convertedImagesToStickers.has(imageTrackingKey)) {
+        const embed = new EmbedBuilder()
+            .setTitle('⚠️ ' + await t('Image Already Converted!', langCode))
+            .setDescription(await t('This image has already been converted to a sticker!', langCode))
+            .setColor('#FF9900');
+        await interaction.editReply({ embeds: [embed] });
+        return;
+    }
+
+    try {
+        const stickers = await interaction.guild.stickers.fetch();
+        if (stickers.size >= 5) {
+            const embed = new EmbedBuilder()
+                .setDescription('❌ ' + await t('Maximum number of stickers reached (5)', langCode))
+                .setColor('#FF0000');
+            await interaction.editReply({ embeds: [embed] });
+            return;
+        }
+
+        if (stickers.find(s => s.name.toLowerCase() === cleanedName.toLowerCase())) {
+            const duplicateText = await t('A sticker with the name "{name}" already exists!', langCode);
+            const embed = new EmbedBuilder().setDescription('❌ ' + duplicateText.replace('{name}', cleanedName)).setColor('#FF0000');
+            await interaction.editReply({ embeds: [embed] });
+            return;
+        }
+
+        const response = await axios.get(finalUrl, { responseType: 'arraybuffer' });
+        const inputBuffer = Buffer.from(response.data);
+
+        let sharpInstance = sharp(inputBuffer);
+
+        if (integrationOption) {
+            // Integration mode: Force square 512x512 with FILL to cover the entire canvas
+            sharpInstance = sharpInstance.resize(512, 512, {
+                fit: 'cover',
+                position: 'center'
+            });
+        } else {
+            // Original form mode: Preserve aspect ratio within 512x512
+            const metadata = await sharpInstance.metadata();
+            const ratio = metadata.width / metadata.height;
+            
+            if (ratio > 1) {
+                sharpInstance = sharpInstance.resize(512, Math.round(512 / ratio));
+            } else {
+                sharpInstance = sharpInstance.resize(Math.round(512 * ratio), 512);
+            }
+        }
+
+        let processedBuffer = await sharpInstance
+            .png({ quality: 80, compressionLevel: 9 })
+            .toBuffer();
+
+        // Safety check for size
+        if (processedBuffer.length > 512000) {
+            processedBuffer = await sharp(processedBuffer)
+                .png({ palette: true, colors: 128 })
+                .toBuffer();
+        }
+
+        const sticker = await interaction.guild.stickers.create({
+            file: processedBuffer,
+            name: cleanedName,
+            description: await t('Converted by ProEmoji', langCode),
+            tags: 'emoji',
+            reason: `By ${interaction.user.tag}`
+        });
+
+        await db.addStickerRecord(interaction.guild.id, sticker.id, sticker.name, interaction.user.tag);
+        const stickerCreatedTitle = await t('Sticker Created!', langCode);
+        const stickerCreatedDesc = await t('Successfully converted image to sticker!', langCode);
+        const nameText = await t('Name:', langCode);
+        const modeText = await t('Mode:', langCode);
+        const integrationText = await t('Integration (Full 512x512)', langCode);
+        const originalText = await t('Original Form', langCode);
+
+        const embed = new EmbedBuilder()
+            .setTitle('✅ ' + stickerCreatedTitle)
+            .setDescription(stickerCreatedDesc + `\n**${nameText}** ${cleanedName}\n**${modeText}** ${integrationOption ? integrationText : originalText}`)
+            .setImage(finalUrl)
+            .setColor('#00FF00');
+
+        await interaction.editReply({ embeds: [embed] });
+        convertedImagesToStickers.set(imageTrackingKey, {
+            stickerId: sticker.id,
+            stickerName: cleanedName,
+            imageUrl: finalUrl
+        });
+    } catch (error) {
+        let errorMsg = error.message;
+        if (error.code === 50045) errorMsg = 'Asset exceeds maximum size (512KB).';
+        const embed = new EmbedBuilder().setDescription(`❌ ${errorMsg}`).setColor('#FF0000');
+        await interaction.editReply({ embeds: [embed] });
+    }
+}
+
+module.exports = { execute };

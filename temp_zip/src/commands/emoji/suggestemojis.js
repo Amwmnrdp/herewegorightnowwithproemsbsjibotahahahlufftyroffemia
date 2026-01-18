@@ -55,11 +55,9 @@ async function execute(interaction, langCode, client) {
 
     const storedLangCode = langCode;
     const filter = (reaction, user) => ['✅', '❌'].includes(reaction.emoji.name) && user.id === interaction.user.id;
-    const collector = msg.createReactionCollector({ filter, max: 1, time: 180000 });
-
-    collector.on('collect', async (reaction, user) => {
-        try {
-            // Check if interaction is still valid before responding
+    msg.awaitReactions({ filter, max: 1, time: 60000, errors: ['time'] })
+        .then(async collected => {
+            const reaction = collected.first();
             if (reaction.emoji.name === '✅') {
                 for (const emoji of emojis) {
                     if (!interaction.guild.emojis.cache.find(e => e.name === emoji.name)) {
@@ -70,28 +68,12 @@ async function execute(interaction, langCode, client) {
                         }
                     }
                 }
-                await interaction.followUp({ content: '✅ ' + await t('Emojis added!', storedLangCode) }).catch(() => {});
+                await interaction.followUp('✅ ' + await t('Emojis added!', storedLangCode));
             } else {
-                await interaction.followUp({ content: '❌ ' + await t('Cancelled.', storedLangCode) }).catch(() => {});
+                await interaction.followUp('❌ ' + await t('Cancelled.', storedLangCode));
             }
-        } catch (e) {
-            console.error('Error in reaction collection:', e.message);
-        }
-    });
-
-    collector.on('end', async (collected, reason) => {
-        if (reason === 'time') {
-            try {
-                await interaction.followUp({ content: '⏳ ' + await t('Timeout.', storedLangCode) }).catch(() => {});
-            } catch (e) {}
-        }
-        try {
-            const currentMsg = await interaction.channel.messages.fetch(msg.id).catch(() => null);
-            if (currentMsg) {
-                await currentMsg.reactions.removeAll().catch(() => {});
-            }
-        } catch (e) {}
-    });
+        })
+        .catch(async () => interaction.followUp('⏳ ' + await t('Timeout.', storedLangCode)));
 }
 
 module.exports = { execute, getSuggestedEmojis: () => suggestedEmojis, setSuggestedEmojis: (v) => { suggestedEmojis = v; } };
