@@ -44,6 +44,9 @@ const language = require('./src/commands/storage/language');
 const emojiPermission = require('./src/commands/storage/emoji_permission');
 const stickerPermission = require('./src/commands/storage/sticker_permission');
 
+const getemojiid = require('./src/commands/emoji/getemojiid');
+const getstickerid = require('./src/commands/sticker/getstickerid');
+
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -318,6 +321,31 @@ client.on('interactionCreate', async interaction => {
                 await interaction.editReply({ content: '✅ Code changes applied dynamically!' }).catch(() => {});
             } catch (err) {
                 await interaction.editReply({ content: `❌ Update failed: ${err.message}` }).catch(() => {});
+            }
+        }
+        else if (interaction.commandName === 'get_emoji_id') {
+            await interaction.deferReply();
+            await getemojiid.execute(interaction, langCode).catch(async err => {
+                console.error(`Error in get_emoji_id: ${err.message}`);
+                try { await interaction.editReply({ content: '❌ ' + await t('An error occurred while executing this command.', langCode) }).catch(() => {}); } catch (e) {}
+            });
+        }
+        else if (interaction.commandName === 'get_sticker_id') {
+            await interaction.deferReply();
+            const response = await getstickerid.execute(interaction, langCode).catch(async err => {
+                console.error(`Error in get_sticker_id: ${err.message}`);
+                try { await interaction.editReply({ content: '❌ ' + await t('An error occurred while executing this command.', langCode) }).catch(() => {}); } catch (e) {}
+            });
+            if (response && response.id) {
+                stickerDeletionSessions.set(response.id, {
+                    guildId: interaction.guild.id,
+                    userId: interaction.user.id,
+                    langCode: langCode,
+                    messageId: response.id,
+                    channelId: response.channel.id,
+                    isIdRetrieval: true
+                });
+                setTimeout(() => stickerDeletionSessions.has(response.id) && stickerDeletionSessions.delete(response.id), 180000);
             }
         }
         else if (interaction.commandName === 'status') {
@@ -630,6 +658,27 @@ client.on('messageCreate', async message => {
 
         const sticker = message.stickers.first();
         const enhanceSession = stickerEnhanceSessions.get(message.reference?.messageId);
+        const deletionSession = stickerDeletionSessions.get(message.reference?.messageId);
+
+        if (deletionSession && message.author.id === deletionSession.userId) {
+            if (!message.stickers.size) {
+                const errorText = await t('Please reply with a sticker, not an emoji or message!', deletionSession.langCode);
+                const embed = new EmbedBuilder().setDescription('❌ ' + errorText).setColor('#FF0000');
+                await message.reply({ embeds: [embed] }).catch(() => {});
+                return;
+            }
+
+            if (deletionSession.isIdRetrieval) {
+                stickerDeletionSessions.delete(message.reference.messageId);
+                const stickerId = message.stickers.first().id;
+                const embed = new EmbedBuilder()
+                    .setTitle('🆔 ' + await t('Sticker ID', deletionSession.langCode))
+                    .setDescription(`**ID:** \`${stickerId}\``)
+                    .setColor('#00FFFF');
+                await message.reply({ embeds: [embed] }).catch(() => {});
+                return;
+            }
+        }
 
         if (enhanceSession && message.author.id === enhanceSession.userId) {
             const sessionLang = enhanceSession.langCode;

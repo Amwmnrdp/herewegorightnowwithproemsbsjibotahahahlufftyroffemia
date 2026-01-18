@@ -3,13 +3,53 @@ const { t } = require('../../utils/languages');
 
 async function execute(interaction, langCode) {
     const name = interaction.options.getString('name');
+    const stickerId = interaction.options.getString('sticker_id');
+
+    const maxStickers = {
+        0: 5,   // Tier 0
+        1: 15,  // Tier 1
+        2: 30,  // Tier 2
+        3: 60   // Tier 3
+    };
+    const guildMax = maxStickers[interaction.guild.premiumTier];
 
     const serverStickers = await interaction.guild.stickers.fetch();
-    if (serverStickers.size >= 5) {
-        const limitText = await t('Maximum number of stickers reached (5)', langCode);
-        const embed = new EmbedBuilder().setDescription('❌ ' + limitText).setColor('#FF0000');
+    if (serverStickers.size >= guildMax) {
+        const limitText = await t('Maximum number of stickers reached ({max})', langCode);
+        const embed = new EmbedBuilder().setDescription('❌ ' + limitText.replace('{max}', guildMax)).setColor('#FF0000');
         await interaction.editReply({ embeds: [embed] });
         return;
+    }
+
+    if (stickerId) {
+        try {
+            let foundSticker = null;
+            for (const guild of interaction.client.guilds.cache.values()) {
+                foundSticker = guild.stickers.cache.get(stickerId);
+                if (foundSticker) break;
+            }
+
+            if (!foundSticker) {
+                const notFoundText = await t('Sticker with ID {id} not found in bot\'s reach.', langCode);
+                const embed = new EmbedBuilder().setDescription('❌ ' + notFoundText.replace('{id}', stickerId)).setColor('#FF0000');
+                return await interaction.editReply({ embeds: [embed] });
+            }
+
+            const stickerName = name || foundSticker.name;
+            await interaction.guild.stickers.create({
+                file: foundSticker.url,
+                name: stickerName,
+                tags: foundSticker.tags || 'emoji'
+            });
+
+            const successText = await t('Successfully added sticker: {name}', langCode);
+            const embed = new EmbedBuilder().setDescription('✅ ' + successText.replace('{name}', stickerName)).setColor('#00FFFF');
+            return await interaction.editReply({ embeds: [embed] });
+        } catch (error) {
+            const errorPrefix = await t('Error adding sticker:', langCode);
+            const embed = new EmbedBuilder().setDescription('❌ ' + errorPrefix + ' ' + error.message).setColor('#FF0000');
+            return await interaction.editReply({ embeds: [embed] });
+        }
     }
 
     if (name) {

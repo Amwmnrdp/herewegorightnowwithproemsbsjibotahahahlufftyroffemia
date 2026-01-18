@@ -6,24 +6,27 @@ const db = require('../../utils/database');
 async function execute(interaction, langCode) {
     const emoji = interaction.options.getString('emoji');
     const name = interaction.options.getString('name');
-    let info = parseEmoji(emoji);
-
-    if (!info.id) {
-        const errorText = await t('Invalid emoji!', langCode);
+    
+    // Support either direct emoji <a:name:id> or just the ID
+    const match = emoji.match(/<a?:.+:(\d+)>/) || emoji.match(/^(\d+)$/);
+    if (!match) {
+        const errorText = await t('Invalid emoji! Please provide a custom emoji or an emoji ID.', langCode);
         const embed = new EmbedBuilder().setDescription('❌ ' + errorText).setColor('#FF0000').setFooter({ text: `${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
         await interaction.editReply({ embeds: [embed] });
         return;
     }
+    const emojiId = match[1];
+    const isAnimated = emoji.includes('<a:') || (emoji.match(/^(\d+)$/) && false); // Default to false for pure IDs unless we can verify, but typically users use direct emoji for animated
 
     const serverEmojis = await interaction.guild.emojis.fetch();
-    if (await db.isEmojiInDb(interaction.guild.id, info.id) || serverEmojis.has(info.id)) {
+    if (await db.isEmojiInDb(interaction.guild.id, emojiId) || serverEmojis.has(emojiId)) {
         const alreadyExistsText = await t('already exists!', langCode);
-        const embed = new EmbedBuilder().setDescription('⚠️ ' + emoji + ' ' + alreadyExistsText).setColor('#FF9900').setFooter({ text: `${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
+        const embed = new EmbedBuilder().setDescription('⚠️ ' + emojiId + ' ' + alreadyExistsText).setColor('#FF9900').setFooter({ text: `${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
         await interaction.editReply({ embeds: [embed] });
         return;
     }
 
-    const emojiName = name || info.name;
+    const emojiName = name || 'emoji_' + emojiId;
     if (serverEmojis.find(e => e.name.toLowerCase() === emojiName.toLowerCase())) {
         const duplicateText = await t('An emoji with the name "{name}" already exists!', langCode);
         const embed = new EmbedBuilder().setDescription('❌ ' + duplicateText.replace('{name}', emojiName)).setColor('#FF0000');
@@ -32,8 +35,19 @@ async function execute(interaction, langCode) {
     }
 
     try {
-        let type = info.animated ? '.gif' : '.png';
-        let url = `https://cdn.discordapp.com/emojis/${info.id + type}`;
+        // Try to fetch emoji info from other guilds the bot is in to determine animation
+        let animated = isAnimated;
+        let foundEmoji = null;
+        for (const g of interaction.client.guilds.cache.values()) {
+            foundEmoji = g.emojis.cache.get(emojiId);
+            if (foundEmoji) {
+                animated = foundEmoji.animated;
+                break;
+            }
+        }
+
+        let type = animated ? '.gif' : '.png';
+        let url = `https://cdn.discordapp.com/emojis/${emojiId + type}`;
         const emj = await interaction.guild.emojis.create({ attachment: url, name: emojiName, reason: `By ${interaction.user.tag}` });
         await db.addEmojiRecord(interaction.guild.id, emj.id, emj.name, interaction.user.tag);
         const addedText = await t('Added!', langCode);

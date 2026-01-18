@@ -30,6 +30,22 @@ const LEGACY_LANGUAGE_MAP = {
 
 const COMMAND_DEFINITIONS = [
     {
+        name: 'get_emoji_id',
+        description: 'Get the ID of a specific emoji',
+        options: [
+            {
+                name: 'emoji',
+                type: 3,
+                description: 'The emoji you want to get the ID for',
+                required: true
+            }
+        ]
+    },
+    {
+        name: 'get_sticker_id',
+        description: 'Get the ID of a specific sticker'
+    },
+    {
         name: 'help',
         description: 'Get help about all ProEmoji commands'
     },
@@ -285,6 +301,12 @@ const COMMAND_DEFINITIONS = [
                 type: 3,
                 description: 'Custom name for the new sticker (optional)',
                 required: false
+            },
+            {
+                name: 'sticker_id',
+                type: 3,
+                description: 'The ID of the sticker you want to add (optional)',
+                required: false
             }
         ]
     },
@@ -315,7 +337,7 @@ const EMOJI_PERMISSION_COMMANDS = [
     'list_emojis', 'delete_sticker', 'rename_sticker', 'image_to_sticker', 'list_stickers', 'add_sticker',
     'emoji_to_image', 'sticker_to_image', 'enhance_emoji', 'enhance_sticker',
     'status', 'search_sticker', 'emoji_pack', 'vote', 'suggest_sticker',
-    'emoji_permission', 'sticker_permission'
+    'emoji_permission', 'sticker_permission', 'get_emoji_id', 'get_sticker_id'
 ];
 
 module.exports = {
