@@ -45,7 +45,7 @@ async function execute(interaction, langCode, client) {
         return new EmbedBuilder()
             .setTitle('✨ ' + await t('Suggested Sticker', langCode) + ` (${page + 1}/5)`)
             .setDescription(await t('Would you like to add this sticker?', langCode) + `\n\n**${sticker.name}**`)
-            .setImage(sticker.url)
+            .setImage(sticker.imageURL())
             .setColor('#00FFFF')
             .setFooter({ text: `${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
     };
@@ -96,7 +96,7 @@ async function execute(interaction, langCode, client) {
                 const stickerToAdd = suggested[currentPage];
                 try {
                     await interaction.guild.stickers.create({
-                        file: stickerToAdd.url,
+                        file: stickerToAdd.imageURL(),
                         name: stickerToAdd.name,
                         tags: stickerToAdd.tags || 'emoji'
                     });

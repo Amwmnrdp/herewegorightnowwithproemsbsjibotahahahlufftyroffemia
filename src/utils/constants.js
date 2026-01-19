@@ -58,6 +58,10 @@ const COMMAND_DEFINITIONS = [
         description: 'Set permissions for sticker suggestions (Owner only)'
     },
     {
+        name: 'delete_permission',
+        description: 'Set whether administrators can delete all emojis/stickers without approval (Owner only)'
+    },
+    {
         name: 'suggest_emojis',
         description: 'Suggests 5 random emojis from other servers (useful if you don\'t have Nitro)'
     },
@@ -328,7 +332,7 @@ const COMMAND_DEFINITIONS = [
     }
 ];
 
-const OWNER_ONLY_COMMANDS = ['emoji_permission', 'sticker_permission'];
+const OWNER_ONLY_COMMANDS = ['emoji_permission', 'sticker_permission', 'delete_permission'];
 const ADMIN_ONLY_COMMANDS = ['delete_all_emojis', 'delete_all_stickers'];
 const PUBLIC_COMMANDS = ['status', 'help', 'vote'];
 const EMOJI_PERMISSION_COMMANDS = [

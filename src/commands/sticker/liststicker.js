@@ -20,7 +20,7 @@ async function execute(interaction, langCode) {
             .setTitle(`📌 ${stickersTitle}`)
             .setColor('#FFA500')
             .setDescription(`**${await t('Name:', langCode)}** ${sticker.name}\n**${await t('ID:', langCode)}** ${sticker.id}`)
-            .setImage(sticker.url)
+            .setImage(sticker.imageURL())
             .setFooter({ text: `${pageText} ${pageNum + 1}/${stickers.length} • ${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
         return embed;
     };

@@ -15,6 +15,7 @@ async function initDatabase() {
                 language VARCHAR(10) DEFAULT 'en',
                 emoji_permission_enabled BOOLEAN DEFAULT true,
                 sticker_permission_enabled BOOLEAN DEFAULT true,
+                delete_permission_enabled BOOLEAN DEFAULT true,
                 joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
 
@@ -155,8 +156,15 @@ async function setStickerPermission(serverId, enabled) {
     );
 }
 
+async function setDeletePermission(serverId, enabled) {
+    await pool.query(
+        'UPDATE servers SET delete_permission_enabled = $1 WHERE server_id = $2',
+        [enabled, serverId]
+    );
+}
+
 async function getServerPermissions(serverId) {
-    const result = await pool.query('SELECT emoji_permission_enabled, sticker_permission_enabled FROM servers WHERE server_id = $1', [serverId]);
+    const result = await pool.query('SELECT emoji_permission_enabled, sticker_permission_enabled, delete_permission_enabled FROM servers WHERE server_id = $1', [serverId]);
     return result.rows[0];
 }
 
@@ -436,5 +444,6 @@ module.exports = {
     addStickerRecord,
     isEmojiInDb,
     isStickerInDb,
-    getServerEmojis
+    getServerEmojis,
+    setDeletePermission
 };

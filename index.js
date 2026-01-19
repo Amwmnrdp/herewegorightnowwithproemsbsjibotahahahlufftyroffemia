@@ -38,6 +38,7 @@ const searchsticker = require('./src/commands/sticker/searchsticker');
 const suggeststicker = require('./src/commands/sticker/suggeststicker');
 
 const help = require('./src/commands/storage/help');
+const deletepermission = require('./src/commands/storage/deletepermission');
 const status = require('./src/commands/storage/status');
 const vote = require('./src/commands/storage/vote');
 const language = require('./src/commands/storage/language');
@@ -257,7 +258,7 @@ client.on('interactionCreate', async interaction => {
             content = `${await t('If you do not have Nitro, you can use /suggest_emojis and the bot will suggest 5 random emojis from other servers it is in.', langCode)}${separator}${await t('Search for specific emojis by name across multiple servers', langCode)}: **/emoji_search**${separator}${await t('Add a new emoji to your server using a custom name or ID', langCode)}: **/add_emoji**${separator}${await t('Convert an image URL or attachment into a server emoji instantly', langCode)}: **/image_to_emoji**${separator}${await t('Change the name of an existing server emoji', langCode)}: **/rename_emoji**${separator}${await t('Permanently remove a specific emoji from your server', langCode)}: **/delete_emoji**${separator}${await t('Remove all emojis from your server (Admin only, requires confirmation)', langCode)}: **/delete_all_emojis**${separator}${await t('View a complete list of all emojis currently in your server', langCode)}: **/list_emojis**${separator}${await t('Improve an emoji\'s resolution and quality before adding it to the server', langCode)}: **/enhance_emoji**${separator}${await t('Transform any existing server emoji into a high-quality sticker', langCode)}: **/emoji_to_sticker**${separator}${await t('Convert any emoji into a downloadable image file', langCode)}: **/emoji_to_image**${separator}${await t('Get a curated pack of suggested emojis to enhance your server', langCode)}: **/emoji_pack**${separator}${await t('Get the ID of a specific emoji', langCode)}: **/get_emoji_id**`;
         } else if (interaction.values[0] === 'info_help') {
             title = await t('Info Commands', langCode);
-            content = `${await t('Set permissions for emoji suggestions (Owner only)', langCode)}: **/emoji_permission**${separator}${await t('Set permissions for sticker suggestions (Owner only)', langCode)}: **/sticker_permission**${separator}${await t('Change the bot\'s language setting (Owner only)', langCode)}: **/language**${separator}${await t('View bot status, latency, and vote status', langCode)}: **/status**${separator}[${await t('Vote ProEmoji', langCode)}](https://top.gg/bot/1009426679061553162/vote)`;
+            content = `${await t('Set permissions for emoji suggestions (Owner only)', langCode)}: **/emoji_permission**${separator}${await t('Set permissions for sticker suggestions (Owner only)', langCode)}: **/sticker_permission**${separator}${await t('Set mass deletion approval requirement (Owner only)', langCode)}: **/delete_permission**${separator}${await t('Change the bot\'s language setting (Owner only)', langCode)}: **/language**${separator}${await t('View bot status, latency, and vote status', langCode)}: **/status**${separator}[${await t('Vote ProEmoji', langCode)}](https://top.gg/bot/1009426679061553162/vote)`;
         }
 
         try {
@@ -371,6 +372,46 @@ client.on('interactionCreate', async interaction => {
         }
         else if (interaction.commandName === 'delete_all_emojis') {
             await interaction.deferReply().catch(() => {});
+            
+            const perms = await db.getServerPermissions(interaction.guild.id);
+            const deletePermEnabled = perms ? perms.delete_permission_enabled : true;
+            
+            if (!deletePermEnabled && interaction.user.id !== interaction.guild.ownerId) {
+                const owner = await interaction.guild.fetchOwner();
+                const embed = new EmbedBuilder()
+                    .setTitle('🛡️ ' + await t('Approval Required', langCode))
+                    .setDescription(`**${interaction.user.displayName} (@${interaction.user.username})** ` + await t('wants to delete all emojis.', langCode))
+                    .setColor('#FFA500')
+                    .setFooter({ text: await t('30-minute timeout for owner to respond.', langCode) });
+
+                const buttons = new ActionRowBuilder().addComponents(
+                    new ButtonBuilder().setCustomId('approve_delete_emojis').setLabel(await t('Allow', langCode)).setStyle(ButtonStyle.Success),
+                    new ButtonBuilder().setCustomId('deny_delete_emojis').setLabel(await t('Deny', langCode)).setStyle(ButtonStyle.Danger)
+                );
+
+                const approvalMsg = await interaction.editReply({ content: `<@${interaction.guild.ownerId}>`, embeds: [embed], components: [buttons] });
+                
+                const filter = i => i.user.id === interaction.guild.ownerId && (i.customId === 'approve_delete_emojis' || i.customId === 'deny_delete_emojis');
+                const collector = approvalMsg.createMessageComponentCollector({ filter, time: 1800000 });
+
+                collector.on('collect', async i => {
+                    await i.deferUpdate();
+                    if (i.customId === 'approve_delete_emojis') {
+                        await deleteallemojis.execute(interaction, langCode).catch(async err => {
+                            console.error(`Error in delete_all_emojis: ${err.message}`);
+                            try { await interaction.editReply({ content: '❌ ' + await t('An error occurred while executing this command.', langCode), components: [] }).catch(() => {}); } catch (e) {}
+                        });
+                        await interaction.followUp({ content: `<@${interaction.user.id}> ✅ ` + await t('Your request to delete all emojis was approved.', langCode) }).catch(() => {});
+                    } else {
+                        const denyEmbed = new EmbedBuilder().setDescription('❌ ' + await t('Mass deletion request rejected.', langCode)).setColor('#FF0000');
+                        await interaction.editReply({ embeds: [denyEmbed], components: [] }).catch(() => {});
+                        await interaction.followUp({ content: `<@${interaction.user.id}> ❌ ` + await t('Your request to delete all emojis was rejected.', langCode) }).catch(() => {});
+                    }
+                    collector.stop();
+                });
+                return;
+            }
+
             await deleteallemojis.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in delete_all_emojis: ${err.message}`);
                 try { await interaction.editReply({ content: '❌ ' + await t('An error occurred while executing this command.', langCode) }).catch(() => {}); } catch (e) {}
@@ -378,8 +419,55 @@ client.on('interactionCreate', async interaction => {
         }
         else if (interaction.commandName === 'delete_all_stickers') {
             await interaction.deferReply().catch(() => {});
+
+            const perms = await db.getServerPermissions(interaction.guild.id);
+            const deletePermEnabled = perms ? perms.delete_permission_enabled : true;
+
+            if (!deletePermEnabled && interaction.user.id !== interaction.guild.ownerId) {
+                const owner = await interaction.guild.fetchOwner();
+                const embed = new EmbedBuilder()
+                    .setTitle('🛡️ ' + await t('Approval Required', langCode))
+                    .setDescription(`**${interaction.user.displayName} (@${interaction.user.username})** ` + await t('wants to delete all stickers.', langCode))
+                    .setColor('#FFA500')
+                    .setFooter({ text: await t('30-minute timeout for owner to respond.', langCode) });
+
+                const buttons = new ActionRowBuilder().addComponents(
+                    new ButtonBuilder().setCustomId('approve_delete_stickers').setLabel(await t('Allow', langCode)).setStyle(ButtonStyle.Success),
+                    new ButtonBuilder().setCustomId('deny_delete_stickers').setLabel(await t('Deny', langCode)).setStyle(ButtonStyle.Danger)
+                );
+
+                const approvalMsg = await interaction.editReply({ content: `<@${interaction.guild.ownerId}>`, embeds: [embed], components: [buttons] });
+                
+                const filter = i => i.user.id === interaction.guild.ownerId && (i.customId === 'approve_delete_stickers' || i.customId === 'deny_delete_stickers');
+                const collector = approvalMsg.createMessageComponentCollector({ filter, time: 1800000 });
+
+                collector.on('collect', async i => {
+                    await i.deferUpdate();
+                    if (i.customId === 'approve_delete_stickers') {
+                        await deleteallstickers.execute(interaction, langCode).catch(async err => {
+                            console.error(`Error in delete_all_stickers: ${err.message}`);
+                            try { await interaction.editReply({ content: '❌ ' + await t('An error occurred while executing this command.', langCode), components: [] }).catch(() => {}); } catch (e) {}
+                        });
+                        await interaction.followUp({ content: `<@${interaction.user.id}> ✅ ` + await t('Your request to delete all stickers was approved.', langCode) }).catch(() => {});
+                    } else {
+                        const denyEmbed = new EmbedBuilder().setDescription('❌ ' + await t('Mass deletion request rejected.', langCode)).setColor('#FF0000');
+                        await interaction.editReply({ embeds: [denyEmbed], components: [] }).catch(() => {});
+                        await interaction.followUp({ content: `<@${interaction.user.id}> ❌ ` + await t('Your request to delete all stickers was rejected.', langCode) }).catch(() => {});
+                    }
+                    collector.stop();
+                });
+                return;
+            }
+
             await deleteallstickers.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in delete_all_stickers: ${err.message}`);
+                try { await interaction.editReply({ content: '❌ ' + await t('An error occurred while executing this command.', langCode) }).catch(() => {}); } catch (e) {}
+            });
+        }
+        else if (interaction.commandName === 'delete_permission') {
+            await interaction.deferReply();
+            await deletepermission.execute(interaction, langCode).catch(async err => {
+                console.error(`Error in delete_permission: ${err.message}`);
                 try { await interaction.editReply({ content: '❌ ' + await t('An error occurred while executing this command.', langCode) }).catch(() => {}); } catch (e) {}
             });
         }

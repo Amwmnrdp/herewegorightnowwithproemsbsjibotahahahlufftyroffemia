@@ -51,16 +51,20 @@ async function execute(interaction, langCode, client) {
     const getAvailableEmojis = (category) => {
         const allInPack = PACKS[category] || [];
         const serverEmojiNames = interaction.guild.emojis.cache.map(e => e.name.toLowerCase());
-        return allInPack.filter(e => !serverEmojiNames.includes(e.name.toLowerCase()));
+        const serverEmojiIds = interaction.guild.emojis.cache.map(e => e.id);
+        return allInPack.filter(e => !serverEmojiNames.includes(e.name.toLowerCase()) && !serverEmojiIds.includes(e.id));
     };
 
-    const generateDisplay = async (category) => {
+    const generateDisplay = async (category, isReset = false) => {
         const available = getAvailableEmojis(category);
         if (!available || available.length === 0) {
+            const desc = isReset ? 
+                await t('There are no more emojis available at the moment.', langCode) : 
+                await t('There are no emojis in this pack.', langCode);
             return {
                 embeds: [new EmbedBuilder()
                     .setTitle('🎁 ' + await t('Emoji Pack', langCode))
-                    .setDescription('❌ ' + await t('There are no emojis available at the moment.', langCode))
+                    .setDescription('❌ ' + desc)
                     .setColor('#FF0000')],
                 components: [new ActionRowBuilder().addComponents(select)]
             };
@@ -77,6 +81,16 @@ async function execute(interaction, langCode, client) {
                 if (emoji) { found = emoji; break; }
             }
             if (found) emojiList.push(found);
+        }
+
+        if (emojiList.length === 0) {
+            return {
+                embeds: [new EmbedBuilder()
+                    .setTitle('🎁 ' + await t('Emoji Pack', langCode))
+                    .setDescription('❌ ' + await t('There are no emojis in this pack.', langCode))
+                    .setColor('#FF0000')],
+                components: [new ActionRowBuilder().addComponents(select)]
+            };
         }
 
         const packEmbed = new EmbedBuilder()
@@ -102,7 +116,7 @@ async function execute(interaction, langCode, client) {
                 await i.editReply(display).catch(() => {});
             } else if (i.isButton()) {
                 if (i.customId === 'pack_reset') {
-                    const display = await generateDisplay(currentCategory);
+                    const display = await generateDisplay(currentCategory, true);
                     await i.editReply(display).catch(() => {});
                 } else if (i.customId === 'pack_add') {
                     let added = 0;
@@ -111,7 +125,7 @@ async function execute(interaction, langCode, client) {
                             const allEmoji = Array.from(client.guilds.cache.values()).flatMap(g => Array.from(g.emojis.cache.values()));
                             const emojiObj = allEmoji.find(em => em.id === e.id);
                             if (emojiObj && !interaction.guild.emojis.cache.find(em => em.name === emojiObj.name)) {
-                                await interaction.guild.emojis.create({ attachment: emojiObj.url, name: emojiObj.name });
+                                await interaction.guild.emojis.create({ attachment: emojiObj.imageURL(), name: emojiObj.name });
                                 added++;
                             }
                         } catch (err) { console.error('Error adding emoji:', err); }

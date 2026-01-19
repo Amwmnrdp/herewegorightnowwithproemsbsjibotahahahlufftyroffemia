@@ -74,7 +74,7 @@ async function execute(interaction, langCode, client) {
                 let added = 0;
                 for (const emoji of foundEmojis) {
                     try {
-                        await interaction.guild.emojis.create({ attachment: emoji.url, name: emoji.name });
+                        await interaction.guild.emojis.create({ attachment: emoji.imageURL(), name: emoji.name });
                         added++;
                     } catch (err) {
                         console.error('Error adding emoji:', err);
