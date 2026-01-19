@@ -25,6 +25,7 @@ async function execute(interaction, langCode) {
     );
 
     const response = await interaction.editReply({ embeds: [embed], components: [row] });
+    if (!response) return;
 
     const filter = i => i.user.id === interaction.user.id;
     const collector = response.createMessageComponentCollector({ filter, time: 180000 });
