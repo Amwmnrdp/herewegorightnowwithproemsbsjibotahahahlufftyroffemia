@@ -56,11 +56,11 @@ async function execute(interaction, langCode, client) {
 
     const generateDisplay = async (category) => {
         const available = getAvailableEmojis(category);
-        if (available.length === 0) {
+        if (!available || available.length === 0) {
             return {
                 embeds: [new EmbedBuilder()
                     .setTitle('🎁 ' + await t('Emoji Pack', langCode))
-                    .setDescription('❌ ' + await t('This pack is currently empty. More emojis will be added in the future!', langCode))
+                    .setDescription('❌ ' + await t('There are no emojis available at the moment.', langCode))
                     .setColor('#FF0000')],
                 components: [new ActionRowBuilder().addComponents(select)]
             };
