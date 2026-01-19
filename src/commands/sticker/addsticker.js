@@ -23,6 +23,13 @@ async function execute(interaction, langCode) {
 
     if (stickerId) {
         try {
+            if (serverStickers.has(stickerId)) {
+                const alreadyExistsText = await t('already exists!', langCode);
+                const embed = new EmbedBuilder().setDescription('⚠️ ' + stickerId + ' ' + alreadyExistsText).setColor('#FF9900');
+                await interaction.editReply({ embeds: [embed] });
+                return;
+            }
+
             let foundSticker = null;
             for (const guild of interaction.client.guilds.cache.values()) {
                 foundSticker = guild.stickers.cache.get(stickerId);

@@ -18,8 +18,15 @@ async function execute(interaction, langCode) {
     const emojiId = match[1];
     const isAnimated = emoji.includes('<a:') || (emoji.match(/^(\d+)$/) && false); // Default to false for pure IDs unless we can verify, but typically users use direct emoji for animated
 
+    if (await db.isEmojiInDb(interaction.guild.id, emojiId)) {
+        const alreadyExistsText = await t('already exists!', langCode);
+        const embed = new EmbedBuilder().setDescription('⚠️ ' + emojiId + ' ' + alreadyExistsText).setColor('#FF9900').setFooter({ text: `${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
+        await interaction.editReply({ embeds: [embed] });
+        return;
+    }
+
     const serverEmojis = await interaction.guild.emojis.fetch();
-    if (await db.isEmojiInDb(interaction.guild.id, emojiId) || serverEmojis.has(emojiId)) {
+    if (serverEmojis.has(emojiId)) {
         const alreadyExistsText = await t('already exists!', langCode);
         const embed = new EmbedBuilder().setDescription('⚠️ ' + emojiId + ' ' + alreadyExistsText).setColor('#FF9900').setFooter({ text: `${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
         await interaction.editReply({ embeds: [embed] });

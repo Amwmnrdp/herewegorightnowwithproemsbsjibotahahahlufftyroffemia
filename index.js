@@ -389,7 +389,8 @@ client.on('interactionCreate', async interaction => {
                     new ButtonBuilder().setCustomId('deny_delete_emojis').setLabel(await t('Deny', langCode)).setStyle(ButtonStyle.Danger)
                 );
 
-                const approvalMsg = await interaction.editReply({ content: `<@${interaction.guild.ownerId}>`, embeds: [embed], components: [buttons] });
+                const approvalMsg = await interaction.channel.send({ content: `<@${interaction.guild.ownerId}>`, embeds: [embed], components: [buttons] });
+                await interaction.editReply({ content: await t('Approval request sent to the server owner.', langCode) }).catch(() => {});
                 
                 const filter = i => i.user.id === interaction.guild.ownerId && (i.customId === 'approve_delete_emojis' || i.customId === 'deny_delete_emojis');
                 const collector = approvalMsg.createMessageComponentCollector({ filter, time: 1800000 });
@@ -436,7 +437,8 @@ client.on('interactionCreate', async interaction => {
                     new ButtonBuilder().setCustomId('deny_delete_stickers').setLabel(await t('Deny', langCode)).setStyle(ButtonStyle.Danger)
                 );
 
-                const approvalMsg = await interaction.editReply({ content: `<@${interaction.guild.ownerId}>`, embeds: [embed], components: [buttons] });
+                const approvalMsg = await interaction.channel.send({ content: `<@${interaction.guild.ownerId}>`, embeds: [embed], components: [buttons] });
+                await interaction.editReply({ content: await t('Approval request sent to the server owner.', langCode) }).catch(() => {});
                 
                 const filter = i => i.user.id === interaction.guild.ownerId && (i.customId === 'approve_delete_stickers' || i.customId === 'deny_delete_stickers');
                 const collector = approvalMsg.createMessageComponentCollector({ filter, time: 1800000 });
