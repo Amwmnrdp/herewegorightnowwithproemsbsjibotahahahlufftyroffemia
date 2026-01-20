@@ -473,14 +473,16 @@ client.on('interactionCreate', async interaction => {
         }
         else if (interaction.commandName === 'emoji_permission') {
             await interaction.deferReply().catch(() => {});
-            await emojiPermission.execute(interaction, langCode).catch(async err => {
+            const permission = require('./src/commands/storage/permission');
+            await permission.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in emoji_permission: ${err.message}`);
                 try { await interaction.editReply({ content: '❌ ' + await t('An error occurred while executing this command.', langCode) }).catch(() => {}); } catch (e) {}
             });
         }
         else if (interaction.commandName === 'sticker_permission') {
             await interaction.deferReply().catch(() => {});
-            await stickerPermission.execute(interaction, langCode).catch(async err => {
+            const permission = require('./src/commands/storage/permission');
+            await permission.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in sticker_permission: ${err.message}`);
                 try { await interaction.editReply({ content: '❌ ' + await t('An error occurred while executing this command.', langCode) }).catch(() => {}); } catch (e) {}
             });

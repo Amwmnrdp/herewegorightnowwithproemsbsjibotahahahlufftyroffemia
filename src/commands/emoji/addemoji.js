@@ -16,32 +16,29 @@ async function execute(interaction, langCode) {
         return;
     }
     const emojiId = match[1];
-    const isAnimated = emoji.includes('<a:') || (emoji.match(/^(\d+)$/) && false); // Default to false for pure IDs unless we can verify, but typically users use direct emoji for animated
-
-    if (await db.isEmojiInDb(interaction.guild.id, emojiId)) {
-        const alreadyExistsText = await t('already exists!', langCode);
-        const embed = new EmbedBuilder().setDescription('⚠️ ' + emojiId + ' ' + alreadyExistsText).setColor('#FF9900').setFooter({ text: `${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
-        await interaction.editReply({ embeds: [embed] });
-        return;
-    }
-
-    const serverEmojis = await interaction.guild.emojis.fetch();
-    if (serverEmojis.has(emojiId)) {
-        const alreadyExistsText = await t('already exists!', langCode);
-        const embed = new EmbedBuilder().setDescription('⚠️ ' + emojiId + ' ' + alreadyExistsText).setColor('#FF9900').setFooter({ text: `${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
-        await interaction.editReply({ embeds: [embed] });
-        return;
-    }
-
-    const emojiName = name || 'emoji_' + emojiId;
-    if (serverEmojis.find(e => e.name.toLowerCase() === emojiName.toLowerCase())) {
-        const duplicateText = await t('An emoji with the name "{name}" already exists!', langCode);
-        const embed = new EmbedBuilder().setDescription('❌ ' + duplicateText.replace('{name}', emojiName)).setColor('#FF0000');
-        await interaction.editReply({ embeds: [embed] });
-        return;
-    }
+    const isAnimated = emoji.includes('<a:');
 
     try {
+        if (await db.isEmojiInDb(interaction.guild.id, emojiId)) {
+            const alreadyExistsText = await t('already exists!', langCode);
+            const embed = new EmbedBuilder().setDescription('⚠️ ' + emojiId + ' ' + alreadyExistsText).setColor('#FF9900').setFooter({ text: `${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
+            return await interaction.editReply({ embeds: [embed] }).catch(() => {});
+        }
+
+        const serverEmojis = await interaction.guild.emojis.fetch().catch(() => new Map());
+        if (serverEmojis.has(emojiId)) {
+            const alreadyExistsText = await t('already exists!', langCode);
+            const embed = new EmbedBuilder().setDescription('⚠️ ' + emojiId + ' ' + alreadyExistsText).setColor('#FF9900').setFooter({ text: `${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
+            return await interaction.editReply({ embeds: [embed] }).catch(() => {});
+        }
+
+        const emojiName = name || 'emoji_' + emojiId;
+        if ([...serverEmojis.values()].find(e => e.name.toLowerCase() === emojiName.toLowerCase())) {
+            const duplicateText = await t('An emoji with the name "{name}" already exists!', langCode);
+            const embed = new EmbedBuilder().setDescription('❌ ' + duplicateText.replace('{name}', emojiName)).setColor('#FF0000');
+            return await interaction.editReply({ embeds: [embed] }).catch(() => {});
+        }
+
         // Try to fetch emoji info from other guilds the bot is in to determine animation
         let animated = isAnimated;
         let foundEmoji = null;
@@ -56,14 +53,14 @@ async function execute(interaction, langCode) {
         let type = animated ? '.gif' : '.png';
         let url = `https://cdn.discordapp.com/emojis/${emojiId + type}`;
         const emj = await interaction.guild.emojis.create({ attachment: url, name: emojiName, reason: `By ${interaction.user.tag}` });
-        await db.addEmojiRecord(interaction.guild.id, emj.id, emj.name, interaction.user.tag);
+        await db.addEmojiRecord(interaction.guild.id, emj.id, emj.name, interaction.user.tag).catch(() => {});
         const addedText = await t('Added!', langCode);
         const embed = new EmbedBuilder().setDescription('✅ ' + addedText + ' ' + emj.toString()).setColor('#00FFFF').setFooter({ text: `${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
-        await interaction.editReply({ embeds: [embed] });
+        await interaction.editReply({ embeds: [embed] }).catch(() => {});
     } catch (error) {
         const errorPrefix = await t('Error:', langCode);
         const embed = new EmbedBuilder().setDescription('❌ ' + errorPrefix + ' ' + error.message).setColor('#FF0000').setFooter({ text: `${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
-        await interaction.editReply({ embeds: [embed] });
+        await interaction.editReply({ embeds: [embed] }).catch(() => {});
     }
 }
 
