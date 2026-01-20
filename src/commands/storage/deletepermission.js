@@ -28,19 +28,21 @@ async function execute(interaction, langCode) {
     await interaction.editReply({ embeds: [embed], components: [buttonRow] });
 
     const filter = i => (i.customId === 'allow_delete' || i.customId === 'deny_delete') && i.user.id === interaction.user.id;
-    const collector = interaction.channel.createMessageComponentCollector({ filter, time: 60000 });
+    const response = await interaction.fetchReply().catch(() => null);
+    if (!response) return;
+    const collector = response.createMessageComponentCollector({ filter, time: 60000 });
 
     collector.on('collect', async i => {
         try {
-            await i.deferUpdate();
+            await i.deferUpdate().catch(() => {});
             if (i.customId === 'allow_delete') {
-                await db.setDeletePermission(interaction.guild.id, true);
+                await db.setDeletePermission(interaction.guild.id, true).catch(() => {});
                 const e = new EmbedBuilder().setTitle('✅ ' + await t('Permission Updated', langCode)).setDescription(await t('Administrators can now delete all emojis/stickers without approval.', langCode)).setColor('#ADD8E6');
-                await i.editReply({ embeds: [e], components: [] });
+                await i.editReply({ embeds: [e], components: [] }).catch(() => {});
             } else {
-                await db.setDeletePermission(interaction.guild.id, false);
+                await db.setDeletePermission(interaction.guild.id, false).catch(() => {});
                 const e = new EmbedBuilder().setTitle('❌ ' + await t('Permission Updated', langCode)).setDescription(await t('Owner approval is now required for mass deletion.', langCode)).setColor('#FF0000');
-                await i.editReply({ embeds: [e], components: [] });
+                await i.editReply({ embeds: [e], components: [] }).catch(() => {});
             }
             collector.stop();
         } catch (err) {

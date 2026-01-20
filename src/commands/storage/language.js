@@ -43,7 +43,8 @@ async function execute(interaction, langCode) {
         .addOptions(options);
 
     const row = new ActionRowBuilder().addComponents(selectMenu);
-    const msgResponse = await interaction.editReply({ embeds: [embed], components: [row] });
+    const msgResponse = await interaction.editReply({ embeds: [embed], components: [row] }).catch(() => null);
+    if (!msgResponse) return;
     const msg = msgResponse;
     
     const filter = i => i.customId === 'language_select' && i.user.id === interaction.user.id;

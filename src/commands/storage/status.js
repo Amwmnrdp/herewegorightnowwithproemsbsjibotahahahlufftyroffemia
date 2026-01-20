@@ -22,7 +22,7 @@ async function execute(interaction, langCode) {
         .setColor(hasManageEmoji ? '#00FF00' : '#FF0000')
         .setTimestamp();
 
-    await interaction.editReply({ embeds: [embed] });
+    await interaction.editReply({ embeds: [embed] }).catch(() => {});
 }
 
 module.exports = { execute };
