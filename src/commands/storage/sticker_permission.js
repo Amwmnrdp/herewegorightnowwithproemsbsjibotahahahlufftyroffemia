@@ -27,20 +27,26 @@ async function execute(interaction, langCode) {
     await interaction.editReply({ embeds: [embed], components: [buttonRow] });
 
     const filter = i => (i.customId === 'allow_sticker' || i.customId === 'refuse_sticker') && i.user.id === interaction.user.id;
-    const collector = interaction.channel.createMessageComponentCollector({ filter, time: 60000 });
+    const response = await interaction.fetchReply().catch(() => null);
+    if (!response) return;
+    const collector = response.createMessageComponentCollector({ filter, time: 60000 });
 
     collector.on('collect', async i => {
-        await i.deferUpdate();
-        if (i.customId === 'allow_sticker') {
-            await db.setStickerPermission(interaction.guild.id, true);
-            const e = new EmbedBuilder().setTitle('✅ ' + await t('Permission Granted', langCode)).setDescription(await t('Bot can suggest stickers from this server.', langCode)).setColor('#ADD8E6');
-            await i.editReply({ embeds: [e], components: [] });
-        } else {
-            await db.setStickerPermission(interaction.guild.id, false);
-            const e = new EmbedBuilder().setTitle('❌ ' + await t('Permission Denied', langCode)).setDescription(await t('Bot will NOT suggest stickers.', langCode)).setColor('#FF0000');
-            await i.editReply({ embeds: [e], components: [] });
+        try {
+            await i.deferUpdate().catch(() => {});
+            if (i.customId === 'allow_sticker') {
+                await db.setStickerPermission(interaction.guild.id, true).catch(() => {});
+                const e = new EmbedBuilder().setTitle('✅ ' + await t('Permission Granted', langCode)).setDescription(await t('Bot can suggest stickers from this server.', langCode)).setColor('#ADD8E6');
+                await i.editReply({ embeds: [e], components: [] }).catch(() => {});
+            } else {
+                await db.setStickerPermission(interaction.guild.id, false).catch(() => {});
+                const e = new EmbedBuilder().setTitle('❌ ' + await t('Permission Denied', langCode)).setDescription(await t('Bot will NOT suggest stickers.', langCode)).setColor('#FF0000');
+                await i.editReply({ embeds: [e], components: [] }).catch(() => {});
+            }
+            collector.stop();
+        } catch (err) {
+            console.error('Collector error:', err);
         }
-        collector.stop();
     });
 }
 
