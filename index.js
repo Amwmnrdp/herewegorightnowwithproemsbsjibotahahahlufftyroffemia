@@ -377,10 +377,9 @@ client.on('interactionCreate', async interaction => {
             const deletePermEnabled = perms ? perms.delete_permission_enabled : true;
             
             if (!deletePermEnabled && interaction.user.id !== interaction.guild.ownerId) {
-                const owner = await interaction.guild.fetchOwner();
                 const embed = new EmbedBuilder()
                     .setTitle('🛡️ ' + await t('Approval Required', langCode))
-                    .setDescription(`**${interaction.user.displayName} (@${interaction.user.username})** ` + await t('wants to delete all emojis.', langCode))
+                    .setDescription(`**${interaction.user.displayName} (@${interaction.user.username})** ` + await t('wants to delete all emojis.', langCode) + `\n\n**${await t('Do you approve?', langCode)}**`)
                     .setColor('#FFA500')
                     .setFooter({ text: await t('30-minute timeout for owner to respond.', langCode) });
 
@@ -390,7 +389,7 @@ client.on('interactionCreate', async interaction => {
                 );
 
                 const approvalMsg = await interaction.channel.send({ content: `<@${interaction.guild.ownerId}>`, embeds: [embed], components: [buttons] });
-                await interaction.editReply({ content: await t('Approval request sent to the server owner.', langCode) }).catch(() => {});
+                await interaction.editReply({ content: '✅ ' + await t('Approval request sent to the server owner.', langCode) }).catch(() => {});
                 
                 const filter = i => i.user.id === interaction.guild.ownerId && (i.customId === 'approve_delete_emojis' || i.customId === 'deny_delete_emojis');
                 const collector = approvalMsg.createMessageComponentCollector({ filter, time: 1800000 });
@@ -425,10 +424,9 @@ client.on('interactionCreate', async interaction => {
             const deletePermEnabled = perms ? perms.delete_permission_enabled : true;
 
             if (!deletePermEnabled && interaction.user.id !== interaction.guild.ownerId) {
-                const owner = await interaction.guild.fetchOwner();
                 const embed = new EmbedBuilder()
                     .setTitle('🛡️ ' + await t('Approval Required', langCode))
-                    .setDescription(`**${interaction.user.displayName} (@${interaction.user.username})** ` + await t('wants to delete all stickers.', langCode))
+                    .setDescription(`**${interaction.user.displayName} (@${interaction.user.username})** ` + await t('wants to delete all stickers.', langCode) + `\n\n**${await t('Do you approve?', langCode)}**`)
                     .setColor('#FFA500')
                     .setFooter({ text: await t('30-minute timeout for owner to respond.', langCode) });
 
@@ -438,7 +436,7 @@ client.on('interactionCreate', async interaction => {
                 );
 
                 const approvalMsg = await interaction.channel.send({ content: `<@${interaction.guild.ownerId}>`, embeds: [embed], components: [buttons] });
-                await interaction.editReply({ content: await t('Approval request sent to the server owner.', langCode) }).catch(() => {});
+                await interaction.editReply({ content: '✅ ' + await t('Approval request sent to the server owner.', langCode) }).catch(() => {});
                 
                 const filter = i => i.user.id === interaction.guild.ownerId && (i.customId === 'approve_delete_stickers' || i.customId === 'deny_delete_stickers');
                 const collector = approvalMsg.createMessageComponentCollector({ filter, time: 1800000 });
