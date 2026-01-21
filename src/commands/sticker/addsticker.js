@@ -22,6 +22,13 @@ async function execute(interaction, langCode) {
     }
 
     if (stickerId) {
+        const isEmoji = /<a?:.+:(\d+)>|(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])/.test(stickerId);
+        if (isEmoji) {
+            const errorText = await t('This is an emoji, not a sticker. Please provide a sticker ID.', langCode);
+            const embed = new EmbedBuilder().setDescription('❌ ' + errorText).setColor('#FF0000');
+            await interaction.editReply({ embeds: [embed] });
+            return;
+        }
         try {
             if (serverStickers.has(stickerId)) {
                 const alreadyExistsText = await t('already exists!', langCode);
@@ -43,19 +50,24 @@ async function execute(interaction, langCode) {
             }
 
             const stickerName = name || foundSticker.name;
-            await interaction.guild.stickers.create({
+            const newSticker = await interaction.guild.stickers.create({
                 file: foundSticker.imageURL(),
                 name: stickerName,
                 tags: foundSticker.tags || 'emoji'
             });
 
+            await db.addStickerRecord(interaction.guild.id, newSticker.id, newSticker.name, interaction.user.tag).catch(err => {
+                console.error('Database error in addsticker:', err);
+            });
+
             const successText = await t('Successfully added sticker: {name}', langCode);
             const embed = new EmbedBuilder().setDescription('✅ ' + successText.replace('{name}', stickerName)).setColor('#00FFFF');
-            return await interaction.editReply({ embeds: [embed] });
+            return await interaction.editReply({ embeds: [embed] }).catch(() => {});
         } catch (error) {
+            console.error('Discord API error in addsticker:', error);
             const errorPrefix = await t('Error adding sticker:', langCode);
             const embed = new EmbedBuilder().setDescription('❌ ' + errorPrefix + ' ' + error.message).setColor('#FF0000');
-            return await interaction.editReply({ embeds: [embed] });
+            return await interaction.editReply({ embeds: [embed] }).catch(() => {});
         }
     }
 

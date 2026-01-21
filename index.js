@@ -519,7 +519,14 @@ client.on('interactionCreate', async interaction => {
             await interaction.deferReply().catch(() => {});
             await addemojiCmd.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in add_emoji: ${err.message}`);
-                try { await interaction.editReply({ content: '❌ ' + await t('An error occurred while executing this command.', langCode) }).catch(() => {}); } catch (e) {}
+                try {
+                    const errorMessage = '❌ ' + await t('An error occurred while executing this command.', langCode);
+                    if (interaction.replied || interaction.deferred) {
+                        await interaction.editReply({ content: errorMessage }).catch(() => {});
+                    } else {
+                        await interaction.reply({ content: errorMessage, flags: 64 }).catch(() => {});
+                    }
+                } catch (e) {}
             });
         }
         else if (interaction.commandName === 'image_to_emoji') {

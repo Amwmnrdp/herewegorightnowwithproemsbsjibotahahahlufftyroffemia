@@ -9,8 +9,15 @@ async function execute(interaction, langCode) {
     
     // Support either direct emoji <a:name:id> or just the ID
     const match = emoji.match(/<a?:.+:(\d+)>/) || emoji.match(/^(\d+)$/);
+    
     if (!match) {
-        const errorText = await t('Invalid emoji! Please provide a custom emoji or an emoji ID.', langCode);
+        const isStandardEmoji = /(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])/.test(emoji);
+        let errorText;
+        if (isStandardEmoji) {
+            errorText = await t('This is a standard emoji. Please use a custom sticker or a sticker ID.', langCode);
+        } else {
+            errorText = await t('Invalid emoji! Please provide a custom emoji or an emoji ID.', langCode);
+        }
         const embed = new EmbedBuilder().setDescription('❌ ' + errorText).setColor('#FF0000').setFooter({ text: `${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
         await interaction.editReply({ embeds: [embed] });
         return;
@@ -58,12 +65,14 @@ async function execute(interaction, langCode) {
         });
         const addedText = await t('Added!', langCode);
         const embed = new EmbedBuilder().setDescription('✅ ' + addedText + ' ' + emj.toString()).setColor('#00FFFF').setFooter({ text: `${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
-        return await interaction.editReply({ embeds: [embed] }).catch(() => {});
+        await interaction.editReply({ embeds: [embed] }).catch(() => {});
+        return;
     } catch (error) {
         console.error('Discord API error in addemoji:', error);
         const errorPrefix = await t('Error:', langCode);
         const embed = new EmbedBuilder().setDescription('❌ ' + errorPrefix + ' ' + error.message).setColor('#FF0000').setFooter({ text: `${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
-        return await interaction.editReply({ embeds: [embed] }).catch(() => {});
+        await interaction.editReply({ embeds: [embed] }).catch(() => {});
+        return;
     }
 }
 
