@@ -53,14 +53,17 @@ async function execute(interaction, langCode) {
         let type = animated ? '.gif' : '.png';
         let url = `https://cdn.discordapp.com/emojis/${emojiId + type}`;
         const emj = await interaction.guild.emojis.create({ attachment: url, name: emojiName, reason: `By ${interaction.user.tag}` });
-        await db.addEmojiRecord(interaction.guild.id, emj.id, emj.name, interaction.user.tag).catch(() => {});
+        await db.addEmojiRecord(interaction.guild.id, emj.id, emj.name, interaction.user.tag).catch(err => {
+            console.error('Database error in addemoji:', err);
+        });
         const addedText = await t('Added!', langCode);
         const embed = new EmbedBuilder().setDescription('✅ ' + addedText + ' ' + emj.toString()).setColor('#00FFFF').setFooter({ text: `${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
-        await interaction.editReply({ embeds: [embed] }).catch(() => {});
+        return await interaction.editReply({ embeds: [embed] }).catch(() => {});
     } catch (error) {
+        console.error('Discord API error in addemoji:', error);
         const errorPrefix = await t('Error:', langCode);
         const embed = new EmbedBuilder().setDescription('❌ ' + errorPrefix + ' ' + error.message).setColor('#FF0000').setFooter({ text: `${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
-        await interaction.editReply({ embeds: [embed] }).catch(() => {});
+        return await interaction.editReply({ embeds: [embed] }).catch(() => {});
     }
 }
 
