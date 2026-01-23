@@ -40,15 +40,6 @@ async function execute(interaction, langCode, client) {
     const suggested = stickers.sort(() => 0.5 - Math.random()).slice(0, 5);
     let currentPage = 0;
 
-    const createEmbed = async (page) => {
-        const sticker = suggested[page];
-        return new EmbedBuilder()
-            .setTitle('✨ ' + await t('Suggested Sticker', langCode) + ` (${page + 1}/5)`)
-            .setDescription(await t('Would you like to add this sticker?', langCode) + `\n\n**${sticker.name}**`)
-            .setImage(sticker.url)
-            .setColor('#00FFFF')
-            .setFooter({ text: `${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
-    };
 
     const createRow = async (page, disabled = false) => {
         const addedLabel = await t('Added', langCode);
