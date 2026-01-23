@@ -424,7 +424,12 @@ client.on('interactionCreate', async interaction => {
                     if (i.customId === 'approve_delete_emojis') {
                         await deleteallemojis.execute(interaction, langCode).catch(async err => {
                             console.error(`Error in delete_all_emojis: ${err.message}`);
-                            try { await interaction.editReply({ content: '❌ ' + await t('An error occurred while executing this command.', langCode), components: [] }).catch(() => {}); } catch (e) {}
+                            const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
+                            if (interaction.replied || interaction.deferred) {
+                                await interaction.editReply({ content: errMsg, components: [] }).catch(() => {});
+                            } else {
+                                await interaction.reply({ content: errMsg, flags: 64 }).catch(() => {});
+                            }
                         });
                         await interaction.followUp({ content: `<@${interaction.user.id}> ✅ ` + await t('Your request to delete all emojis was approved.', langCode) }).catch(() => {});
                     } else {
@@ -439,7 +444,12 @@ client.on('interactionCreate', async interaction => {
 
             await deleteallemojis.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in delete_all_emojis: ${err.message}`);
-                try { await interaction.editReply({ content: '❌ ' + await t('An error occurred while executing this command.', langCode) }).catch(() => {}); } catch (e) {}
+                const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
+                if (interaction.replied || interaction.deferred) {
+                    await interaction.editReply({ content: errMsg }).catch(() => {});
+                } else {
+                    await interaction.reply({ content: errMsg, flags: 64 }).catch(() => {});
+                }
             });
         }
         else if (interaction.commandName === 'delete_all_stickers') {
@@ -490,10 +500,15 @@ client.on('interactionCreate', async interaction => {
             });
         }
         else if (interaction.commandName === 'delete_permission') {
-            await interaction.deferReply();
+            await interaction.deferReply().catch(() => {});
             await deletepermission.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in delete_permission: ${err.message}`);
-                try { await interaction.editReply({ content: '❌ ' + await t('An error occurred while executing this command.', langCode) }).catch(() => {}); } catch (e) {}
+                const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
+                if (interaction.deferred || interaction.replied) {
+                    await interaction.editReply({ content: errMsg }).catch(() => {});
+                } else {
+                    await interaction.reply({ content: errMsg, flags: 64 }).catch(() => {});
+                }
             });
         }
         else if (interaction.commandName === 'emoji_permission') {

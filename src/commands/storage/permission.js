@@ -32,11 +32,11 @@ async function execute(interaction, langCode) {
             await i.deferUpdate().catch(() => {});
             const db = require('../../utils/database');
             if (i.customId === 'allow') {
-                await db.setServerPermission(interaction.guild.id, true).catch(() => {});
+                await db.setEmojiPermission(interaction.guild.id, true).catch(() => {});
                 const e = new EmbedBuilder().setTitle('✅ ' + await t('Permission Granted', langCode)).setDescription(await t('Bot can suggest emojis from this server.', langCode)).setColor('#ADD8E6');
                 await i.editReply({ embeds: [e], components: [] }).catch(() => {});
             } else {
-                await db.setServerPermission(interaction.guild.id, false).catch(() => {});
+                await db.setEmojiPermission(interaction.guild.id, false).catch(() => {});
                 const e = new EmbedBuilder().setTitle('❌ ' + await t('Permission Denied', langCode)).setDescription(await t('Bot will NOT suggest emojis.', langCode)).setColor('#FF0000');
                 await i.editReply({ embeds: [e], components: [] }).catch(() => {});
             }

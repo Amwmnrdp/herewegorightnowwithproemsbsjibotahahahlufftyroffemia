@@ -125,7 +125,7 @@ async function execute(interaction, langCode, client) {
                             const allEmoji = Array.from(client.guilds.cache.values()).flatMap(g => Array.from(g.emojis.cache.values()));
                             const emojiObj = allEmoji.find(em => em.id === e.id);
                             if (emojiObj && !interaction.guild.emojis.cache.find(em => em.name === emojiObj.name)) {
-                                await interaction.guild.emojis.create({ attachment: emojiObj.imageURL(), name: emojiObj.name });
+                                await interaction.guild.emojis.create({ attachment: emojiObj.url, name: emojiObj.name });
                                 added++;
                             }
                         } catch (err) { console.error('Error adding emoji:', err); }

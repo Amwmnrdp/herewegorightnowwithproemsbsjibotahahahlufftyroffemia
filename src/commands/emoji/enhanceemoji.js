@@ -62,7 +62,7 @@ async function execute(interaction, langCode) {
         const embed = new EmbedBuilder()
             .setDescription('✨ ' + successText + `\n**Name:** ${emojiName}`)
             .setColor('#ADD8E6')
-            .setImage(newEmoji.imageURL())
+            .setImage(newEmoji.url)
             .setFooter({ text: `${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
         
         await interaction.editReply({ embeds: [embed] });

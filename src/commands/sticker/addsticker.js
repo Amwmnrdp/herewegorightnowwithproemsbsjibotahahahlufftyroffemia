@@ -51,7 +51,7 @@ async function execute(interaction, langCode) {
 
             const stickerName = name || foundSticker.name;
             const newSticker = await interaction.guild.stickers.create({
-                file: foundSticker.imageURL(),
+                file: foundSticker.url,
                 name: stickerName,
                 tags: foundSticker.tags || 'emoji'
             });

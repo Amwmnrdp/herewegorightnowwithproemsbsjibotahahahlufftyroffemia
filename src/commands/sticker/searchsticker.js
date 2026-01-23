@@ -42,7 +42,7 @@ async function execute(interaction, langCode, client) {
     const embed = new EmbedBuilder()
         .setTitle('🔍 ' + await t('Sticker Search Result', langCode))
         .setDescription(await t('Found this sticker. Would you like to add it?', langCode) + `\n\n**${foundSticker.name}**`)
-        .setImage(foundSticker.imageURL())
+        .setImage(foundSticker.url)
         .setColor('#00FFFF')
         .setFooter({ text: `${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
 
@@ -71,7 +71,7 @@ async function execute(interaction, langCode, client) {
             
             if (i.customId === 'confirm_sticker_search_add') {
                 try {
-                    await interaction.guild.stickers.create({ file: foundSticker.imageURL(), name: foundSticker.name, tags: foundSticker.tags || 'emoji' });
+                    await interaction.guild.stickers.create({ file: foundSticker.url, name: foundSticker.name, tags: foundSticker.tags || 'emoji' });
                     const successEmbed = new EmbedBuilder()
                         .setDescription('✅ ' + await t('Successfully added the sticker!', langCode))
                         .setColor('#00FFFF');
