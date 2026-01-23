@@ -53,14 +53,14 @@ async function execute(interaction, langCode, client) {
         console.error('⚠️ Warning: Could not add reactions:', error.message);
     }
 
-    const storedLangCode = langCode;
-    const filter = (reaction, user) => ['✅', '❌'].includes(reaction.emoji.name) && user.id === interaction.user.id;
-    const collector = msg.createReactionCollector({ filter, max: 1, time: 180000 });
+        const storedLangCode = langCode;
+        const filter = (reaction, user) => ['✅', '❌'].includes(reaction.emoji.name) && user.id === interaction.user.id;
+        const collector = msg.createReactionCollector({ filter, max: 1, time: 180000 });
 
-    collector.on('collect', async (reaction, user) => {
-        try {
-            // Check if interaction is still valid before responding
-            if (reaction.emoji.name === '✅') {
+        collector.on('collect', async (reaction, user) => {
+            try {
+                // No i.deferUpdate() needed for reaction collectors as they don't have interactions
+                if (reaction.emoji.name === '✅') {
                 for (const emoji of emojis) {
                     if (!interaction.guild.emojis.cache.find(e => e.name === emoji.name)) {
                         try {
