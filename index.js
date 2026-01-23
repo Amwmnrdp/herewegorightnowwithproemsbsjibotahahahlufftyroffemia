@@ -420,19 +420,23 @@ client.on('interactionCreate', async interaction => {
             const deletePermEnabled = perms ? perms.delete_permission_enabled : true;
             
             if (!deletePermEnabled && interaction.user.id !== interaction.guild.ownerId) {
-                const embed = new EmbedBuilder()
+                const approvalEmbed = new EmbedBuilder()
                     .setTitle('🛡️ ' + await t('Approval Required', langCode))
                     .setDescription(`**${interaction.user.displayName} (@${interaction.user.username})** ` + await t('wants to delete all emojis.', langCode) + `\n\n**${await t('Do you approve?', langCode)}**`)
                     .setColor('#FFA500')
-                    .setFooter({ text: await t('30-minute timeout for owner to respond.', langCode) });
+                    .setFooter({ text: await t('3-minute timeout for owner to respond.', langCode) });
 
                 const buttons = new ActionRowBuilder().addComponents(
                     new ButtonBuilder().setCustomId('approve_delete_emojis').setLabel(await t('Allow', langCode)).setStyle(ButtonStyle.Success),
                     new ButtonBuilder().setCustomId('deny_delete_emojis').setLabel(await t('Deny', langCode)).setStyle(ButtonStyle.Danger)
                 );
 
-                const approvalMsg = await interaction.channel.send({ content: `<@${interaction.guild.ownerId}>`, embeds: [embed], components: [buttons] });
-                await interaction.editReply({ content: '✅ ' + await t('Approval request sent to the server owner.', langCode) }).catch(() => {});
+                const approvalMsg = await interaction.channel.send({ content: `<@${interaction.guild.ownerId}>`, embeds: [approvalEmbed], components: [buttons] });
+                
+                const waitEmbed = new EmbedBuilder()
+                    .setDescription('⏳ ' + await t('Approval request sent to the server owner.', langCode))
+                    .setColor('#FFFF00');
+                await interaction.editReply({ embeds: [waitEmbed] }).catch(() => {});
                 
                 const filter = i => i.user.id === interaction.guild.ownerId && (i.customId === 'approve_delete_emojis' || i.customId === 'deny_delete_emojis');
                 const collector = approvalMsg.createMessageComponentCollector({ filter, time: 180000 });
@@ -440,19 +444,37 @@ client.on('interactionCreate', async interaction => {
                 collector.on('collect', async i => {
                     if (!i.deferred && !i.replied) await i.deferUpdate().catch(() => {});
                     if (i.customId === 'approve_delete_emojis') {
+                        const processingEmbed = new EmbedBuilder()
+                            .setDescription('⏳ ' + await t('Processing request... Please wait.', langCode))
+                            .setColor('#FFFF00');
+                        await interaction.editReply({ embeds: [processingEmbed], components: [] }).catch(() => {});
+
                         await deleteallemojis.execute(interaction, langCode).catch(async err => {
                             console.error(`Error in delete_all_emojis: ${err.message}`);
-                            const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
-                            if (interaction.replied || interaction.deferred) {
-                                await interaction.editReply({ content: errMsg, components: [] }).catch(() => {});
-                            } else {
-                                await interaction.reply({ content: errMsg, flags: 64 }).catch(() => {});
-                            }
+                            const errorEmbed = new EmbedBuilder()
+                                .setDescription('❌ ' + await t('An error occurred while executing this command.', langCode))
+                                .setColor('#FF0000');
+                            await interaction.editReply({ embeds: [errorEmbed], components: [] }).catch(() => {});
                         });
                         await interaction.followUp({ content: `<@${interaction.user.id}> ✅ ` + await t('Your request to delete all emojis was approved.', langCode) }).catch(() => {});
                     } else {
-                        const denyEmbed = new EmbedBuilder().setDescription('❌ ' + await t('Mass deletion request rejected.', langCode)).setColor('#FF0000');
+                        const denyEmbed = new EmbedBuilder()
+                            .setDescription('❌ ' + await t('Mass deletion request rejected.', langCode))
+                            .setColor('#FF0000');
                         await interaction.editReply({ embeds: [denyEmbed], components: [] }).catch(() => {});
+                        
+                        try {
+                            const owner = await interaction.guild.fetchOwner();
+                            const warningEmbed = new EmbedBuilder()
+                                .setTitle('⚠️ ' + await t('Mass Deletion Denied', langCode))
+                                .setDescription(await t('An administrator tried to delete all emojis, but the request was denied.', langCode) + `\n\n**Admin:** ${interaction.user.tag}`)
+                                .setColor('#FF0000')
+                                .setTimestamp();
+                            await owner.send({ embeds: [warningEmbed] }).catch(() => {});
+                        } catch (e) {
+                            console.error('Failed to send DM to owner:', e.message);
+                        }
+
                         await interaction.followUp({ content: `<@${interaction.user.id}> ❌ ` + await t('Your request to delete all emojis was rejected.', langCode) }).catch(() => {});
                     }
                     collector.stop();
@@ -460,14 +482,17 @@ client.on('interactionCreate', async interaction => {
                 return;
             }
 
+            const deletingEmbed = new EmbedBuilder()
+                .setDescription('⏳ ' + await t('Deleting all emojis... Please wait.', langCode))
+                .setColor('#FFFF00');
+            await interaction.editReply({ embeds: [deletingEmbed] }).catch(() => {});
+
             await deleteallemojis.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in delete_all_emojis: ${err.message}`);
-                const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
-                if (interaction.replied || interaction.deferred) {
-                    await interaction.editReply({ content: errMsg }).catch(() => {});
-                } else {
-                    await interaction.reply({ content: errMsg, flags: 64 }).catch(() => {});
-                }
+                const errorEmbed = new EmbedBuilder()
+                    .setDescription('❌ ' + await t('An error occurred while executing this command.', langCode))
+                    .setColor('#FF0000');
+                await interaction.editReply({ embeds: [errorEmbed] }).catch(() => {});
             });
         }
         else if (interaction.commandName === 'delete_all_stickers') {
@@ -477,19 +502,23 @@ client.on('interactionCreate', async interaction => {
             const deletePermEnabled = perms ? perms.delete_permission_enabled : true;
 
             if (!deletePermEnabled && interaction.user.id !== interaction.guild.ownerId) {
-                const embed = new EmbedBuilder()
+                const approvalEmbed = new EmbedBuilder()
                     .setTitle('🛡️ ' + await t('Approval Required', langCode))
                     .setDescription(`**${interaction.user.displayName} (@${interaction.user.username})** ` + await t('wants to delete all stickers.', langCode) + `\n\n**${await t('Do you approve?', langCode)}**`)
                     .setColor('#FFA500')
-                    .setFooter({ text: await t('30-minute timeout for owner to respond.', langCode) });
+                    .setFooter({ text: await t('3-minute timeout for owner to respond.', langCode) });
 
                 const buttons = new ActionRowBuilder().addComponents(
                     new ButtonBuilder().setCustomId('approve_delete_stickers').setLabel(await t('Allow', langCode)).setStyle(ButtonStyle.Success),
                     new ButtonBuilder().setCustomId('deny_delete_stickers').setLabel(await t('Deny', langCode)).setStyle(ButtonStyle.Danger)
                 );
 
-                const approvalMsg = await interaction.channel.send({ content: `<@${interaction.guild.ownerId}>`, embeds: [embed], components: [buttons] });
-                await interaction.editReply({ content: '✅ ' + await t('Approval request sent to the server owner.', langCode) }).catch(() => {});
+                const approvalMsg = await interaction.channel.send({ content: `<@${interaction.guild.ownerId}>`, embeds: [approvalEmbed], components: [buttons] });
+                
+                const waitEmbed = new EmbedBuilder()
+                    .setDescription('⏳ ' + await t('Approval request sent to the server owner.', langCode))
+                    .setColor('#FFFF00');
+                await interaction.editReply({ embeds: [waitEmbed] }).catch(() => {});
                 
                 const filter = i => i.user.id === interaction.guild.ownerId && (i.customId === 'approve_delete_stickers' || i.customId === 'deny_delete_stickers');
                 const collector = approvalMsg.createMessageComponentCollector({ filter, time: 180000 });
@@ -497,14 +526,37 @@ client.on('interactionCreate', async interaction => {
                 collector.on('collect', async i => {
                     if (!i.deferred && !i.replied) await i.deferUpdate().catch(() => {});
                     if (i.customId === 'approve_delete_stickers') {
+                        const processingEmbed = new EmbedBuilder()
+                            .setDescription('⏳ ' + await t('Processing request... Please wait.', langCode))
+                            .setColor('#FFFF00');
+                        await interaction.editReply({ embeds: [processingEmbed], components: [] }).catch(() => {});
+
                         await deleteallstickers.execute(interaction, langCode).catch(async err => {
                             console.error(`Error in delete_all_stickers: ${err.message}`);
-                            try { await interaction.editReply({ content: '❌ ' + await t('An error occurred while executing this command.', langCode), components: [] }).catch(() => {}); } catch (e) {}
+                            const errorEmbed = new EmbedBuilder()
+                                .setDescription('❌ ' + await t('An error occurred while executing this command.', langCode))
+                                .setColor('#FF0000');
+                            await interaction.editReply({ embeds: [errorEmbed], components: [] }).catch(() => {});
                         });
                         await interaction.followUp({ content: `<@${interaction.user.id}> ✅ ` + await t('Your request to delete all stickers was approved.', langCode) }).catch(() => {});
                     } else {
-                        const denyEmbed = new EmbedBuilder().setDescription('❌ ' + await t('Mass deletion request rejected.', langCode)).setColor('#FF0000');
+                        const denyEmbed = new EmbedBuilder()
+                            .setDescription('❌ ' + await t('Mass deletion request rejected.', langCode))
+                            .setColor('#FF0000');
                         await interaction.editReply({ embeds: [denyEmbed], components: [] }).catch(() => {});
+                        
+                        try {
+                            const owner = await interaction.guild.fetchOwner();
+                            const warningEmbed = new EmbedBuilder()
+                                .setTitle('⚠️ ' + await t('Mass Deletion Denied', langCode))
+                                .setDescription(await t('An administrator tried to delete all stickers, but the request was denied.', langCode) + `\n\n**Admin:** ${interaction.user.tag}`)
+                                .setColor('#FF0000')
+                                .setTimestamp();
+                            await owner.send({ embeds: [warningEmbed] }).catch(() => {});
+                        } catch (e) {
+                            console.error('Failed to send DM to owner:', e.message);
+                        }
+
                         await interaction.followUp({ content: `<@${interaction.user.id}> ❌ ` + await t('Your request to delete all stickers was rejected.', langCode) }).catch(() => {});
                     }
                     collector.stop();
@@ -512,9 +564,17 @@ client.on('interactionCreate', async interaction => {
                 return;
             }
 
+            const deletingEmbed = new EmbedBuilder()
+                .setDescription('⏳ ' + await t('Deleting all stickers... Please wait.', langCode))
+                .setColor('#FFFF00');
+            await interaction.editReply({ embeds: [deletingEmbed] }).catch(() => {});
+
             await deleteallstickers.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in delete_all_stickers: ${err.message}`);
-                try { await interaction.editReply({ content: '❌ ' + await t('An error occurred while executing this command.', langCode) }).catch(() => {}); } catch (e) {}
+                const errorEmbed = new EmbedBuilder()
+                    .setDescription('❌ ' + await t('An error occurred while executing this command.', langCode))
+                    .setColor('#FF0000');
+                await interaction.editReply({ embeds: [errorEmbed] }).catch(() => {});
             });
         }
         else if (interaction.commandName === 'delete_permission') {
