@@ -312,7 +312,14 @@ client.on('interactionCreate', async interaction => {
     };
 
     try {
-        if (interaction.commandName === 'update') {
+        if (interaction.commandName === 'ping') {
+            await safeDefer();
+            const ping = require('./src/commands/storage/ping');
+            await ping.execute(interaction, langCode).catch(async err => {
+                console.error(`Error in ping: ${err.message}`);
+            });
+        }
+        else if (interaction.commandName === 'update') {
             if (interaction.guild.id !== '1118153648938160191' || 
                 interaction.channel.id !== '1456609646205861938' || 
                 interaction.user.id !== '815701106235670558') {

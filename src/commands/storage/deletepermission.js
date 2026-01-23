@@ -22,7 +22,7 @@ async function execute(interaction, langCode) {
     const embed = new EmbedBuilder()
         .setTitle('🔐 ' + await t('Delete Permission Settings', langCode))
         .setDescription(await t('Enable direct mass deletion of emojis/stickers for administrators? If disabled, owner approval will be required.', langCode) + 
-            `\n\n**${await t('Current Status:', langCode)}** ${currentState ? '✅ ' + await t('Enabled', langCode) : '❌ ' + await t('Disabled', langCode)}`)
+            `\n\n**${await t('current now:', langCode)}** ${currentState ? await t('Allow', langCode) : await t('Deny', langCode)}`)
         .setColor('#ADD8E6');
 
     await interaction.editReply({ embeds: [embed], components: [buttonRow] });

@@ -2,24 +2,34 @@ const { EmbedBuilder } = require('discord.js');
 const { t } = require('../../utils/languages');
 
 async function execute(interaction, langCode) {
-    // 1. Check Server Permissions
-    const hasManageEmoji = interaction.member.permissions.has('ManageGuildExpressions') ||
-                           interaction.member.permissions.has('ManageEmojisAndStickers');
-    const permStatus = hasManageEmoji ? '🟢' : '🔴';
+    const db = require('../../utils/database');
+    const perms = await db.getServerPermissions(interaction.guild.id);
+    
+    // 1. Emoji Permission
+    const emojiAllowed = perms ? perms.emoji_permission_enabled : true;
+    const emojiStatus = emojiAllowed ? '✅ ' + await t('Granted', langCode) : '❌ ' + await t('Denied', langCode);
+    
+    // 2. Sticker Permission
+    const stickerAllowed = perms ? perms.sticker_permission_enabled : true;
+    const stickerStatus = stickerAllowed ? '✅ ' + await t('Granted', langCode) : '❌ ' + await t('Denied', langCode);
+    
+    // 3. Delete Permission
+    const deleteAllowed = perms ? perms.delete_permission_enabled : true;
+    const deleteStatus = deleteAllowed ? '✅ ' + await t('Granted', langCode) : '❌ ' + await t('Denied', langCode);
 
-    // 2. Ping
-    const ping = interaction.client.ws.ping;
     const botStatus = await t('Bot Status', langCode);
-    const serverPerms = await t('Server Permissions', langCode);
-    const pingText = await t('Ping', langCode);
+    const emojiPermText = await t('Emoji Permission', langCode);
+    const stickerPermText = await t('Sticker Permission', langCode);
+    const deletePermText = await t('Delete Permission', langCode);
 
     const embed = new EmbedBuilder()
         .setTitle('📊 ' + botStatus)
         .addFields(
-            { name: serverPerms, value: permStatus, inline: true },
-            { name: pingText, value: `${ping}ms`, inline: true }
+            { name: emojiPermText, value: emojiStatus, inline: false },
+            { name: stickerPermText, value: stickerStatus, inline: false },
+            { name: deletePermText, value: deleteStatus, inline: false }
         )
-        .setColor(hasManageEmoji ? '#00FF00' : '#FF0000')
+        .setColor('#00FFFF')
         .setTimestamp();
 
     await interaction.editReply({ embeds: [embed] }).catch(() => {});

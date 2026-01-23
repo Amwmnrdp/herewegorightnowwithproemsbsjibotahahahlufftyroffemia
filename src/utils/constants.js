@@ -30,6 +30,10 @@ const LEGACY_LANGUAGE_MAP = {
 
 const COMMAND_DEFINITIONS = [
     {
+        name: 'ping',
+        description: 'Check the bot\'s response speed'
+    },
+    {
         name: 'get_emoji_id',
         description: 'Get the ID of a specific emoji',
         options: [
