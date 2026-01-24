@@ -741,6 +741,16 @@ client.on('interactionCreate', async interaction => {
                 }
             });
         }
+        else if (interaction.commandName === 'add_to_pack') {
+            await addtopack.execute(interaction, langCode).catch(async err => {
+                console.error(`Error in add_to_pack: ${err.message}`);
+            });
+        }
+        else if (interaction.commandName === 'delete_from_pack') {
+            await deletefrompack.execute(interaction, langCode).catch(async err => {
+                console.error(`Error in delete_from_pack: ${err.message}`);
+            });
+        }
         else if (interaction.commandName === 'suggest_emojis') {
             await safeDefer();
             await suggestemojis.execute(interaction, langCode, client).catch(async err => {
