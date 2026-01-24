@@ -3,6 +3,10 @@ const { t } = require('../../utils/languages');
 const { allowedServers } = require('../../utils/permissions');
 
 async function execute(interaction, langCode) {
+    if (!interaction.replied && !interaction.deferred) {
+        await interaction.deferReply().catch(() => {});
+    }
+
     if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
         const embed = new EmbedBuilder()
             .setDescription('❌ ' + await t('Need ADMINISTRATOR permission!', langCode))

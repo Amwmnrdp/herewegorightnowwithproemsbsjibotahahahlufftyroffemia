@@ -5,6 +5,9 @@ const { allowedServers } = require('../../utils/permissions');
 let suggestedEmojis = [];
 
 async function execute(interaction, langCode, client) {
+    if (!interaction.replied && !interaction.deferred) {
+        await interaction.deferReply().catch(() => {});
+    }
     if (!interaction.member.permissions.has(PermissionsBitField.Flags.ManageEmojisAndStickers)) {
         const embed = new EmbedBuilder().setDescription('❌ ' + await t('Need Manage Emojis permission!', langCode)).setColor('#FF0000');
         await interaction.editReply({ embeds: [embed] });
@@ -89,7 +92,7 @@ async function execute(interaction, langCode, client) {
                 for (const emoji of emojis) {
                     if (!interaction.guild.emojis.cache.find(e => e.name === emoji.name)) {
                         try {
-                            await interaction.guild.emojis.create({ attachment: emoji.url, name: emoji.name });
+                            await interaction.guild.emojis.create({ attachment: emoji.imageURL(), name: emoji.name });
                             added++;
                         } catch (error) {
                             console.error(`⚠️ Warning: Could not add emoji ${emoji.name}:`, error.message);

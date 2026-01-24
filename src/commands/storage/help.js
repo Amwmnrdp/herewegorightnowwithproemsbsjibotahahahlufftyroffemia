@@ -2,6 +2,10 @@ const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder } = require('dis
 const { t } = require('../../utils/languages');
 
 async function execute(interaction, langCode) {
+    if (!interaction.replied && !interaction.deferred) {
+        await interaction.deferReply().catch(() => {});
+    }
+
     // Select Menu
     const selectMenu = new StringSelectMenuBuilder()
         .setCustomId('help_category')

@@ -2,6 +2,9 @@ const { EmbedBuilder } = require('discord.js');
 const { t } = require('../../utils/languages');
 
 async function execute(interaction, langCode) {
+    if (!interaction.replied && !interaction.deferred) {
+        await interaction.deferReply().catch(() => {});
+    }
     try {
         const emoji = interaction.options.getString('emoji');
         const match = emoji.match(/<a?:.+:(\d+)>/) || emoji.match(/^(\d+)$/);

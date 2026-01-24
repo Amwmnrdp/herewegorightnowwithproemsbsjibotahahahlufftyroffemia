@@ -2,6 +2,10 @@ const { EmbedBuilder, PermissionsBitField } = require('discord.js');
 const { t } = require('../../utils/languages');
 
 async function execute(interaction, langCode) {
+    if (!interaction.replied && !interaction.deferred) {
+        await interaction.deferReply().catch(() => {});
+    }
+    
     if (!interaction.member.permissions.has(PermissionsBitField.Flags.ManageEmojisAndStickers)) {
         const embed = new EmbedBuilder().setDescription('❌ ' + await t('Need permission!', langCode)).setColor('#FF0000');
         await interaction.editReply({ embeds: [embed] });

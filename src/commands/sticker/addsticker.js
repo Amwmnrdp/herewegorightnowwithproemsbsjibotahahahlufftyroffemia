@@ -2,6 +2,10 @@ const { EmbedBuilder } = require('discord.js');
 const { t } = require('../../utils/languages');
 
 async function execute(interaction, langCode) {
+    if (!interaction.replied && !interaction.deferred) {
+        await interaction.deferReply().catch(() => {});
+    }
+    
     const name = interaction.options.getString('name');
     const stickerId = interaction.options.getString('sticker_id');
 

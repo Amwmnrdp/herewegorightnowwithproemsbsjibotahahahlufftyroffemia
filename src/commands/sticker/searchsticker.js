@@ -2,6 +2,10 @@ const { EmbedBuilder, PermissionsBitField, ActionRowBuilder, ButtonBuilder, Butt
 const { t } = require('../../utils/languages');
 
 async function execute(interaction, langCode, client) {
+    if (!interaction.replied && !interaction.deferred) {
+        await interaction.deferReply().catch(() => {});
+    }
+    
     const hasManageEmoji = interaction.member.permissions.has(PermissionsBitField.Flags.ManageGuildExpressions) ||
                            interaction.member.permissions.has(PermissionsBitField.Flags.ManageEmojisAndStickers);
     

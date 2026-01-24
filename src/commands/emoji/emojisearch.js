@@ -2,6 +2,9 @@ const { EmbedBuilder, PermissionsBitField, ActionRowBuilder, ButtonBuilder, Butt
 const { t } = require('../../utils/languages');
 
 async function execute(interaction, langCode, client) {
+    if (!interaction.replied && !interaction.deferred) {
+        await interaction.deferReply().catch(() => {});
+    }
     const hasManageEmoji = interaction.member.permissions.has(PermissionsBitField.Flags.ManageGuildExpressions) ||
                            interaction.member.permissions.has(PermissionsBitField.Flags.ManageEmojisAndStickers);
     
@@ -74,7 +77,7 @@ async function execute(interaction, langCode, client) {
                 let added = 0;
                 for (const emoji of foundEmojis) {
                     try {
-                        await interaction.guild.emojis.create({ attachment: emoji.url, name: emoji.name });
+                        await interaction.guild.emojis.create({ attachment: emoji.imageURL(), name: emoji.name });
                         added++;
                     } catch (err) {
                         console.error('Error adding emoji:', err);

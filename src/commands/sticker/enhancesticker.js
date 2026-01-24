@@ -4,6 +4,10 @@ const sharp = require('sharp');
 const axios = require('axios');
 
 async function execute(interaction, langCode) {
+    if (!interaction.replied && !interaction.deferred) {
+        await interaction.deferReply().catch(() => {});
+    }
+    
     const hasManageEmoji = interaction.member.permissions.has(PermissionsBitField.Flags.ManageGuildExpressions) ||
                            interaction.member.permissions.has(PermissionsBitField.Flags.ManageEmojisAndStickers);
     

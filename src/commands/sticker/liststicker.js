@@ -2,6 +2,10 @@ const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('
 const { t } = require('../../utils/languages');
 
 async function execute(interaction, langCode) {
+    if (!interaction.replied && !interaction.deferred) {
+        await interaction.deferReply().catch(() => {});
+    }
+    
     const stickers = Array.from(interaction.guild.stickers.cache.values());
     const stickersTitle = await t('Stickers', langCode);
     

@@ -2,6 +2,9 @@ const { EmbedBuilder } = require('discord.js');
 const { t } = require('../../utils/languages');
 
 async function execute(interaction, langCode) {
+    if (!interaction.replied && !interaction.deferred) {
+        await interaction.deferReply().catch(() => {});
+    }
     const emojiInput = interaction.options.getString('emoji');
     let emojiUrl = '';
 

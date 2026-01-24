@@ -2,6 +2,9 @@ const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('
 const { t } = require('../../utils/languages');
 
 async function execute(interaction, langCode) {
+    if (!interaction.replied && !interaction.deferred) {
+        await interaction.deferReply().catch(() => {});
+    }
     const emojis = Array.from(interaction.guild.emojis.cache.values());
     const pageText = await t('Page', langCode);
     const emojisTitle = await t('Emojis', langCode);

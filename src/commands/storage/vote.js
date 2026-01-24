@@ -2,6 +2,10 @@ const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('
 const { t } = require('../../utils/languages');
 
 async function execute(interaction, langCode) {
+    if (!interaction.replied && !interaction.deferred) {
+        await interaction.deferReply().catch(() => {});
+    }
+
     const embed = new EmbedBuilder()
         .setTitle('🙏 ' + await t('Thank You!', langCode))
         .setDescription(await t('Thank you for supporting ProEmoji! Your help keeps the bot growing.', langCode))

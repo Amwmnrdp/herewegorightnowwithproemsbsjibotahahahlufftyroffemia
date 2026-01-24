@@ -2,6 +2,10 @@ const { EmbedBuilder } = require('discord.js');
 const { t } = require('../../utils/languages');
 
 async function execute(interaction, langCode) {
+    if (!interaction.replied && !interaction.deferred) {
+        await interaction.deferReply().catch(() => {});
+    }
+    
     const titleText = await t('Sticker to Image', langCode);
     const descText = await t('Reply to this message using the sticker you want to convert back into an image file.', langCode);
     const footerPrefix = await t('Waiting for your sticker...', langCode);

@@ -4,6 +4,9 @@ const sharp = require('sharp');
 const axios = require('axios');
 
 async function execute(interaction, langCode) {
+    if (!interaction.replied && !interaction.deferred) {
+        await interaction.deferReply().catch(() => {});
+    }
     if (!interaction.member.permissions.has(PermissionsBitField.Flags.ManageEmojisAndStickers)) {
         const embed = new EmbedBuilder().setDescription('❌ ' + await t('Need permission!', langCode)).setColor('#FF0000');
         await interaction.editReply({ embeds: [embed] });
@@ -62,7 +65,7 @@ async function execute(interaction, langCode) {
         const embed = new EmbedBuilder()
             .setDescription('✨ ' + successText + `\n**Name:** ${emojiName}`)
             .setColor('#ADD8E6')
-            .setImage(newEmoji.url)
+            .setImage(newEmoji.imageURL())
             .setFooter({ text: `${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
         
         await interaction.editReply({ embeds: [embed] });

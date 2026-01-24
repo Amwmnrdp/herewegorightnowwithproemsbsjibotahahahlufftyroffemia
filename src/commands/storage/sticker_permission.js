@@ -3,6 +3,10 @@ const { t } = require('../../utils/languages');
 const db = require('../../utils/database');
 
 async function execute(interaction, langCode) {
+    if (!interaction.replied && !interaction.deferred) {
+        await interaction.deferReply().catch(() => {});
+    }
+
     if (interaction.user.id !== interaction.guild.ownerId) {
         const embed = new EmbedBuilder()
             .setDescription('❌ ' + await t('Only the server owner can use this command.', langCode))

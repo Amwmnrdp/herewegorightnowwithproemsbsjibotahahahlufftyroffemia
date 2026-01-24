@@ -2,6 +2,9 @@ const { EmbedBuilder } = require('discord.js');
 const { t } = require('../../utils/languages');
 
 async function execute(interaction, langCode, convertedStickersToEmojis) {
+    if (!interaction.replied && !interaction.deferred) {
+        await interaction.deferReply().catch(() => {});
+    }
     const emojisInput = interaction.options.getString('emojis');
     // Extract all emojis like <a:name:id> or <:name:id>
     const emojiMatches = Array.from(emojisInput.matchAll(/<(a)?:\w+:(\d+)>/g));

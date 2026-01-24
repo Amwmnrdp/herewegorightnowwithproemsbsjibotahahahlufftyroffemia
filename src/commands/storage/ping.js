@@ -2,6 +2,10 @@ const { EmbedBuilder } = require('discord.js');
 const { t } = require('../../utils/languages');
 
 async function execute(interaction, langCode) {
+    if (!interaction.replied && !interaction.deferred) {
+        await interaction.deferReply().catch(() => {});
+    }
+
     const start = Date.now();
     
     const pingEmbed = new EmbedBuilder()

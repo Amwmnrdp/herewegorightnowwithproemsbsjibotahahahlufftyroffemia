@@ -5,6 +5,10 @@ const sharp = require('sharp');
 const db = require('../../utils/database');
 
 async function execute(interaction, langCode, convertedImagesToStickers) {
+    if (!interaction.replied && !interaction.deferred) {
+        await interaction.deferReply().catch(() => {});
+    }
+    
     const nameOption = interaction.options.getString('name');
     const urlOption = interaction.options.getString('url');
     const attachment = interaction.options.getAttachment('attachment');

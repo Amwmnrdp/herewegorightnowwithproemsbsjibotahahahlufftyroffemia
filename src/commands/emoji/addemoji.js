@@ -4,6 +4,9 @@ const { t } = require('../../utils/languages');
 const db = require('../../utils/database');
 
 async function execute(interaction, langCode) {
+    if (!interaction.replied && !interaction.deferred) {
+        await interaction.deferReply().catch(() => {});
+    }
     const emojiInput = interaction.options.getString('emoji');
     const customName = interaction.options.getString('name');
     

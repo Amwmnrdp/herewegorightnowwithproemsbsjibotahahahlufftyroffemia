@@ -2,6 +2,10 @@ const { EmbedBuilder } = require('discord.js');
 const { t } = require('../../utils/languages');
 
 async function execute(interaction, langCode) {
+    if (!interaction.replied && !interaction.deferred) {
+        await interaction.deferReply().catch(() => {});
+    }
+
     const db = require('../../utils/database');
     const perms = await db.getServerPermissions(interaction.guild.id);
     

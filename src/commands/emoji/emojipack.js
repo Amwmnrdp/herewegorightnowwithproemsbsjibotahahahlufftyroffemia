@@ -12,6 +12,9 @@ function getEmojiLimit(premiumTier) {
 }
 
 async function execute(interaction, langCode, client) {
+    if (!interaction.replied && !interaction.deferred) {
+        await interaction.deferReply().catch(() => {});
+    }
     const mainEmbed = new EmbedBuilder()
         .setTitle('🎁 ' + await t('Emoji Pack', langCode))
         .setDescription(await t('Select an emoji pack category to view and add emojis:', langCode))
@@ -150,7 +153,7 @@ async function execute(interaction, langCode, client) {
                             }
 
                             if (emojiObj) {
-                                await interaction.guild.emojis.create({ attachment: emojiObj.url, name: emojiObj.name });
+                                await interaction.guild.emojis.create({ attachment: emojiObj.imageURL(), name: emojiObj.name });
                                 added++;
                             } else {
                                 // If not in cache, attempt to use the CDN URL directly
