@@ -76,7 +76,8 @@ async function execute(interaction, langCode, client) {
                 const emojiFormat = found.animated ? `<a:${found.name}:${found.id}>` : `<:${found.name}:${found.id}>`;
                 emojiList.push(emojiFormat);
             } else {
-                emojiList.push(`:${e.emoji_name}:`);
+                // Try to use a common format if not found in cache, assuming non-animated if unknown
+                emojiList.push(`<:emoji:${e.emoji_id}>`);
             }
         }
 
@@ -147,8 +148,15 @@ async function execute(interaction, langCode, client) {
                                 const found = g.emojis.cache.get(e.emoji_id);
                                 if (found) { emojiObj = found; break; }
                             }
+
                             if (emojiObj) {
                                 await interaction.guild.emojis.create({ attachment: emojiObj.url, name: emojiObj.name });
+                                added++;
+                            } else {
+                                // If not in cache, attempt to use the CDN URL directly
+                                // We'll try PNG first as it's most common
+                                const cdnUrl = `https://cdn.discordapp.com/emojis/${e.emoji_id}.png`;
+                                await interaction.guild.emojis.create({ attachment: cdnUrl, name: e.emoji_name });
                                 added++;
                             }
                         } catch (err) { 
