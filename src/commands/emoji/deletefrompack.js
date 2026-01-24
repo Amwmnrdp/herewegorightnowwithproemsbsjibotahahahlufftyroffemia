@@ -8,10 +8,31 @@ async function execute(interaction, langCode) {
         return await interaction.reply({ content: errMsg, flags: MessageFlags.Ephemeral });
     }
 
+    await interaction.deferReply();
+
     const emojiInput = interaction.options.getString('emoji');
     const packName = interaction.options.getString('pack_select');
 
-    await db.removeEmojiFromPack(emojiInput, packName);
+    let emojiId = emojiInput;
+    const emojiMatch = emojiInput.match(/<a?:(\w+):(\d+)>/);
+    if (emojiMatch) {
+        emojiId = emojiMatch[2];
+    }
+
+    const exists = await db.isEmojiInPack(emojiId, packName);
+    if (!exists) {
+        const errorTitle = await t('Emoji Not Found', langCode);
+        const errorMsg = await t('This emoji does not exist in the {pack}.', langCode);
+        
+        const embed = new EmbedBuilder()
+            .setTitle('⚠️ ' + errorTitle)
+            .setDescription(errorMsg.replace('{pack}', packName.charAt(0).toUpperCase() + packName.slice(1) + ' Pack'))
+            .setColor('#FFA500');
+
+        return await interaction.editReply({ embeds: [embed] });
+    }
+
+    await db.removeEmojiFromPack(emojiId, packName);
 
     const successTitle = await t('Success!', langCode);
     const successMsg = await t('Removed {emoji} from {pack} successfully.', langCode);
@@ -21,7 +42,7 @@ async function execute(interaction, langCode) {
         .setDescription(successMsg.replace('{emoji}', emojiInput).replace('{pack}', packName.charAt(0).toUpperCase() + packName.slice(1) + ' Pack'))
         .setColor('#00FF00');
 
-    await interaction.reply({ embeds: [embed] });
+    await interaction.editReply({ embeds: [embed] });
 }
 
 module.exports = { execute };

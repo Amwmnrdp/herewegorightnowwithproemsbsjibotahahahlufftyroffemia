@@ -8,16 +8,30 @@ async function execute(interaction, langCode) {
         return await interaction.reply({ content: errMsg, flags: MessageFlags.Ephemeral });
     }
 
+    await interaction.deferReply();
+
     const emojiStr = interaction.options.getString('emoji');
     const packName = interaction.options.getString('pack_select');
 
-    // Simple emoji parser
     let emojiId = emojiStr;
     let emojiName = emojiStr;
     const emojiMatch = emojiStr.match(/<a?:(\w+):(\d+)>/);
     if (emojiMatch) {
         emojiName = emojiMatch[1];
         emojiId = emojiMatch[2];
+    }
+
+    const exists = await db.isEmojiInPack(emojiId, packName);
+    if (exists) {
+        const errorTitle = await t('Duplicate Emoji', langCode);
+        const errorMsg = await t('This emoji already exists in the {pack}.', langCode);
+        
+        const embed = new EmbedBuilder()
+            .setTitle('⚠️ ' + errorTitle)
+            .setDescription(errorMsg.replace('{pack}', packName.charAt(0).toUpperCase() + packName.slice(1) + ' Pack'))
+            .setColor('#FFA500');
+
+        return await interaction.editReply({ embeds: [embed] });
     }
 
     await db.addEmojiToPack(emojiId, emojiName, packName);
@@ -30,7 +44,7 @@ async function execute(interaction, langCode) {
         .setDescription(successMsg.replace('{emoji}', emojiStr).replace('{pack}', packName.charAt(0).toUpperCase() + packName.slice(1) + ' Pack'))
         .setColor('#00FF00');
 
-    await interaction.reply({ embeds: [embed] });
+    await interaction.editReply({ embeds: [embed] });
 }
 
 module.exports = { execute };

@@ -694,8 +694,7 @@ client.on('interactionCreate', async interaction => {
         }
         else if (interaction.commandName === 'sticker_permission') {
             await safeDefer();
-            const permission = require('./src/commands/storage/permission');
-            await permission.execute(interaction, langCode).catch(async err => {
+            await stickerPermission.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in sticker_permission: ${err.message}`);
                 const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
                 if (interaction.replied || interaction.deferred) {

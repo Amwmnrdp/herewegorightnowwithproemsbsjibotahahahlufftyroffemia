@@ -443,6 +443,14 @@ async function getEmojisByPack(packName) {
     return result.rows;
 }
 
+async function isEmojiInPack(emojiId, packName) {
+    const result = await pool.query(
+        'SELECT * FROM emoji_packs WHERE emoji_id = $1 AND pack_name = $2',
+        [emojiId, packName]
+    );
+    return result.rows.length > 0;
+}
+
 module.exports = {
     pool,
     initDatabase,
@@ -486,5 +494,6 @@ module.exports = {
     setDeletePermission,
     addEmojiToPack,
     removeEmojiFromPack,
-    getEmojisByPack
+    getEmojisByPack,
+    isEmojiInPack
 };
