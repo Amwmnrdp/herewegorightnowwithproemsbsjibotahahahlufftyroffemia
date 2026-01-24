@@ -15,14 +15,14 @@ async function execute(interaction, langCode) {
     const isAllowed = perms ? perms.sticker_permission_enabled : true;
 
     const buttonRow = new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId('allow_sticker').setLabel('✅ ' + await t('Allow', langCode)).setStyle(ButtonStyle.Success).setDisabled(isAllowed),
-        new ButtonBuilder().setCustomId('refuse_sticker').setLabel('❌ ' + await t('Refuse', langCode)).setStyle(ButtonStyle.Danger).setDisabled(!isAllowed)
+        new ButtonBuilder().setCustomId('allow_sticker').setLabel('✅ ' + await t('Allow Stickers', langCode)).setStyle(ButtonStyle.Success).setDisabled(isAllowed),
+        new ButtonBuilder().setCustomId('refuse_sticker').setLabel('❌ ' + await t('Deny Stickers', langCode)).setStyle(ButtonStyle.Danger).setDisabled(!isAllowed)
     );
 
     const embed = new EmbedBuilder()
         .setTitle('🔐 ' + await t('Sticker Permission Settings', langCode))
-        .setDescription(await t('Allow bot to suggest stickers from this server?', langCode))
-        .setColor('#ADD8E6');
+        .setDescription(await t('Allow or deny the bot to suggest stickers in this server.', langCode) + `\n\n**${await t('Current Status', langCode)}:** ` + (isAllowed ? '✅ ' + await t('Allowed', langCode) : '❌ ' + await t('Denied', langCode)))
+        .setColor(isAllowed ? '#ADD8E6' : '#FF0000');
 
     await interaction.editReply({ embeds: [embed], components: [buttonRow] });
 

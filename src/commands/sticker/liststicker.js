@@ -18,7 +18,10 @@ async function execute(interaction, langCode) {
         const embed = new EmbedBuilder()
             .setAuthor({ name: interaction.guild.name, iconURL: interaction.guild.iconURL() })
             .setTitle(`📌 ${stickersTitle}`)
-            .setColor('#FFA500')
+            .setDescription(`**${await t('Name', langCode)}:** ${sticker.name}\n**ID:** ${sticker.id}`)
+            .setImage(sticker.url)
+            .setFooter({ text: `${pageText} ${pageNum + 1}/${stickers.length}` })
+            .setColor('#FFA500');
         return embed;
     };
 

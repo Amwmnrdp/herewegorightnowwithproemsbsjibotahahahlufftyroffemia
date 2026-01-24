@@ -15,14 +15,14 @@ async function execute(interaction, langCode) {
     const isAllowed = perms ? perms.emoji_permission_enabled : true;
 
     const buttonRow = new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId('allow_emoji').setLabel('✅ ' + await t('Allow', langCode)).setStyle(ButtonStyle.Success).setDisabled(isAllowed),
-        new ButtonBuilder().setCustomId('refuse_emoji').setLabel('❌ ' + await t('Refuse', langCode)).setStyle(ButtonStyle.Danger).setDisabled(!isAllowed)
+        new ButtonBuilder().setCustomId('allow_emoji').setLabel('✅ ' + await t('Allow Emojis', langCode)).setStyle(ButtonStyle.Success).setDisabled(isAllowed),
+        new ButtonBuilder().setCustomId('refuse_emoji').setLabel('❌ ' + await t('Deny Emojis', langCode)).setStyle(ButtonStyle.Danger).setDisabled(!isAllowed)
     );
 
     const embed = new EmbedBuilder()
         .setTitle('🔐 ' + await t('Emoji Permission Settings', langCode))
-        .setDescription(await t('Allow bot to suggest emojis from this server?', langCode))
-        .setColor('#ADD8E6');
+        .setDescription(await t('Allow or deny the bot to suggest emojis in this server.', langCode) + `\n\n**${await t('Current Status', langCode)}:** ` + (isAllowed ? '✅ ' + await t('Allowed', langCode) : '❌ ' + await t('Denied', langCode)))
+        .setColor(isAllowed ? '#ADD8E6' : '#FF0000');
 
     await interaction.editReply({ embeds: [embed], components: [buttonRow] });
 
