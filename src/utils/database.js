@@ -97,6 +97,15 @@ async function initDatabase() {
                 added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE(server_id, sticker_id)
             );
+
+            CREATE TABLE IF NOT EXISTS emoji_packs (
+                id SERIAL PRIMARY KEY,
+                emoji_id VARCHAR(255) NOT NULL,
+                emoji_name VARCHAR(255) NOT NULL,
+                pack_name VARCHAR(50) NOT NULL,
+                added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(emoji_id, pack_name)
+            );
         `);
         console.log('✅ Database tables initialized');
     } finally {
@@ -412,6 +421,28 @@ async function getServerEmojis(serverId) {
     return result.rows;
 }
 
+async function addEmojiToPack(emojiId, emojiName, packName) {
+    await pool.query(
+        'INSERT INTO emoji_packs (emoji_id, emoji_name, pack_name) VALUES ($1, $2, $3) ON CONFLICT (emoji_id, pack_name) DO NOTHING',
+        [emojiId, emojiName, packName]
+    );
+}
+
+async function removeEmojiFromPack(emojiId, packName) {
+    await pool.query(
+        'DELETE FROM emoji_packs WHERE (emoji_id = $1 OR emoji_name = $1) AND pack_name = $2',
+        [emojiId, packName]
+    );
+}
+
+async function getEmojisByPack(packName) {
+    const result = await pool.query(
+        'SELECT * FROM emoji_packs WHERE pack_name = $1 ORDER BY added_at DESC',
+        [packName]
+    );
+    return result.rows;
+}
+
 module.exports = {
     pool,
     initDatabase,
@@ -452,5 +483,8 @@ module.exports = {
     isEmojiInDb,
     isStickerInDb,
     getServerEmojis,
-    setDeletePermission
+    setDeletePermission,
+    addEmojiToPack,
+    removeEmojiFromPack,
+    getEmojisByPack
 };

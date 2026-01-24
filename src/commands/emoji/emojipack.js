@@ -1,26 +1,6 @@
 const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, ComponentType } = require('discord.js');
 const { t } = require('../../utils/languages');
-
-const PACKS = {
-    anime: [
-        { id: '1329415474773131346', name: 'Anime1' },
-        { id: '1329415494050152509', name: 'Anime2' },
-        { id: '1449046993727918254', name: 'Anime3' },
-        { id: '1287169436398125137', name: 'Anime4' },
-        { id: '1287414191497547868', name: 'Anime5' },
-        { id: '1450504931420278979', name: 'Anime6' },
-        { id: '1434970945113690192', name: 'Anime7' },
-        { id: '1434970709133627524', name: 'Anime8' }
-    ],
-    game: [
-        { id: '1329415510659715103', name: 'Game1' },
-        { id: '1329415528825225256', name: 'Game2' }
-    ],
-    romantic: [
-        { id: '1329415546252431441', name: 'Romantic1' },
-        { id: '1329415563969171486', name: 'Romantic2' }
-    ]
-};
+const db = require('../../utils/database');
 
 async function execute(interaction, langCode, client) {
     const mainEmbed = new EmbedBuilder()
@@ -32,9 +12,9 @@ async function execute(interaction, langCode, client) {
         .setCustomId('emoji_pack_select')
         .setPlaceholder(await t('Select a category', langCode))
         .addOptions([
-            { label: await t('Anime', langCode), value: 'anime', emoji: '🎌' },
-            { label: await t('Game', langCode), value: 'game', emoji: '🎮' },
-            { label: await t('Romantic', langCode), value: 'romantic', emoji: '💖' }
+            { label: await t('Anime Pack', langCode), value: 'anime', emoji: '🎌' },
+            { label: await t('Games Pack', langCode), value: 'game', emoji: '🎮' },
+            { label: await t('Romantic Pack', langCode), value: 'romantic', emoji: '💖' }
         ]);
 
     const row = new ActionRowBuilder().addComponents(select);
@@ -42,64 +22,64 @@ async function execute(interaction, langCode, client) {
 
     const collector = response.createMessageComponentCollector({ 
         filter: i => i.user.id === interaction.user.id, 
-        time: 180000 
+        time: 300000 
     });
 
     let currentCategory = null;
-    let currentEmojis = [];
+    let page = 0;
+    const pageSize = 5;
 
-    const getAvailableEmojis = (category) => {
-        const allInPack = PACKS[category] || [];
+    const generateDisplay = async (category, resetPage = false) => {
+        if (resetPage) page = 0;
+        
+        const allInPack = await db.getEmojisByPack(category);
         const serverEmojiNames = interaction.guild.emojis.cache.map(e => e.name.toLowerCase());
         const serverEmojiIds = interaction.guild.emojis.cache.map(e => e.id);
-        return allInPack.filter(e => !serverEmojiNames.includes(e.name.toLowerCase()) && !serverEmojiIds.includes(e.id));
-    };
+        
+        const available = allInPack.filter(e => !serverEmojiNames.includes(e.emoji_name.toLowerCase()) && !serverEmojiIds.includes(e.emoji_id));
 
-    const generateDisplay = async (category, isReset = false) => {
-        const available = getAvailableEmojis(category);
-        if (!available || available.length === 0) {
-            const desc = isReset ? 
-                await t('There are no more emojis available at the moment.', langCode) : 
-                await t('There are no emojis in this pack.', langCode);
+        if (available.length === 0) {
+            const noMoreMsg = await t('No more emojis are available at the moment. More will be added in the future.', langCode);
+            const suggestMsg = await t('Suggest more emojis so we can add them to “a Discord server that I choose”.', langCode);
+            
             return {
                 embeds: [new EmbedBuilder()
                     .setTitle('🎁 ' + await t('Emoji Pack', langCode))
-                    .setDescription('❌ ' + desc)
+                    .setDescription(`❌ ${noMoreMsg}\n\n💡 ${suggestMsg}`)
                     .setColor('#FF0000')],
                 components: [new ActionRowBuilder().addComponents(select)]
             };
         }
 
-        const display = available.sort(() => Math.random() - 0.5).slice(0, 5);
-        currentEmojis = display;
+        const totalPages = Math.ceil(available.length / pageSize);
+        if (page >= totalPages) page = 0;
 
+        const display = available.slice(page * pageSize, (page + 1) * pageSize);
         const emojiList = [];
+        
         for (const e of display) {
             let found = null;
             for (const g of client.guilds.cache.values()) {
-                const emoji = g.emojis.cache.get(e.id);
+                const emoji = g.emojis.cache.get(e.emoji_id);
                 if (emoji) { found = emoji; break; }
             }
             if (found) emojiList.push(found);
+            else {
+                // Fallback for custom emojis if they are not in cache (though unlikely for pack emojis)
+                emojiList.push(`:${e.emoji_name}:`);
+            }
         }
 
-        if (emojiList.length === 0) {
-            return {
-                embeds: [new EmbedBuilder()
-                    .setTitle('🎁 ' + await t('Emoji Pack', langCode))
-                    .setDescription('❌ ' + await t('There are no emojis in this pack.', langCode))
-                    .setColor('#FF0000')],
-                components: [new ActionRowBuilder().addComponents(select)]
-            };
-        }
-
+        const categoryLabel = category.charAt(0).toUpperCase() + category.slice(1) + ' Pack';
         const packEmbed = new EmbedBuilder()
-            .setTitle(`🎁 ${await t(category.charAt(0).toUpperCase() + category.slice(1), langCode)} Pack`)
-            .setDescription(await t('Found these emojis in the pack:', langCode) + '\n\n' + emojiList.map((e, idx) => `${idx + 1}. ${e} (${e.name})`).join('\n'))
+            .setTitle(`🎁 ${await t(categoryLabel, langCode)}`)
+            .setDescription(await t('Found these emojis in the pack:', langCode) + '\n\n' + emojiList.map((e, idx) => `${idx + 1}. ${e} (${display[idx].emoji_name})`).join('\n'))
+            .setFooter({ text: `${page + 1}/${totalPages}` })
             .setColor('#00FFFF');
 
         const buttons = new ActionRowBuilder().addComponents(
             new ButtonBuilder().setCustomId('pack_add').setLabel(await t('Add', langCode)).setStyle(ButtonStyle.Success),
+            new ButtonBuilder().setCustomId('pack_next').setLabel(await t('Next', langCode)).setStyle(ButtonStyle.Primary).setDisabled(totalPages <= 1),
             new ButtonBuilder().setCustomId('pack_reset').setLabel(await t('Reset', langCode)).setStyle(ButtonStyle.Secondary)
         );
 
@@ -112,19 +92,32 @@ async function execute(interaction, langCode, client) {
             
             if (i.isStringSelectMenu()) {
                 currentCategory = i.values[0];
-                const display = await generateDisplay(currentCategory);
+                const display = await generateDisplay(currentCategory, true);
                 await i.editReply(display).catch(() => {});
             } else if (i.isButton()) {
                 if (i.customId === 'pack_reset') {
                     const display = await generateDisplay(currentCategory, true);
                     await i.editReply(display).catch(() => {});
+                } else if (i.customId === 'pack_next') {
+                    page++;
+                    const display = await generateDisplay(currentCategory);
+                    await i.editReply(display).catch(() => {});
                 } else if (i.customId === 'pack_add') {
+                    const allInPack = await db.getEmojisByPack(currentCategory);
+                    const serverEmojiNames = interaction.guild.emojis.cache.map(e => e.name.toLowerCase());
+                    const serverEmojiIds = interaction.guild.emojis.cache.map(e => e.id);
+                    const available = allInPack.filter(e => !serverEmojiNames.includes(e.emoji_name.toLowerCase()) && !serverEmojiIds.includes(e.emoji_id));
+                    const currentEmojis = available.slice(page * pageSize, (page + 1) * pageSize);
+
                     let added = 0;
                     for (const e of currentEmojis) {
                         try {
-                            const allEmoji = Array.from(client.guilds.cache.values()).flatMap(g => Array.from(g.emojis.cache.values()));
-                            const emojiObj = allEmoji.find(em => em.id === e.id);
-                            if (emojiObj && !interaction.guild.emojis.cache.find(em => em.name === emojiObj.name)) {
+                            let emojiObj = null;
+                            for (const g of client.guilds.cache.values()) {
+                                const found = g.emojis.cache.get(e.emoji_id);
+                                if (found) { emojiObj = found; break; }
+                            }
+                            if (emojiObj) {
                                 await interaction.guild.emojis.create({ attachment: emojiObj.url, name: emojiObj.name });
                                 added++;
                             }

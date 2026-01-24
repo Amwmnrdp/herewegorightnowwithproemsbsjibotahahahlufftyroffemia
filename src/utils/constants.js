@@ -331,6 +331,52 @@ const COMMAND_DEFINITIONS = [
         description: 'Get links to vote and support the bot'
     },
     {
+        name: 'add_to_pack',
+        description: 'Add an emoji to a curated pack (Owner Only)',
+        options: [
+            {
+                name: 'emoji',
+                type: 3,
+                description: 'The emoji to add',
+                required: true
+            },
+            {
+                name: 'pack_select',
+                type: 3,
+                description: 'Choose the pack to add it to',
+                required: true,
+                choices: [
+                    { name: 'Anime Pack', value: 'anime' },
+                    { name: 'Games Pack', value: 'game' },
+                    { name: 'Romantic Pack', value: 'romantic' }
+                ]
+            }
+        ]
+    },
+    {
+        name: 'delete_from_pack',
+        description: 'Remove an emoji from a curated pack (Owner Only)',
+        options: [
+            {
+                name: 'emoji',
+                type: 3,
+                description: 'The emoji name or ID to remove',
+                required: true
+            },
+            {
+                name: 'pack_select',
+                type: 3,
+                description: 'Choose the pack where the emoji exists',
+                required: true,
+                choices: [
+                    { name: 'Anime Pack', value: 'anime' },
+                    { name: 'Games Pack', value: 'game' },
+                    { name: 'Romantic Pack', value: 'romantic' }
+                ]
+            }
+        ]
+    },
+    {
         name: 'update',
         description: 'Hot-reload commands without restarting the bot.'
     }
