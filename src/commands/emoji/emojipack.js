@@ -40,12 +40,12 @@ async function execute(interaction, langCode, client) {
 
         if (available.length === 0) {
             const noMoreMsg = await t('No more emojis are available at the moment. More will be added in the future.', langCode);
-            const suggestMsg = await t('Suggest more emojis so we can add them to “a Discord server that I choose”.', langCode);
+            const suggestMsg = await t('Suggest more emojis so we can add them in {link}.', langCode);
             
             return {
                 embeds: [new EmbedBuilder()
                     .setTitle('🎁 ' + await t('Emoji Pack', langCode))
-                    .setDescription(`❌ ${noMoreMsg}\n\n💡 ${suggestMsg}`)
+                    .setDescription(`❌ ${noMoreMsg}\n\n💡 ${suggestMsg.replace('{link}', '[Here](https://discord.gg/qTHehSfaW4)')}`)
                     .setColor('#FF0000')],
                 components: [new ActionRowBuilder().addComponents(select)]
             };
