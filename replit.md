@@ -162,3 +162,11 @@ Chinese (zh), English (en), Arabic (ar), Spanish (es), Russian (ru), Turkish (tr
 - Updated help command with an interactive dropdown menu and categorized sections.
 - Implemented persistent memory for emojis and stickers with startup synchronization and duplicate detection.
 - Added global error handlers to prevent crashes and improved DM safety for commands.
+
+## January 24, 2026
+- Fixed `/sticker_permission` command to correctly use `sticker_permission.js` instead of `permission.js`
+- Enhanced `/add_to_pack` command with duplicate emoji detection before adding to pack
+- Enhanced `/delete_from_pack` command with verification that emoji exists before deletion
+- Added `isEmojiInPack()` function to database for duplicate checking
+- Emoji pack commands (`/add_to_pack`, `/delete_from_pack`) restricted to owner (815701106235670558) in server 1118153648938160191
+- Pack emojis stored in database and visible to all users via `/emoji_pack` command
