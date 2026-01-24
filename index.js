@@ -234,146 +234,141 @@ client.on('interactionCreate', async interaction => {
         setTimeout(() => cooldowns.delete(userId), cooldownAmount);
     }
 
+    if (interaction.isStringSelectMenu() && interaction.customId === 'help_category') {
         try {
-            // Re-fetch langCode to ensure it's up to date
             const currentLangCode = interaction.guild ? await db.getServerLanguage(interaction.guild.id) : 'en';
             
-            if (interaction.isStringSelectMenu() && interaction.customId === 'help_category') {
-                // Ensure the interaction is acknowledged correctly
-                if (!interaction.deferred && !interaction.replied) {
-                    await interaction.deferUpdate().catch(() => {});
-                }
+            if (!interaction.deferred && !interaction.replied) {
+                await interaction.deferUpdate().catch(() => {});
+            }
 
-                const row = new ActionRowBuilder().addComponents(
-                    new StringSelectMenuBuilder()
-                        .setCustomId('help_category')
-                        .setPlaceholder(await t('Select a category', currentLangCode))
-                        .addOptions([
-                            { label: await t('Sticker Commands', currentLangCode), value: 'sticker_help', emoji: '✨' },
-                            { label: await t('Emoji Commands', currentLangCode), value: 'emoji_help', emoji: '😀' },
-                            { label: await t('Info Commands', currentLangCode), value: 'info_help', emoji: 'ℹ️' }
-                        ])
-                );
+            const row = new ActionRowBuilder().addComponents(
+                new StringSelectMenuBuilder()
+                    .setCustomId('help_category')
+                    .setPlaceholder(await t('Select a category', currentLangCode))
+                    .addOptions([
+                        { label: await t('Sticker Commands', currentLangCode), value: 'sticker_help', emoji: '✨' },
+                        { label: await t('Emoji Commands', currentLangCode), value: 'emoji_help', emoji: '😀' },
+                        { label: await t('Info Commands', currentLangCode), value: 'info_help', emoji: 'ℹ️' }
+                    ])
+            );
 
-                const pages = [];
-                let title = '';
+            const pages = [];
+            let title = '';
 
-                if (interaction.values[0] === 'sticker_help') {
-                    title = await t('Sticker Commands', currentLangCode);
-                    const stickerCommands = [
-                        { cmd: '/add_sticker', desc: 'Add a new sticker to your server with a custom name' },
-                        { cmd: '/image_to_sticker', desc: 'Convert an image URL or attachment into a server sticker instantly' },
-                        { cmd: '/rename_sticker', desc: 'Change the name of an existing server sticker' },
-                        { cmd: '/delete_sticker', desc: 'Permanently remove a specific sticker from your server' },
-                        { cmd: '/delete_all_stickers', desc: 'Remove all stickers from your server (Admin only, requires confirmation)' },
-                        { cmd: '/list_stickers', desc: 'View a complete list of all stickers currently in your server' },
-                        { cmd: '/sticker_to_emoji', desc: 'Transform any existing server sticker into a custom emoji' },
-                        { cmd: '/sticker_to_image', desc: 'Convert a server sticker into a downloadable image file' },
-                        { cmd: '/enhance_sticker', desc: 'Improve a sticker\'s resolution and quality before saving it to the server' },
-                        { cmd: '/suggest_sticker', desc: 'Suggests 5 random stickers from other servers (useful if you don\'t have Nitro)' },
-                        { cmd: '/get_sticker_id', desc: 'Get the ID of a specific sticker' }
-                    ];
+            if (interaction.values[0] === 'sticker_help') {
+                title = await t('Sticker Commands', currentLangCode);
+                const stickerCommands = [
+                    { cmd: '/add_sticker', desc: 'Add a new sticker to your server with a custom name' },
+                    { cmd: '/image_to_sticker', desc: 'Convert an image URL or attachment into a server sticker instantly' },
+                    { cmd: '/rename_sticker', desc: 'Change the name of an existing server sticker' },
+                    { cmd: '/delete_sticker', desc: 'Permanently remove a specific sticker from your server' },
+                    { cmd: '/delete_all_stickers', desc: 'Remove all stickers from your server (Admin only, requires confirmation)' },
+                    { cmd: '/list_stickers', desc: 'View a complete list of all stickers currently in your server' },
+                    { cmd: '/sticker_to_emoji', desc: 'Transform any existing server sticker into a custom emoji' },
+                    { cmd: '/sticker_to_image', desc: 'Convert a server sticker into a downloadable image file' },
+                    { cmd: '/enhance_sticker', desc: 'Improve a sticker\'s resolution and quality before saving it to the server' },
+                    { cmd: '/suggest_sticker', desc: 'Suggests 5 random stickers from other servers (useful if you don\'t have Nitro)' },
+                    { cmd: '/get_sticker_id', desc: 'Get the ID of a specific sticker' }
+                ];
 
-                    for (let i = 0; i < stickerCommands.length; i += 5) {
-                        let pageContent = `**${await t('Commands related to stickers', currentLangCode)}**\n\n`;
-                        const chunk = stickerCommands.slice(i, i + 5);
-                        for (const item of chunk) {
-                            pageContent += `${await t(item.desc, currentLangCode)}: **${item.cmd}**\n\n`;
-                        }
-                        pages.push(pageContent);
+                for (let i = 0; i < stickerCommands.length; i += 5) {
+                    let pageContent = `**${await t('Commands related to stickers', currentLangCode)}**\n\n`;
+                    const chunk = stickerCommands.slice(i, i + 5);
+                    for (const item of chunk) {
+                        pageContent += `${await t(item.desc, currentLangCode)}: **${item.cmd}**\n\n`;
                     }
-                } else if (interaction.values[0] === 'emoji_help') {
-                    title = await t('Emoji Commands', currentLangCode);
-                    const emojiCommands = [
-                        { cmd: '/emoji_search', desc: 'Search for specific emojis by name across multiple servers' },
-                        { cmd: '/add_emoji', desc: 'Add a new emoji to your server using a custom name or ID' },
-                        { cmd: '/image_to_emoji', desc: 'Convert an image URL or attachment into a server emoji instantly' },
-                        { cmd: '/rename_emoji', desc: 'Change the name of an existing server emoji' },
-                        { cmd: '/delete_emoji', desc: 'Permanently remove a specific emoji from your server' },
-                        { cmd: '/delete_all_emojis', desc: 'Remove all emojis from your server (Admin only, requires confirmation)' },
-                        { cmd: '/list_emojis', desc: 'View a complete list of all emojis currently in your server' },
-                        { cmd: '/enhance_emoji', desc: 'Improve an emoji\'s resolution and quality before adding it to the server' },
-                        { cmd: '/emoji_to_sticker', desc: 'Transform any existing server emoji into a high-quality sticker' },
-                        { cmd: '/emoji_to_image', desc: 'Convert any emoji into a downloadable image file' },
-                        { cmd: '/emoji_pack', desc: 'Get a curated pack of suggested emojis to enhance your server' },
-                        { cmd: '/get_emoji_id', desc: 'Get the ID of a specific emoji' }
-                    ];
-
-                    for (let i = 0; i < emojiCommands.length; i += 5) {
-                        let pageContent = `**${await t('Commands related to emojis', currentLangCode)}**\n\n`;
-                        const chunk = emojiCommands.slice(i, i + 5);
-                        for (const item of chunk) {
-                            pageContent += `${await t(item.desc, currentLangCode)}: **${item.cmd}**\n\n`;
-                        }
-                        if (i + 5 >= emojiCommands.length) {
-                            pageContent += `💡 *${await t('If you do not have Nitro, you can use /suggest_emojis and the bot will suggest 5 random emojis from other servers it is in.', currentLangCode)}*`;
-                        }
-                        pages.push(pageContent);
-                    }
-                } else if (interaction.values[0] === 'info_help') {
-                    title = await t('Info Commands', currentLangCode);
-                    const pageContent = `**${await t('Utility and status commands', currentLangCode)}**\n\n` +
-                        `${await t('Set permissions for emoji suggestions (Owner only)', currentLangCode)}: **/emoji_permission**\n\n` +
-                        `${await t('Set permissions for sticker suggestions (Owner only)', currentLangCode)}: **/sticker_permission**\n\n` +
-                        `${await t('Set mass deletion approval requirement (Owner only)', currentLangCode)}: **/delete_permission**\n\n` +
-                        `${await t('Change the bot\'s language setting (Owner only)', currentLangCode)}: **/language**\n\n` +
-                        `${await t('View bot status, latency, and vote status', currentLangCode)}: **/status**\n\n` +
-                        `🔗 [${await t('Vote ProEmoji', currentLangCode)}](https://top.gg/bot/1009426679061553162/vote)`;
                     pages.push(pageContent);
                 }
+            } else if (interaction.values[0] === 'emoji_help') {
+                title = await t('Emoji Commands', currentLangCode);
+                const emojiCommands = [
+                    { cmd: '/emoji_search', desc: 'Search for specific emojis by name across multiple servers' },
+                    { cmd: '/add_emoji', desc: 'Add a new emoji to your server using a custom name or ID' },
+                    { cmd: '/image_to_emoji', desc: 'Convert an image URL or attachment into a server emoji instantly' },
+                    { cmd: '/rename_emoji', desc: 'Change the name of an existing server emoji' },
+                    { cmd: '/delete_emoji', desc: 'Permanently remove a specific emoji from your server' },
+                    { cmd: '/delete_all_emojis', desc: 'Remove all emojis from your server (Admin only, requires confirmation)' },
+                    { cmd: '/list_emojis', desc: 'View a complete list of all emojis currently in your server' },
+                    { cmd: '/enhance_emoji', desc: 'Improve an emoji\'s resolution and quality before adding it to the server' },
+                    { cmd: '/emoji_to_sticker', desc: 'Transform any existing server emoji into a high-quality sticker' },
+                    { cmd: '/emoji_to_image', desc: 'Convert any emoji into a downloadable image file' },
+                    { cmd: '/emoji_pack', desc: 'Get a curated pack of suggested emojis to enhance your server' },
+                    { cmd: '/get_emoji_id', desc: 'Get the ID of a specific emoji' }
+                ];
 
-                // Safety check: ensure pages is not empty
-                if (pages.length === 0) {
-                    pages.push(await t('No commands found in this category.', currentLangCode));
+                for (let i = 0; i < emojiCommands.length; i += 5) {
+                    let pageContent = `**${await t('Commands related to emojis', currentLangCode)}**\n\n`;
+                    const chunk = emojiCommands.slice(i, i + 5);
+                    for (const item of chunk) {
+                        pageContent += `${await t(item.desc, currentLangCode)}: **${item.cmd}**\n\n`;
+                    }
+                    if (i + 5 >= emojiCommands.length) {
+                        pageContent += `💡 *${await t('If you do not have Nitro, you can use /suggest_emojis and the bot will suggest 5 random emojis from other servers it is in.', currentLangCode)}*`;
+                    }
+                    pages.push(pageContent);
                 }
+            } else if (interaction.values[0] === 'info_help') {
+                title = await t('Info Commands', currentLangCode);
+                const pageContent = `**${await t('Utility and status commands', currentLangCode)}**\n\n` +
+                    `${await t('Set permissions for emoji suggestions (Owner only)', currentLangCode)}: **/emoji_permission**\n\n` +
+                    `${await t('Set permissions for sticker suggestions (Owner only)', currentLangCode)}: **/sticker_permission**\n\n` +
+                    `${await t('Set mass deletion approval requirement (Owner only)', currentLangCode)}: **/delete_permission**\n\n` +
+                    `${await t('Change the bot\'s language setting (Owner only)', currentLangCode)}: **/language**\n\n` +
+                    `${await t('View bot status, latency, and vote status', currentLangCode)}: **/status**\n\n` +
+                    `🔗 [${await t('Vote ProEmoji', currentLangCode)}](https://top.gg/bot/1009426679061553162/vote)`;
+                pages.push(pageContent);
+            }
 
-                let currentPage = 0;
-                const createHelpEmbed = (idx) => {
-                    const desc = pages[idx] || '...';
-                    return new EmbedBuilder()
-                        .setTitle('📖 ' + title)
-                        .setDescription(desc)
-                        .setColor('#0099ff')
-                        .setFooter({ text: `${idx + 1}/${pages.length}` });
-                };
+            if (pages.length === 0) {
+                pages.push(await t('No commands found in this category.', currentLangCode));
+            }
 
-                const createHelpRow = (idx) => {
-                    const rowComponents = [
-                        new ButtonBuilder().setCustomId('prev_help').setEmoji('⬅️').setStyle(ButtonStyle.Primary).setDisabled(idx === 0),
-                        new ButtonBuilder().setCustomId('next_help').setEmoji('➡️').setStyle(ButtonStyle.Primary).setDisabled(idx === pages.length - 1)
-                    ];
-                    return new ActionRowBuilder().addComponents(rowComponents);
-                };
+            let currentPage = 0;
+            const createHelpEmbed = (idx) => {
+                const desc = pages[idx] || '...';
+                return new EmbedBuilder()
+                    .setTitle('📖 ' + title)
+                    .setDescription(desc)
+                    .setColor('#0099ff')
+                    .setFooter({ text: `${idx + 1}/${pages.length}` });
+            };
 
-                const updateOptions = { 
-                    embeds: [createHelpEmbed(0)], 
-                    components: pages.length > 1 ? [row, createHelpRow(0)] : [row]
-                };
+            const createHelpRow = (idx) => {
+                const rowComponents = [
+                    new ButtonBuilder().setCustomId('prev_help').setEmoji('⬅️').setStyle(ButtonStyle.Primary).setDisabled(idx === 0),
+                    new ButtonBuilder().setCustomId('next_help').setEmoji('➡️').setStyle(ButtonStyle.Primary).setDisabled(idx === pages.length - 1)
+                ];
+                return new ActionRowBuilder().addComponents(rowComponents);
+            };
 
-                const msg = await interaction.editReply(updateOptions);
+            await interaction.editReply({ 
+                embeds: [createHelpEmbed(0)], 
+                components: pages.length > 1 ? [row, createHelpRow(0)] : [row]
+            });
 
-                if (pages.length > 1) {
-                    const collector = msg.createMessageComponentCollector({ 
-                        filter: i => i.user.id === interaction.user.id && (i.customId === 'prev_help' || i.customId === 'next_help'),
-                        time: 180000 
-                    });
+            if (pages.length > 1) {
+                const collector = interaction.message.createMessageComponentCollector({ 
+                    filter: i => i.user.id === interaction.user.id && (i.customId === 'prev_help' || i.customId === 'next_help'),
+                    time: 180000 
+                });
 
-                    collector.on('collect', async i => {
-                        try {
-                            if (!i.deferred && !i.replied) await i.deferUpdate().catch(() => {});
-                            if (i.customId === 'prev_help') currentPage--;
-                            else currentPage++;
-                            await i.editReply({ embeds: [createHelpEmbed(currentPage)], components: [row, createHelpRow(currentPage)] });
-                        } catch (e) {
-                            console.error('Error in help collector:', e);
-                        }
-                    });
-                }
-                return;
+                collector.on('collect', async i => {
+                    try {
+                        if (!i.deferred && !i.replied) await i.deferUpdate().catch(() => {});
+                        if (i.customId === 'prev_help') currentPage--;
+                        else currentPage++;
+                        await i.editReply({ embeds: [createHelpEmbed(currentPage)], components: [row, createHelpRow(currentPage)] });
+                    } catch (e) {
+                        console.error('Error in help collector:', e);
+                    }
+                });
             }
         } catch (e) {
             console.error('Error in help interaction handler:', e);
         }
+        return;
+    }
 
     if (interaction.isStringSelectMenu() && interaction.customId === 'language_select') {
         const langCode = interaction.values[0];
