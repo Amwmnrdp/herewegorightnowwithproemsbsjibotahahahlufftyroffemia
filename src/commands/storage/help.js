@@ -47,7 +47,12 @@ async function execute(interaction, langCode) {
             .setTitle('✅ ' + await t('Help Sent', langCode))
             .setDescription(await t('Check your private messages for the help menu!', langCode))
             .setColor('#10b981');
-        await interaction.editReply({ embeds: [replyEmbed] });
+        
+        if (interaction.deferred || interaction.replied) {
+            await interaction.editReply({ embeds: [replyEmbed] });
+        } else {
+            await interaction.reply({ embeds: [replyEmbed], flags: MessageFlags.Ephemeral });
+        }
     } catch (error) {
         const errorEmbed = new EmbedBuilder()
             .setTitle('❌ ' + await t('Could not send DM', langCode))

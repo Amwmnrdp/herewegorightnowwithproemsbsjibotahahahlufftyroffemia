@@ -484,7 +484,6 @@ client.on('interactionCreate', async interaction => {
             });
         }
         else if (interaction.commandName === 'help') {
-            await safeDefer();
             await help.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in help: ${err.message}`);
                 const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
