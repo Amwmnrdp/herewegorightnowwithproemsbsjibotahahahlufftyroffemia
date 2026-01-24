@@ -22,7 +22,7 @@ async function execute(interaction, langCode) {
     }
 
     try {
-        const emojiName = customEmojiMatch[1] + '_enhanced';
+        const emojiName = customEmojiMatch[1] + '_enh';
         const emojiId = customEmojiMatch[2];
         const isAnimated = emojiInput.startsWith('<a:');
         const emojiUrl = `https://cdn.discordapp.com/emojis/${emojiId}.${isAnimated ? 'gif' : 'png'}?size=1024`;

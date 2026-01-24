@@ -41,7 +41,7 @@ async function execute(interaction, langCode, client) {
     const footerText = await t('React with checkmark to add or X to cancel.', langCode);
     const embed = new EmbedBuilder()
         .setTitle('💡 ' + titleText)
-        .setDescription(descPrefix + '\n' + emojis.map(e => e.toString()).join(' '))
+        .setDescription(descPrefix + '\n' + emojis.map(e => `<${e.animated ? 'a' : ''}:${e.name}:${e.id}>`).join(' '))
         .setColor('#00FFFF')
         .setFooter({ text: footerText + ` • ${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
 
