@@ -1057,7 +1057,7 @@ client.on('messageCreate', async message => {
 
             try {
                 const stickerUrl = sticker.url;
-                const stickerName = sticker.name.substring(0, 22) + '_enhanced';
+                const stickerName = sticker.name.substring(0, 22) + '_enh';
 
                 const response = await axios.get(stickerUrl, { responseType: 'arraybuffer' });
                 const buffer = Buffer.from(response.data);
