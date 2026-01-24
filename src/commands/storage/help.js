@@ -30,9 +30,12 @@ async function execute(interaction, langCode) {
     const row = new ActionRowBuilder().addComponents(selectMenu);
 
     try {
+        const titleText = await t('ProEmoji Help', langCode);
+        const descText = await t('Select a category from the menu below to see the available commands.', langCode);
+        
         const dmEmbed = new EmbedBuilder()
-            .setTitle('📖 ' + await t('ProEmoji Help', langCode))
-            .setDescription(await t('Select a category from the menu below to see the available commands.', langCode))
+            .setTitle('📖 ' + titleText)
+            .setDescription(descText)
             .setColor('#0099ff');
 
         await interaction.user.send({ 

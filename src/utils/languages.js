@@ -41,7 +41,7 @@ async function t(text, langCode) {
     const translateCode = SUPPORTED_LANGUAGES[langCode]?.translateCode || langCode;
     if (translateCode === 'en') return text;
 
-    const cacheKey = `${langCode}:${text}`;
+    const cacheKey = `${translateCode}:${text}`;
     if (translationCache.has(cacheKey)) {
         return translationCache.get(cacheKey);
     }
@@ -52,6 +52,7 @@ async function t(text, langCode) {
         translationCache.set(cacheKey, translated);
         return translated;
     } catch (error) {
+        console.error(`❌ Translation error (${langCode}):`, error.message);
         return text;
     }
 }
