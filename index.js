@@ -250,7 +250,12 @@ client.on('interactionCreate', async interaction => {
             const currentLangCode = interaction.guild ? await db.getServerLanguage(interaction.guild.id) : 'en';
             
             if (!interaction.deferred && !interaction.replied) {
-                await interaction.deferUpdate().catch(() => {});
+                try {
+                    await interaction.deferUpdate();
+                } catch (deferError) {
+                    console.error('Failed to defer help category update:', deferError.message);
+                    return;
+                }
             }
 
             const row = new ActionRowBuilder().addComponents(

@@ -1,7 +1,13 @@
 const { Pool } = require('pg');
 
+const isLocalhost = process.env.DATABASE_URL?.includes('localhost');
+const connectionString = isLocalhost 
+    ? process.env.DATABASE_URL 
+    : process.env.DATABASE_URL + (process.env.DATABASE_URL?.includes('?') ? '&' : '?') + 'sslmode=no-verify';
+
 const pool = new Pool({
-    connectionString: process.env.DATABASE_URL + (process.env.DATABASE_URL.includes('?') ? '&' : '?') + 'sslmode=verify-full',
+    connectionString,
+    ssl: isLocalhost ? false : { rejectUnauthorized: false },
 });
 
 async function initDatabase() {
@@ -499,5 +505,6 @@ module.exports = {
     addEmojiToPack,
     removeEmojiFromPack,
     getEmojisByPack,
-    isEmojiInPack
+    isEmojiInPack,
+    removeEmojiFromPacksById
 };
