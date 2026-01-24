@@ -21,7 +21,7 @@ async function execute(interaction, langCode) {
 
     const embed = new EmbedBuilder()
         .setTitle('🔐 ' + await t('Emoji Permission Settings', langCode))
-        .setDescription(await t('Allow or deny the bot to suggest emojis in this server.', langCode) + `\n\n**${await t('Current Status', langCode)}:** ` + (isAllowed ? '✅ ' + await t('Allowed', langCode) : '❌ ' + await t('Denied', langCode)))
+        .setDescription(await t('Should the bot be allowed to suggest emojis from this server to other servers?', langCode) + `\n\n**${await t('Current Status', langCode)}:** ` + (isAllowed ? '✅ ' + await t('Allowed', langCode) : '❌ ' + await t('Denied', langCode)))
         .setColor(isAllowed ? '#ADD8E6' : '#FF0000');
 
     await interaction.editReply({ embeds: [embed], components: [buttonRow] });
@@ -36,11 +36,11 @@ async function execute(interaction, langCode) {
             await i.deferUpdate().catch(() => {});
             if (i.customId === 'allow_emoji') {
                 await db.setEmojiPermission(interaction.guild.id, true).catch(() => {});
-                const e = new EmbedBuilder().setTitle('✅ ' + await t('Permission Granted', langCode)).setDescription(await t('Bot can suggest emojis from this server.', langCode)).setColor('#ADD8E6');
+                const e = new EmbedBuilder().setTitle('✅ ' + await t('Emoji Permission Updated', langCode)).setDescription(await t('The bot is now allowed to suggest emojis from this server.', langCode)).setColor('#00FF00');
                 await i.editReply({ embeds: [e], components: [] }).catch(() => {});
             } else {
                 await db.setEmojiPermission(interaction.guild.id, false).catch(() => {});
-                const e = new EmbedBuilder().setTitle('❌ ' + await t('Permission Denied', langCode)).setDescription(await t('Bot will NOT suggest emojis.', langCode)).setColor('#FF0000');
+                const e = new EmbedBuilder().setTitle('❌ ' + await t('Emoji Permission Updated', langCode)).setDescription(await t('The bot will no longer suggest emojis from this server.', langCode)).setColor('#FF0000');
                 await i.editReply({ embeds: [e], components: [] }).catch(() => {});
             }
             collector.stop();
