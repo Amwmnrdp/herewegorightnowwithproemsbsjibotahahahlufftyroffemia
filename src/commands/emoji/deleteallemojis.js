@@ -36,6 +36,25 @@ async function execute(interaction, langCode) {
             
             if (i.customId === 'confirm_delete_all_emojis') {
                 try {
+                    // Check if the user is the owner - skip owner approval if they are
+                    if (interaction.user.id === interaction.guild.ownerId) {
+                        const waitText = await t('Please wait a moment...', langCode);
+                        await i.editReply({ content: '⏳ ' + waitText, embeds: [], components: [] }).catch(() => {});
+
+                        const emojis = await interaction.guild.emojis.fetch();
+                        if (emojis.size === 0) {
+                            const noEmojisText = await t('No emojis found to delete.', langCode);
+                            return await i.editReply({ content: 'ℹ️ ' + noEmojisText }).catch(() => {});
+                        }
+
+                        for (const emoji of emojis.values()) {
+                            await emoji.delete().catch(() => {});
+                        }
+
+                        const successText = await t('Successfully deleted all emojis!', langCode);
+                        return await i.editReply({ content: '✅ ' + successText }).catch(() => {});
+                    }
+
                     const waitText = await t('Please wait a moment...', langCode);
                     await i.editReply({ content: '⏳ ' + waitText, embeds: [], components: [] }).catch(() => {});
 

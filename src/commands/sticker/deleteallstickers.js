@@ -36,6 +36,25 @@ async function execute(interaction, langCode) {
             
             if (i.customId === 'confirm_delete_all_stickers') {
                 try {
+                    // Check if the user is the owner - skip owner approval if they are
+                    if (interaction.user.id === interaction.guild.ownerId) {
+                        const waitText = await t('Please wait a moment...', langCode);
+                        await i.editReply({ content: '⏳ ' + waitText, embeds: [], components: [] }).catch(() => {});
+
+                        const stickers = await interaction.guild.stickers.fetch();
+                        if (stickers.size === 0) {
+                            const noStickersText = await t('No stickers found to delete.', langCode);
+                            return await i.editReply({ content: 'ℹ️ ' + noStickersText }).catch(() => {});
+                        }
+
+                        for (const sticker of stickers.values()) {
+                            await sticker.delete().catch(() => {});
+                        }
+
+                        const successText = await t('Successfully deleted all stickers!', langCode);
+                        return await i.editReply({ content: '✅ ' + successText }).catch(() => {});
+                    }
+
                     const waitText = await t('Please wait a moment...', langCode);
                     await i.editReply({ content: '⏳ ' + waitText, embeds: [], components: [] }).catch(() => {});
 
