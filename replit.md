@@ -173,3 +173,11 @@ Chinese (zh), English (en), Arabic (ar), Spanish (es), Russian (ru), Turkish (tr
 - Updated `/emoji_pack` to display actual emoji images instead of just names
 - Added server emoji limit checking based on boost level (50/100/150/250 emojis)
 - Bot now only adds as many emojis as the server can hold and shows warning when limit is reached
+
+### Design & UX Improvements (January 24, 2026)
+- **`/add_emoji` now supports multiple emojis** - paste multiple emojis separated by spaces to add them all at once
+- **`/suggest_emojis` improved display** - now shows each emoji with view links and uses buttons instead of reactions for better UX
+- **`/list_emojis` enhanced** - displays total count with animated/static breakdown, reduced chunk size for better embed rendering
+- **`/list_stickers` enhanced** - shows total sticker count and improved footer with user info
+- **`/status` command redesigned** - shows server stats (emoji/sticker counts), ping, and permissions in a clean layout
+- Consistent footer styling across all commands showing user display name and avatar
