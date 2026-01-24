@@ -1241,22 +1241,45 @@ initializeBot();
 function updateStatus() {
     if (!client.user) return;
     client.user.setPresence({
-        status: 'idle',
+        status: 'online',
         activities: [{
-            name: `${client.guilds.cache.size} servers! | ProEmoji`,
-            type: 1, // Streaming
-            url: 'https://www.twitch.tv/discord'
+            name: 'https://m.twitch.tv/proemoji_bot/home',
+            type: 4, // CUSTOM
+            state: 'https://m.twitch.tv/proemoji_bot/home'
         }]
     });
 }
 
-client.once('clientReady', async () => {
+client.on('ready', () => {
     console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
     console.log(`🤖 Bot: ${client.user.tag}`)
     console.log(`✅ Status: Online and Ready!`);
     console.log(`📊 Servers: ${client.guilds.cache.size}`);
     console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
 
+    initializeDatabaseAndSync().catch(console.error);
+    
+    updateStatus();
+
+    try {
+        const globalCommands = COMMAND_DEFINITIONS.filter(cmd => cmd.name !== 'update');
+        client.application.commands.set(globalCommands);
+        
+        const restrictedServer = client.guilds.cache.get('1118153648938160191');
+        if (restrictedServer) {
+            const updateCommand = COMMAND_DEFINITIONS.find(cmd => cmd.name === 'update');
+            restrictedServer.commands.set([updateCommand]);
+            console.log('✅ Restricted /update command registered');
+        }
+        
+        preWarmCache().catch(err => console.error('⚠️ Cache warming error:', err.message));
+    } catch (error) {
+        console.error('❌ Error registering commands:', error);
+    }
+});
+
+async function initializeDatabaseAndSync() {
+    await db.initDatabase();
     for (const guild of client.guilds.cache.values()) {
         const emojis = await guild.emojis.fetch();
         for (const emoji of emojis.values()) {
@@ -1267,32 +1290,9 @@ client.once('clientReady', async () => {
             for (const sticker of stickers.values()) {
                 await db.addStickerRecord(guild.id, sticker.id, sticker.name, 'system_sync');
             }
-        } catch (e) {
-            console.error(`Failed to sync stickers:`, e.message);
-        }
+        } catch (e) {}
     }
-    console.log('✅ Synchronized emojis and stickers with database');
-
-    updateStatus();
-
-    try {
-        const globalCommands = COMMAND_DEFINITIONS.filter(cmd => cmd.name !== 'update');
-        await client.application.commands.set(globalCommands);
-        
-        const restrictedServer = client.guilds.cache.get('1118153648938160191');
-        if (restrictedServer) {
-            const updateCommand = COMMAND_DEFINITIONS.find(cmd => cmd.name === 'update');
-            await restrictedServer.commands.set([updateCommand]);
-            console.log('✅ Restricted /update command registered for the specific server');
-        }
-        
-        console.log('✅ Global slash commands registered!');
-        console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-        preWarmCache().catch(err => console.error('⚠️ Cache warming error:', err.message));
-    } catch (error) {
-        console.error('❌ Error:', error);
-    }
-});
+}
 
 client.on('guildCreate', async guild => {
     try {

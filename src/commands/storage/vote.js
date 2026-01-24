@@ -16,7 +16,7 @@ async function execute(interaction, langCode) {
                 .setStyle(ButtonStyle.Link),
             new ButtonBuilder()
                 .setLabel(await t('Vote', langCode))
-                .setURL('https://top.gg/bot/1009426679061553162/vote')
+                .setURL('https://discord.gg/qTHehSfaW4')
                 .setStyle(ButtonStyle.Link)
         );
 
