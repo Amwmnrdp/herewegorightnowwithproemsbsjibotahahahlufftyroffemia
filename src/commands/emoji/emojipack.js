@@ -40,7 +40,7 @@ async function execute(interaction, langCode, client) {
 
         if (available.length === 0) {
             const noMoreMsg = await t('No more emojis are available at the moment. More will be added in the future.', langCode);
-            const suggestMsg = await t('Suggest more emojis so we can add them in {link}.', langCode);
+            const suggestMsg = await t('Suggest more emojis so we can add them, {link}', langCode);
             
             return {
                 embeds: [new EmbedBuilder()
