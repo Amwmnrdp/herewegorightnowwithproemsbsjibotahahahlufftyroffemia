@@ -636,7 +636,7 @@ function updateStatus() {
         activities: [{
             name: `${client.guilds.cache.size} servers! | ProEmoji`,
             type: 1, // Streaming
-            url: 'https://www.twitch.tv/discord'
+            url: 'https://www.twitch.tv/proemoji_bot'
         }]
     });
 }

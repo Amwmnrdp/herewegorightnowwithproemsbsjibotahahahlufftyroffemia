@@ -1263,7 +1263,7 @@ function updateStatus() {
     });
 }
 
-client.on('ready', () => {
+client.on('clientReady', () => {
     console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
     console.log(`🤖 Bot: ${client.user.tag}`)
     console.log(`✅ Status: Online and Ready!`);
