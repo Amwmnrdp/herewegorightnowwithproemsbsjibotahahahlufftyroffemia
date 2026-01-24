@@ -111,7 +111,7 @@ async function getServer(serverId) {
 
 async function addServer(serverId, serverName) {
     await pool.query(
-        'INSERT INTO servers (server_id, server_name, emoji_permission_enabled, sticker_permission_enabled, delete_permission_enabled) VALUES ($1, $2, true, true, true) ON CONFLICT (server_id) DO UPDATE SET server_name = $2',
+        'INSERT INTO servers (server_id, server_name, emoji_permission_enabled, sticker_permission_enabled, delete_permission_enabled) VALUES ($1, $2, true, true, false) ON CONFLICT (server_id) DO UPDATE SET server_name = $2',
         [serverId, serverName]
     );
 }
@@ -165,6 +165,13 @@ async function setDeletePermission(serverId, enabled) {
 
 async function getServerPermissions(serverId) {
     const result = await pool.query('SELECT emoji_permission_enabled, sticker_permission_enabled, delete_permission_enabled FROM servers WHERE server_id = $1', [serverId]);
+    if (result.rows.length === 0) {
+        return {
+            emoji_permission_enabled: true,
+            sticker_permission_enabled: true,
+            delete_permission_enabled: false
+        };
+    }
     return result.rows[0];
 }
 
