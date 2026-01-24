@@ -451,6 +451,10 @@ async function isEmojiInPack(emojiId, packName) {
     return result.rows.length > 0;
 }
 
+async function removeEmojiFromPacksById(emojiId) {
+    await pool.query('DELETE FROM emoji_packs WHERE emoji_id = $1', [emojiId]);
+}
+
 module.exports = {
     pool,
     initDatabase,

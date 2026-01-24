@@ -69,6 +69,15 @@ process.on('uncaughtException', error => {
     console.error('Uncaught exception:', error);
 });
 
+client.on('emojiDelete', async emoji => {
+    try {
+        await db.removeEmojiFromPacksById(emoji.id);
+        console.log(`🗑️ Removed deleted emoji ${emoji.name} (${emoji.id}) from all packs.`);
+    } catch (error) {
+        console.error('❌ Error handling emojiDelete event:', error.message);
+    }
+});
+
 client.on('error', error => {
     console.error('Discord client error:', error);
 });
