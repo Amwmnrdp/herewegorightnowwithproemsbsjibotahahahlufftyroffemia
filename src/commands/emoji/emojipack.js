@@ -2,6 +2,15 @@ const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, 
 const { t } = require('../../utils/languages');
 const db = require('../../utils/database');
 
+function getEmojiLimit(premiumTier) {
+    switch (premiumTier) {
+        case 1: return 100;
+        case 2: return 150;
+        case 3: return 250;
+        default: return 50;
+    }
+}
+
 async function execute(interaction, langCode, client) {
     const mainEmbed = new EmbedBuilder()
         .setTitle('🎁 ' + await t('Emoji Pack', langCode))
@@ -63,9 +72,10 @@ async function execute(interaction, langCode, client) {
                 const emoji = g.emojis.cache.get(e.emoji_id);
                 if (emoji) { found = emoji; break; }
             }
-            if (found) emojiList.push(found);
-            else {
-                // Fallback for custom emojis if they are not in cache (though unlikely for pack emojis)
+            if (found) {
+                const emojiFormat = found.animated ? `<a:${found.name}:${found.id}>` : `<:${found.name}:${found.id}>`;
+                emojiList.push(emojiFormat);
+            } else {
                 emojiList.push(`:${e.emoji_name}:`);
             }
         }
@@ -73,7 +83,7 @@ async function execute(interaction, langCode, client) {
         const categoryLabel = category.charAt(0).toUpperCase() + category.slice(1) + ' Pack';
         const packEmbed = new EmbedBuilder()
             .setTitle(`🎁 ${await t(categoryLabel, langCode)}`)
-            .setDescription(await t('Found these emojis in the pack:', langCode) + '\n\n' + emojiList.map((e, idx) => `${idx + 1}. ${e} (${display[idx].emoji_name})`).join('\n'))
+            .setDescription(await t('Found these emojis in the pack:', langCode) + '\n\n' + emojiList.map((e, idx) => `${idx + 1}. ${e} \`${display[idx].emoji_name}\``).join('\n'))
             .setFooter({ text: `${page + 1}/${totalPages}` })
             .setColor('#00FFFF');
 
@@ -109,8 +119,28 @@ async function execute(interaction, langCode, client) {
                     const available = allInPack.filter(e => !serverEmojiNames.includes(e.emoji_name.toLowerCase()) && !serverEmojiIds.includes(e.emoji_id));
                     const currentEmojis = available.slice(page * pageSize, (page + 1) * pageSize);
 
+                    const emojiLimit = getEmojiLimit(interaction.guild.premiumTier);
+                    const currentEmojiCount = interaction.guild.emojis.cache.size;
+                    const slotsAvailable = emojiLimit - currentEmojiCount;
+
+                    if (slotsAvailable <= 0) {
+                        const limitReachedMsg = await t('Cannot add emojis. Your server has reached the emoji limit: {limit} emojis.', langCode);
+                        const limitEmbed = new EmbedBuilder()
+                            .setDescription('⚠️ ' + limitReachedMsg.replace('{limit}', emojiLimit))
+                            .setColor('#FFA500');
+                        await i.editReply({ embeds: [limitEmbed], components: [new ActionRowBuilder().addComponents(select)] }).catch(() => {});
+                        return;
+                    }
+
                     let added = 0;
+                    let hitLimit = false;
+                    
                     for (const e of currentEmojis) {
+                        if (added >= slotsAvailable) {
+                            hitLimit = true;
+                            break;
+                        }
+                        
                         try {
                             let emojiObj = null;
                             for (const g of client.guilds.cache.values()) {
@@ -121,12 +151,33 @@ async function execute(interaction, langCode, client) {
                                 await interaction.guild.emojis.create({ attachment: emojiObj.url, name: emojiObj.name });
                                 added++;
                             }
-                        } catch (err) { console.error('Error adding emoji:', err); }
+                        } catch (err) { 
+                            console.error('Error adding emoji:', err);
+                            if (err.code === 30008) {
+                                hitLimit = true;
+                                break;
+                            }
+                        }
                     }
-                    const successText = await t('Successfully added {count} emojis from the pack!', langCode);
-                    const resultEmbed = new EmbedBuilder()
-                        .setDescription('✅ ' + successText.replace('{count}', added))
-                        .setColor('#00FFFF');
+
+                    let resultEmbed;
+                    if (hitLimit && added > 0) {
+                        const partialSuccessMsg = await t('{count} emoji(s) added. The rest were not added because the server emoji limit has been reached: {limit} emojis.', langCode);
+                        resultEmbed = new EmbedBuilder()
+                            .setDescription('⚠️ ' + partialSuccessMsg.replace('{count}', added).replace('{limit}', emojiLimit))
+                            .setColor('#FFA500');
+                    } else if (hitLimit && added === 0) {
+                        const limitReachedMsg = await t('Cannot add emojis. Your server has reached the emoji limit: {limit} emojis.', langCode);
+                        resultEmbed = new EmbedBuilder()
+                            .setDescription('⚠️ ' + limitReachedMsg.replace('{limit}', emojiLimit))
+                            .setColor('#FFA500');
+                    } else {
+                        const successText = await t('Successfully added {count} emojis from the pack!', langCode);
+                        resultEmbed = new EmbedBuilder()
+                            .setDescription('✅ ' + successText.replace('{count}', added))
+                            .setColor('#00FFFF');
+                    }
+                    
                     await i.editReply({ embeds: [resultEmbed], components: [new ActionRowBuilder().addComponents(select)] }).catch(() => {});
                 }
             }

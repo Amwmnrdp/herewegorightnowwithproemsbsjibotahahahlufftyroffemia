@@ -170,3 +170,6 @@ Chinese (zh), English (en), Arabic (ar), Spanish (es), Russian (ru), Turkish (tr
 - Added `isEmojiInPack()` function to database for duplicate checking
 - Emoji pack commands (`/add_to_pack`, `/delete_from_pack`) restricted to owner (815701106235670558) in server 1118153648938160191
 - Pack emojis stored in database and visible to all users via `/emoji_pack` command
+- Updated `/emoji_pack` to display actual emoji images instead of just names
+- Added server emoji limit checking based on boost level (50/100/150/250 emojis)
+- Bot now only adds as many emojis as the server can hold and shows warning when limit is reached
