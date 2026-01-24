@@ -6,23 +6,39 @@ async function execute(interaction, langCode) {
     const pageText = await t('Page', langCode);
     const emojisTitle = await t('Emojis', langCode);
     const noEmojis = await t('No emojis.', langCode);
+    const totalText = await t('Total', langCode);
+    const animatedText = await t('Animated', langCode);
+    const staticText = await t('Static', langCode);
+    
     if (emojis.length === 0) {
-        const embed = new EmbedBuilder().setDescription('❌ ' + noEmojis).setColor('#FF0000');
+        const embed = new EmbedBuilder()
+            .setTitle('📋 ' + emojisTitle)
+            .setDescription('❌ ' + noEmojis)
+            .setColor('#FF0000')
+            .setFooter({ text: `${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
         await interaction.editReply({ embeds: [embed] });
         return;
     }
+    
+    const animatedCount = emojis.filter(e => e.animated).length;
+    const staticCount = emojis.length - animatedCount;
+    
     let pages = [];
-    let chunk = 50;
+    let chunk = 25;
     for (let i = 0; i < emojis.length; i += chunk) {
-        pages.push(emojis.slice(i, i + chunk).map(e => e.toString()).join(' '));
+        const pageEmojis = emojis.slice(i, i + chunk);
+        const emojiDisplay = pageEmojis.map(e => e.toString()).join(' ');
+        pages.push(emojiDisplay);
     }
 
     let page = 0;
+    const statsLine = `📊 **${totalText}:** ${emojis.length} | 🎞️ **${animatedText}:** ${animatedCount} | 🖼️ **${staticText}:** ${staticCount}`;
+    
     const embed = new EmbedBuilder()
         .setAuthor({ name: interaction.guild.name, iconURL: interaction.guild.iconURL() })
         .setTitle(`📋 ${emojisTitle}`)
         .setColor('#00FFFF')
-        .setDescription(pages[page])
+        .setDescription(`${statsLine}\n\n${pages[page]}`)
         .setFooter({ text: `${pageText} ${page + 1}/${pages.length} • ${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
 
     const row = new ActionRowBuilder().addComponents(
@@ -45,11 +61,16 @@ async function execute(interaction, langCode) {
 
             const pageTextUpdate = await t('Page', storedLangCode);
             const emojisTitleUpdate = await t('Emojis', storedLangCode);
+            const totalTextUpdate = await t('Total', storedLangCode);
+            const animatedTextUpdate = await t('Animated', storedLangCode);
+            const staticTextUpdate = await t('Static', storedLangCode);
+            const statsLineUpdate = `📊 **${totalTextUpdate}:** ${emojis.length} | 🎞️ **${animatedTextUpdate}:** ${animatedCount} | 🖼️ **${staticTextUpdate}:** ${staticCount}`;
+            
             const e = new EmbedBuilder()
                 .setAuthor({ name: interaction.guild.name, iconURL: interaction.guild.iconURL() })
                 .setTitle(`📋 ${emojisTitleUpdate}`)
                 .setColor('#00FFFF')
-                .setDescription(pages[page])
+                .setDescription(`${statsLineUpdate}\n\n${pages[page]}`)
                 .setFooter({ text: `${pageTextUpdate} ${page + 1}/${pages.length} • ${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
 
             const prevButton = new ButtonBuilder().setCustomId('prev_emoji').setLabel('◀️').setStyle(ButtonStyle.Primary).setDisabled(page === 0);

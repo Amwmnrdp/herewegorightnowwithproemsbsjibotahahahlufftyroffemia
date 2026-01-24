@@ -3,24 +3,31 @@ const { t } = require('../../utils/languages');
 
 async function execute(interaction, langCode) {
     const stickers = Array.from(interaction.guild.stickers.cache.values());
+    const stickersTitle = await t('Stickers', langCode);
+    
     if (stickers.length === 0) {
-        const embed = new EmbedBuilder().setDescription('❌ ' + await t('No stickers.', langCode)).setColor('#FF0000');
+        const embed = new EmbedBuilder()
+            .setTitle('📌 ' + stickersTitle)
+            .setDescription('❌ ' + await t('No stickers.', langCode))
+            .setColor('#FF0000')
+            .setFooter({ text: `${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
         await interaction.editReply({ embeds: [embed] });
         return;
     }
 
     let page = 0;
     const pageText = await t('Page', langCode);
-    const stickersTitle = await t('Stickers', langCode);
+    const totalText = await t('Total', langCode);
 
     const createEmbed = async (pageNum) => {
         const sticker = stickers[pageNum];
+        const nameText = await t('Name', langCode);
         const embed = new EmbedBuilder()
             .setAuthor({ name: interaction.guild.name, iconURL: interaction.guild.iconURL() })
             .setTitle(`📌 ${stickersTitle}`)
-            .setDescription(`**${await t('Name', langCode)}:** ${sticker.name}\n**ID:** ${sticker.id}`)
+            .setDescription(`📊 **${totalText}:** ${stickers.length}\n\n**${nameText}:** ${sticker.name}\n**ID:** \`${sticker.id}\``)
             .setImage(sticker.url)
-            .setFooter({ text: `${pageText} ${pageNum + 1}/${stickers.length}` })
+            .setFooter({ text: `${pageText} ${pageNum + 1}/${stickers.length} • ${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() })
             .setColor('#FFA500');
         return embed;
     };
