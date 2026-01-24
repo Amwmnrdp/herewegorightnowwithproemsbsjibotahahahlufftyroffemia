@@ -1252,13 +1252,14 @@ initializeBot();
 
 function updateStatus() {
     if (!client.user) return;
+    const serverCount = client.guilds.cache.size;
     client.user.setPresence({
-        status: 'online',
         activities: [{
-            name: 'https://m.twitch.tv/proemoji_bot/home',
-            type: 4, // CUSTOM
-            state: 'https://m.twitch.tv/proemoji_bot/home'
-        }]
+            name: `ProEmoji | ${serverCount} Servers`,
+            type: 1, // STREAMING
+            url: 'https://m.twitch.tv/proemoji_bot/home'
+        }],
+        status: 'online'
     });
 }
 
