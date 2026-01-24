@@ -1,5 +1,5 @@
 entrypoint = "index.js"
-modules = ["nodejs-20", "nix", "web", "postgresql-16"]
+modules = ["nodejs-20", "nix", "web"]
 hidden = [".config", "package-lock.json"]
 
 [gitHubImport]
@@ -45,9 +45,8 @@ name = "ProEmoji Bot"
 author = "agent"
 
 [workflows.workflow.metadata]
-outputType = "webview"
+outputType = "console"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "node index.js"
-waitForPort = 5000
