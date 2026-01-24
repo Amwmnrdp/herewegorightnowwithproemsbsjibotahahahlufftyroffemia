@@ -1274,14 +1274,14 @@ client.on('ready', () => {
     updateStatus();
 
     try {
-        const globalCommands = COMMAND_DEFINITIONS.filter(cmd => cmd.name !== 'update');
+        const globalCommands = COMMAND_DEFINITIONS.filter(cmd => !['update', 'add_to_pack', 'delete_from_pack'].includes(cmd.name));
         client.application.commands.set(globalCommands);
         
         const restrictedServer = client.guilds.cache.get('1118153648938160191');
         if (restrictedServer) {
-            const updateCommand = COMMAND_DEFINITIONS.find(cmd => cmd.name === 'update');
-            restrictedServer.commands.set([updateCommand]);
-            console.log('✅ Restricted /update command registered');
+            const restrictedCommands = COMMAND_DEFINITIONS.filter(cmd => ['update', 'add_to_pack', 'delete_from_pack'].includes(cmd.name));
+            restrictedServer.commands.set(restrictedCommands);
+            console.log('✅ Restricted commands (/update, /add_to_pack, /delete_from_pack) registered');
         }
         
         preWarmCache().catch(err => console.error('⚠️ Cache warming error:', err.message));
