@@ -12,7 +12,7 @@ async function execute(interaction, langCode) {
         .addComponents(
             new ButtonBuilder()
                 .setLabel(await t('Support Server', langCode))
-                .setURL('https://discord.gg/invite_link')
+                .setURL('https://discord.gg/qTHehSfaW4')
                 .setStyle(ButtonStyle.Link),
             new ButtonBuilder()
                 .setLabel(await t('Vote', langCode))
