@@ -99,18 +99,18 @@ const COMMAND_DEFINITIONS = [
     },
     {
         name: 'add_emoji',
-        description: 'Add a new emoji to your server using a custom name or ID',
+        description: 'Add one or more emojis to your server at once',
         options: [
             {
                 name: 'emoji',
                 type: 3,
-                description: 'The emoji to add (can be an emoji, ID, or link)',
+                description: 'Emoji(s) to add - paste multiple emojis separated by spaces',
                 required: true
             },
             {
                 name: 'name',
                 type: 3,
-                description: 'Custom name for the new emoji (optional)',
+                description: 'Custom name (only works when adding a single emoji)',
                 required: false
             }
         ]
