@@ -270,74 +270,64 @@ client.on('interactionCreate', async interaction => {
             if (interaction.values[0] === 'sticker_help') {
                 title = await t('Sticker Commands', currentLangCode);
                 const stickerCommands = [
-                    { cmd: '/add_sticker', desc: 'Add a new sticker to your server with a custom name', emoji: '➕' },
-                    { cmd: '/image_to_sticker', desc: 'Convert an image URL or attachment into a server sticker instantly', emoji: '🖼️' },
-                    { cmd: '/rename_sticker', desc: 'Change the name of an existing server sticker', emoji: '✏️' },
-                    { cmd: '/delete_sticker', desc: 'Permanently remove a specific sticker from your server', emoji: '🗑️' },
-                    { cmd: '/delete_all_stickers', desc: 'Remove all stickers from your server (Admin only)', emoji: '⚠️' },
-                    { cmd: '/list_stickers', desc: 'View a complete list of all stickers currently in your server', emoji: '📋' },
-                    { cmd: '/sticker_to_emoji', desc: 'Transform any existing server sticker into a custom emoji', emoji: '🔄' },
-                    { cmd: '/sticker_to_image', desc: 'Convert a server sticker into a downloadable image file', emoji: '💾' },
-                    { cmd: '/enhance_sticker', desc: 'Improve a sticker quality before saving it to the server', emoji: '✨' },
-                    { cmd: '/suggest_sticker', desc: 'Get 5 random sticker suggestions from other servers', emoji: '💡' },
-                    { cmd: '/search_sticker', desc: 'Search for stickers by name across servers', emoji: '🔍' },
-                    { cmd: '/get_sticker_id', desc: 'Get the ID of a specific sticker', emoji: '🆔' }
+                    { cmd: '/add_sticker', desc: 'Add a new sticker to your server with a custom name' },
+                    { cmd: '/image_to_sticker', desc: 'Convert an image URL or attachment into a server sticker instantly' },
+                    { cmd: '/rename_sticker', desc: 'Change the name of an existing server sticker' },
+                    { cmd: '/delete_sticker', desc: 'Permanently remove a specific sticker from your server' },
+                    { cmd: '/delete_all_stickers', desc: 'Remove all stickers from your server (Admin only, requires confirmation)' },
+                    { cmd: '/list_stickers', desc: 'View a complete list of all stickers currently in your server' },
+                    { cmd: '/sticker_to_emoji', desc: 'Transform any existing server sticker into a custom emoji' },
+                    { cmd: '/sticker_to_image', desc: 'Convert a server sticker into a downloadable image file' },
+                    { cmd: '/enhance_sticker', desc: 'Improve a sticker\'s resolution and quality before saving it to the server' },
+                    { cmd: '/suggest_sticker', desc: 'Suggests 5 random stickers from other servers (useful if you don\'t have Nitro)' },
+                    { cmd: '/get_sticker_id', desc: 'Get the ID of a specific sticker' }
                 ];
 
-                for (let i = 0; i < stickerCommands.length; i += 6) {
-                    let pageContent = '';
-                    const chunk = stickerCommands.slice(i, i + 6);
+                for (let i = 0; i < stickerCommands.length; i += 5) {
+                    let pageContent = `**${await t('Commands related to stickers', currentLangCode)}**\n\n`;
+                    const chunk = stickerCommands.slice(i, i + 5);
                     for (const item of chunk) {
-                        const translatedDesc = await t(item.desc, currentLangCode);
-                        pageContent += `${item.emoji} **${item.cmd}**\n> ${translatedDesc}\n\n`;
+                        pageContent += `${await t(item.desc, currentLangCode)}: **${item.cmd}**\n\n`;
                     }
                     pages.push(pageContent);
                 }
             } else if (interaction.values[0] === 'emoji_help') {
                 title = await t('Emoji Commands', currentLangCode);
                 const emojiCommands = [
-                    { cmd: '/add_emoji', desc: 'Add one or more emojis to your server at once', emoji: '➕' },
-                    { cmd: '/emoji_search', desc: 'Search for specific emojis by name across multiple servers', emoji: '🔍' },
-                    { cmd: '/image_to_emoji', desc: 'Convert an image URL or attachment into a server emoji instantly', emoji: '🖼️' },
-                    { cmd: '/rename_emoji', desc: 'Change the name of an existing server emoji', emoji: '✏️' },
-                    { cmd: '/delete_emoji', desc: 'Permanently remove a specific emoji from your server', emoji: '🗑️' },
-                    { cmd: '/delete_all_emojis', desc: 'Remove all emojis from your server (Admin only)', emoji: '⚠️' },
-                    { cmd: '/list_emojis', desc: 'View a complete list of all emojis currently in your server', emoji: '📋' },
-                    { cmd: '/enhance_emoji', desc: 'Improve an emoji quality before adding it to the server', emoji: '✨' },
-                    { cmd: '/emoji_to_sticker', desc: 'Transform any existing server emoji into a high-quality sticker', emoji: '🔄' },
-                    { cmd: '/emoji_to_image', desc: 'Convert any emoji into a downloadable image file', emoji: '💾' },
-                    { cmd: '/emoji_pack', desc: 'Get a curated pack of suggested emojis to enhance your server', emoji: '📦' },
-                    { cmd: '/suggest_emojis', desc: 'Get 5 random emoji suggestions from other servers', emoji: '💡' },
-                    { cmd: '/get_emoji_id', desc: 'Get the ID of a specific emoji', emoji: '🆔' }
+                    { cmd: '/emoji_search', desc: 'Search for specific emojis by name across multiple servers' },
+                    { cmd: '/add_emoji', desc: 'Add a new emoji to your server using a custom name or ID' },
+                    { cmd: '/image_to_emoji', desc: 'Convert an image URL or attachment into a server emoji instantly' },
+                    { cmd: '/rename_emoji', desc: 'Change the name of an existing server emoji' },
+                    { cmd: '/delete_emoji', desc: 'Permanently remove a specific emoji from your server' },
+                    { cmd: '/delete_all_emojis', desc: 'Remove all emojis from your server (Admin only, requires confirmation)' },
+                    { cmd: '/list_emojis', desc: 'View a complete list of all emojis currently in your server' },
+                    { cmd: '/enhance_emoji', desc: 'Improve an emoji\'s resolution and quality before adding it to the server' },
+                    { cmd: '/emoji_to_sticker', desc: 'Transform any existing server emoji into a high-quality sticker' },
+                    { cmd: '/emoji_to_image', desc: 'Convert any emoji into a downloadable image file' },
+                    { cmd: '/emoji_pack', desc: 'Get a curated pack of suggested emojis to enhance your server' },
+                    { cmd: '/get_emoji_id', desc: 'Get the ID of a specific emoji' }
                 ];
 
-                for (let i = 0; i < emojiCommands.length; i += 6) {
-                    let pageContent = '';
-                    const chunk = emojiCommands.slice(i, i + 6);
+                for (let i = 0; i < emojiCommands.length; i += 5) {
+                    let pageContent = `**${await t('Commands related to emojis', currentLangCode)}**\n\n`;
+                    const chunk = emojiCommands.slice(i, i + 5);
                     for (const item of chunk) {
-                        const translatedDesc = await t(item.desc, currentLangCode);
-                        pageContent += `${item.emoji} **${item.cmd}**\n> ${translatedDesc}\n\n`;
+                        pageContent += `${await t(item.desc, currentLangCode)}: **${item.cmd}**\n\n`;
+                    }
+                    if (i + 5 >= emojiCommands.length) {
+                        pageContent += `💡 *${await t('If you do not have Nitro, you can use /suggest_emojis and the bot will suggest 5 random emojis from other servers it is in.', currentLangCode)}*`;
                     }
                     pages.push(pageContent);
                 }
             } else if (interaction.values[0] === 'info_help') {
                 title = await t('Info Commands', currentLangCode);
-                const infoCommands = [
-                    { cmd: '/status', desc: 'View server stats and permission settings', emoji: '📊' },
-                    { cmd: '/ping', desc: 'Check the bot response speed and connection quality', emoji: '🏓' },
-                    { cmd: '/language', desc: 'Change the bot language setting (Admin only)', emoji: '🌐' },
-                    { cmd: '/emoji_permission', desc: 'Set permissions for emoji suggestions (Owner only)', emoji: '🔐' },
-                    { cmd: '/sticker_permission', desc: 'Set permissions for sticker suggestions (Owner only)', emoji: '🔐' },
-                    { cmd: '/delete_permission', desc: 'Set mass deletion approval requirement (Owner only)', emoji: '🔐' },
-                    { cmd: '/vote', desc: 'Get links to vote and support the bot', emoji: '⭐' }
-                ];
-                
-                let pageContent = '';
-                for (const item of infoCommands) {
-                    const translatedDesc = await t(item.desc, currentLangCode);
-                    pageContent += `${item.emoji} **${item.cmd}**\n> ${translatedDesc}\n\n`;
-                }
-                pageContent += `\n🔗 [${await t('Vote for ProEmoji on Top.gg', currentLangCode)}](https://top.gg/bot/1009426679061553162/vote)`;
+                const pageContent = `**${await t('Utility and status commands', currentLangCode)}**\n\n` +
+                    `${await t('Set permissions for emoji suggestions (Owner only)', currentLangCode)}: **/emoji_permission**\n\n` +
+                    `${await t('Set permissions for sticker suggestions (Owner only)', currentLangCode)}: **/sticker_permission**\n\n` +
+                    `${await t('Set mass deletion approval requirement (Owner only)', currentLangCode)}: **/delete_permission**\n\n` +
+                    `${await t('Change the bot\'s language setting (Owner only)', currentLangCode)}: **/language**\n\n` +
+                    `${await t('View bot status, latency, and vote status', currentLangCode)}: **/status**\n\n` +
+                    `🔗 [${await t('Vote ProEmoji', currentLangCode)}](https://top.gg/bot/1009426679061553162/vote)`;
                 pages.push(pageContent);
             }
 
@@ -346,15 +336,13 @@ client.on('interactionCreate', async interaction => {
             }
 
             let currentPage = 0;
-            const pageText = await t('Page', currentLangCode);
             const createHelpEmbed = (idx) => {
                 const desc = pages[idx] || '...';
                 return new EmbedBuilder()
-                    .setAuthor({ name: 'ProEmoji', iconURL: interaction.client.user.displayAvatarURL() })
                     .setTitle('📖 ' + title)
                     .setDescription(desc)
-                    .setColor('#5865F2')
-                    .setFooter({ text: `${pageText} ${idx + 1}/${pages.length} • ${interaction.user.displayName}`, iconURL: interaction.user.displayAvatarURL() });
+                    .setColor('#0099ff')
+                    .setFooter({ text: `${idx + 1}/${pages.length}` });
             };
 
             const createHelpRow = (idx) => {

@@ -176,13 +176,8 @@ Chinese (zh), English (en), Arabic (ar), Spanish (es), Russian (ru), Turkish (tr
 
 ### Design & UX Improvements (January 24, 2026)
 - **`/add_emoji` now supports multiple emojis** - paste multiple emojis separated by spaces to add them all at once
-- **`/add_to_pack` now supports multiple emojis** - add several emojis to a pack at once with summary of added/skipped
-- **`/delete_from_pack` now supports multiple emojis** - remove several emojis from a pack at once with summary
 - **`/suggest_emojis` improved display** - now shows each emoji with view links and uses buttons instead of reactions for better UX
 - **`/list_emojis` enhanced** - displays total count with animated/static breakdown, reduced chunk size for better embed rendering
 - **`/list_stickers` enhanced** - shows total sticker count and improved footer with user info
-- **`/status` command redesigned** - shows server stats and permissions only (ping moved to /ping)
-- **`/ping` command enhanced** - now shows bot latency, API latency, and connection quality indicator with color coding
-- **`/help` menus fully translated** - all command descriptions are now translated while keeping command names in English
-- Refined embed styling with author headers, consistent colors (#5865F2 Discord Blurple), timestamps, and improved formatting
+- **`/status` command redesigned** - shows server stats (emoji/sticker counts), ping, and permissions in a clean layout
 - Consistent footer styling across all commands showing user display name and avatar

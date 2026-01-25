@@ -324,7 +324,7 @@ const COMMAND_DEFINITIONS = [
     },
     {
         name: 'status',
-        description: 'View server stats and permission settings'
+        description: 'Check bot status and ping'
     },
     {
         name: 'vote',
@@ -332,18 +332,18 @@ const COMMAND_DEFINITIONS = [
     },
     {
         name: 'add_to_pack',
-        description: 'Add one or more emojis to a curated pack (Owner Only)',
+        description: 'Add an emoji to a curated pack (Owner Only)',
         options: [
             {
                 name: 'emoji',
                 type: 3,
-                description: 'Emoji(s) to add - paste multiple emojis separated by spaces',
+                description: 'The emoji to add',
                 required: true
             },
             {
                 name: 'pack_select',
                 type: 3,
-                description: 'Choose the pack to add to',
+                description: 'Choose the pack to add it to',
                 required: true,
                 choices: [
                     { name: 'Anime Pack', value: 'anime' },
@@ -355,18 +355,18 @@ const COMMAND_DEFINITIONS = [
     },
     {
         name: 'delete_from_pack',
-        description: 'Remove one or more emojis from a curated pack (Owner Only)',
+        description: 'Remove an emoji from a curated pack (Owner Only)',
         options: [
             {
                 name: 'emoji',
                 type: 3,
-                description: 'Emoji(s) or ID(s) to remove - separate multiple with spaces',
+                description: 'The emoji name or ID to remove',
                 required: true
             },
             {
                 name: 'pack_select',
                 type: 3,
-                description: 'Choose the pack to remove from',
+                description: 'Choose the pack where the emoji exists',
                 required: true,
                 choices: [
                     { name: 'Anime Pack', value: 'anime' },
