@@ -490,6 +490,7 @@ client.on('interactionCreate', async interaction => {
             });
         }
         else if (interaction.commandName === 'help') {
+            await safeDefer();
             await help.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in help: ${err.message}`);
                 const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
@@ -750,13 +751,23 @@ client.on('interactionCreate', async interaction => {
             });
         }
         else if (interaction.commandName === 'add_to_pack') {
+            await safeDefer();
             await addtopack.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in add_to_pack: ${err.message}`);
+                const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
+                if (interaction.replied || interaction.deferred) {
+                    await interaction.editReply({ content: errMsg }).catch(() => {});
+                }
             });
         }
         else if (interaction.commandName === 'delete_from_pack') {
+            await safeDefer();
             await deletefrompack.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in delete_from_pack: ${err.message}`);
+                const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
+                if (interaction.replied || interaction.deferred) {
+                    await interaction.editReply({ content: errMsg }).catch(() => {});
+                }
             });
         }
         else if (interaction.commandName === 'suggest_emojis') {
