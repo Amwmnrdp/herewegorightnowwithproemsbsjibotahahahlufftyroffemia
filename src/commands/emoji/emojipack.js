@@ -150,7 +150,7 @@ async function execute(interaction, langCode, client) {
                             }
 
                             if (emojiObj) {
-                                await interaction.guild.emojis.create({ attachment: emojiObj.url, name: emojiObj.name });
+                                await interaction.guild.emojis.create({ attachment: emojiObj.imageURL(), name: emojiObj.name });
                                 added++;
                             } else {
                                 // If not in cache, attempt to use the CDN URL directly

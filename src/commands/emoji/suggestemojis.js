@@ -89,7 +89,7 @@ async function execute(interaction, langCode, client) {
                 for (const emoji of emojis) {
                     if (!interaction.guild.emojis.cache.find(e => e.name === emoji.name)) {
                         try {
-                            await interaction.guild.emojis.create({ attachment: emoji.url, name: emoji.name });
+                            await interaction.guild.emojis.create({ attachment: emoji.imageURL(), name: emoji.name });
                             added++;
                         } catch (error) {
                             console.error(`⚠️ Warning: Could not add emoji ${emoji.name}:`, error.message);

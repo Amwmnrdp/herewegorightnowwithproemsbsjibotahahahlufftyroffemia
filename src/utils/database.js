@@ -1,7 +1,13 @@
 const { Pool } = require('pg');
 
+const connectionString = process.env.DATABASE_URL || '';
 const pool = new Pool({
-    connectionString: process.env.DATABASE_URL + (process.env.DATABASE_URL.includes('?') ? '&' : '?') + 'sslmode=verify-full',
+    connectionString: connectionString.includes('sslmode=') 
+        ? connectionString 
+        : connectionString + (connectionString.includes('?') ? '&' : '?') + 'sslmode=require',
+    ssl: {
+        rejectUnauthorized: false
+    }
 });
 
 async function initDatabase() {
@@ -499,5 +505,6 @@ module.exports = {
     addEmojiToPack,
     removeEmojiFromPack,
     getEmojisByPack,
-    isEmojiInPack
+    isEmojiInPack,
+    removeEmojiFromPacksById
 };

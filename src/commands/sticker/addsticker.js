@@ -1,5 +1,6 @@
 const { EmbedBuilder } = require('discord.js');
 const { t } = require('../../utils/languages');
+const db = require('../../utils/database');
 
 async function execute(interaction, langCode) {
     const name = interaction.options.getString('name');
