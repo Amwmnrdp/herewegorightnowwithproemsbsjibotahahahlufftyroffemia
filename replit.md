@@ -186,3 +186,20 @@ Chinese (zh), English (en), Arabic (ar), Spanish (es), Russian (ru), Turkish (tr
 - **`/help` menus fully translated** - all command descriptions are now translated while keeping command names in English
 - Refined embed styling with author headers, consistent colors (#5865F2 Discord Blurple), timestamps, and improved formatting
 - Consistent footer styling across all commands showing user display name and avatar
+
+## January 26, 2026
+### Animated Emoji/Sticker Support & Display Fixes
+- **Fixed `/emoji_to_sticker`** - Now actually creates stickers (was only showing embed before). Supports both static and animated emojis
+- **Fixed `/sticker_to_emoji`** - Added missing session handler. Now properly converts stickers to emojis when user replies with sticker
+- **Fixed `/add_sticker`** - Added missing `db` import and session handler for sticker reply. Works with both sticker IDs and reply-based adding
+- **Improved `/image_to_emoji`** - Now shows the created emoji visually with name, type (static/animated), and thumbnail
+- **Updated `/status`** - Now shows separate counts: Static Emojis and Animated Emojis with cleaner formatting
+
+### Session Handlers Fixed
+- `stickerToEmojiSessions` - Now properly processed when user replies with sticker to convert
+- `stickerAddSessions` - Now properly processed when user replies with sticker to add
+
+### Visual Improvements
+- All emoji commands display emojis visually using `<:name:id>` or `<a:name:id>` for animated
+- Commands show emoji thumbnails using `emoji.imageURL()`
+- Proper animated/static type indication in responses

@@ -1171,6 +1171,70 @@ client.on('messageCreate', async message => {
             }
         }
 
+        // Handle sticker add session (when user replies with a sticker to add)
+        const stickerAddSession = stickerAddSessions.get(message.reference?.messageId);
+        if (stickerAddSession && message.author.id === stickerAddSession.userId) {
+            const sessionLang = stickerAddSession.langCode;
+            stickerAddSessions.delete(message.reference.messageId);
+
+            try {
+                const stickerUrl = sticker.url;
+                const stickerName = stickerAddSession.stickerName || sticker.name;
+                
+                // Check sticker limit
+                const maxStickers = { 0: 5, 1: 15, 2: 30, 3: 60 };
+                const guildMax = maxStickers[message.guild.premiumTier];
+                const serverStickers = await message.guild.stickers.fetch();
+                
+                if (serverStickers.size >= guildMax) {
+                    const limitText = await t('Maximum number of stickers reached ({max})', sessionLang);
+                    const embed = new EmbedBuilder()
+                        .setDescription('❌ ' + limitText.replace('{max}', guildMax))
+                        .setColor('#FF0000');
+                    await message.reply({ embeds: [embed] });
+                    return;
+                }
+
+                // Download sticker and create it
+                const response = await axios.get(stickerUrl, { responseType: 'arraybuffer' });
+                let buffer = Buffer.from(response.data);
+                
+                // Resize to 512x512 for sticker format
+                const processedBuffer = await sharp(buffer)
+                    .resize(512, 512, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+                    .png()
+                    .toBuffer();
+                
+                const newSticker = await message.guild.stickers.create({
+                    file: processedBuffer,
+                    name: stickerName,
+                    description: await t('Added by ProEmoji', sessionLang),
+                    tags: 'emoji',
+                    reason: `Added by ${message.author.tag}`
+                });
+                
+                await db.addStickerRecord(message.guild.id, newSticker.id, newSticker.name, message.author.tag);
+                
+                const successText = await t('Successfully added sticker: {name}', sessionLang);
+                const embed = new EmbedBuilder()
+                    .setTitle('✅ ' + await t('Sticker Added!', sessionLang))
+                    .setDescription(successText.replace('{name}', stickerName))
+                    .setImage(newSticker.url)
+                    .setColor('#00FF00')
+                    .setFooter({ text: `${message.author.displayName} (@${message.author.username})`, iconURL: message.author.displayAvatarURL() });
+                
+                await message.reply({ embeds: [embed] });
+            } catch (error) {
+                console.error('Error in sticker add session:', error);
+                const errorText = await t('Error adding sticker:', sessionLang);
+                const embed = new EmbedBuilder()
+                    .setDescription('❌ ' + errorText + ' ' + error.message)
+                    .setColor('#FF0000');
+                await message.reply({ embeds: [embed] });
+            }
+            return;
+        }
+
         // Handle sticker to emoji conversion
         const stickerToEmojiSession = stickerToEmojiSessions.get(message.reference?.messageId);
         if (stickerToEmojiSession && message.author.id === stickerToEmojiSession.userId) {
