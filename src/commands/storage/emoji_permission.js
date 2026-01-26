@@ -24,9 +24,9 @@ async function execute(interaction, langCode) {
     );
 
     const embed = new EmbedBuilder()
-        .setTitle('🔐 ' + await t('Emoji Permission Settings', langCode))
+        .setTitle('😀 ' + await t('Emoji Permission Settings', langCode))
         .setDescription(await t('Should the bot be allowed to suggest emojis from this server to other servers?', langCode) + `\n\n**${await t('Current Status', langCode)}:** ` + (isAllowed ? '✅ ' + await t('Allowed', langCode) : '❌ ' + await t('Denied', langCode)))
-        .setColor(isAllowed ? '#ADD8E6' : '#FF0000');
+        .setColor('#FFA500');
 
     await interaction.editReply({ embeds: [embed], components: [buttonRow] });
 

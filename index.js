@@ -351,31 +351,40 @@ client.on('interactionCreate', async interaction => {
             }
 
             let currentPage = 0;
+            const totalPages = pages.length;
+            const currentTitle = title;
             const pageText = await t('Page', currentLangCode);
-            const createHelpEmbed = (idx) => {
-                const desc = pages[idx] || '...';
+            
+            const createHelpEmbed = (idx, embedTitle, pagesArr, pagesTotal) => {
+                const safeIdx = Math.max(0, Math.min(idx, pagesTotal - 1));
+                const desc = pagesArr[safeIdx] || '...';
                 return new EmbedBuilder()
                     .setAuthor({ name: 'ProEmoji', iconURL: interaction.client.user.displayAvatarURL() })
-                    .setTitle('📖 ' + title)
+                    .setTitle('📖 ' + embedTitle)
                     .setDescription(desc)
                     .setColor('#5865F2')
-                    .setFooter({ text: `${pageText} ${idx + 1}/${pages.length} • ${interaction.user.displayName}`, iconURL: interaction.user.displayAvatarURL() });
+                    .setFooter({ text: `${pageText} ${safeIdx + 1}/${pagesTotal} • ${interaction.user.displayName}`, iconURL: interaction.user.displayAvatarURL() });
             };
 
-            const createHelpRow = (idx) => {
+            const createHelpRow = (idx, pagesTotal) => {
+                const safeIdx = Math.max(0, Math.min(idx, pagesTotal - 1));
                 const rowComponents = [
-                    new ButtonBuilder().setCustomId('prev_help').setEmoji('⬅️').setStyle(ButtonStyle.Primary).setDisabled(idx === 0),
-                    new ButtonBuilder().setCustomId('next_help').setEmoji('➡️').setStyle(ButtonStyle.Primary).setDisabled(idx === pages.length - 1)
+                    new ButtonBuilder().setCustomId('prev_help').setEmoji('⬅️').setStyle(ButtonStyle.Primary).setDisabled(safeIdx === 0),
+                    new ButtonBuilder().setCustomId('next_help').setEmoji('➡️').setStyle(ButtonStyle.Primary).setDisabled(safeIdx >= pagesTotal - 1)
                 ];
                 return new ActionRowBuilder().addComponents(rowComponents);
             };
 
             await interaction.editReply({ 
-                embeds: [createHelpEmbed(0)], 
-                components: pages.length > 1 ? [row, createHelpRow(0)] : [row]
+                embeds: [createHelpEmbed(0, currentTitle, pages, totalPages)], 
+                components: totalPages > 1 ? [row, createHelpRow(0, totalPages)] : [row]
             });
 
-            if (pages.length > 1) {
+            if (totalPages > 1) {
+                const storedPages = [...pages];
+                const storedTitle = currentTitle;
+                const storedTotalPages = totalPages;
+                
                 const collector = interaction.message.createMessageComponentCollector({ 
                     filter: i => i.user.id === interaction.user.id && (i.customId === 'prev_help' || i.customId === 'next_help'),
                     time: 180000 
@@ -384,9 +393,14 @@ client.on('interactionCreate', async interaction => {
                 collector.on('collect', async i => {
                     try {
                         if (!i.deferred && !i.replied) await i.deferUpdate().catch(() => {});
-                        if (i.customId === 'prev_help') currentPage--;
-                        else currentPage++;
-                        await i.editReply({ embeds: [createHelpEmbed(currentPage)], components: [row, createHelpRow(currentPage)] });
+                        if (i.customId === 'prev_help' && currentPage > 0) currentPage--;
+                        else if (i.customId === 'next_help' && currentPage < storedTotalPages - 1) currentPage++;
+                        
+                        currentPage = Math.max(0, Math.min(currentPage, storedTotalPages - 1));
+                        await i.editReply({ 
+                            embeds: [createHelpEmbed(currentPage, storedTitle, storedPages, storedTotalPages)], 
+                            components: [row, createHelpRow(currentPage, storedTotalPages)] 
+                        });
                     } catch (e) {
                         console.error('Error in help collector:', e);
                     }

@@ -79,8 +79,9 @@ async function execute(interaction, langCode, client) {
                 const emojiFormat = found.animated ? `<a:${found.name}:${found.id}>` : `<:${found.name}:${found.id}>`;
                 emojiList.push(emojiFormat);
             } else {
-                // Try to use a common format if not found in cache, assuming non-animated if unknown
-                emojiList.push(`<:emoji:${e.emoji_id}>`);
+                const isAnimated = e.animated || false;
+                const emojiFormat = isAnimated ? `<a:${e.emoji_name}:${e.emoji_id}>` : `<:${e.emoji_name}:${e.emoji_id}>`;
+                emojiList.push(emojiFormat);
             }
         }
 

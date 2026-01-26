@@ -43,22 +43,16 @@ async function execute(interaction, langCode, client) {
     const descPrefix = await t('Here are 5 suggestions:', langCode);
     const footerText = await t('Click the buttons below to add all or cancel.', langCode);
     
-    const resolvedFields = await Promise.all(emojis.map(async (e, idx) => {
+    const emojiListText = emojis.map((e, idx) => {
+        const emojiDisplay = e.animated ? `<a:${e.name}:${e.id}>` : `<:${e.name}:${e.id}>`;
+        const typeIcon = e.animated ? '🎞️' : '🖼️';
         const emojiUrl = `https://cdn.discordapp.com/emojis/${e.id}.${e.animated ? 'gif' : 'png'}`;
-        const viewText = await t('View', langCode) || 'View';
-        return {
-            name: `${idx + 1}. ${e.name}`,
-            value: `[${viewText}](${emojiUrl}) • ${e.animated ? '🎞️' : '🖼️'}`,
-            inline: true
-        };
-    }));
-
-    const emojiPreviews = emojis.map(e => `<${e.animated ? 'a' : ''}:${e.name}:${e.id}>`).join(' ');
+        return `${idx + 1}. ${emojiDisplay} \`${e.name}\` ${typeIcon} [View](${emojiUrl})`;
+    }).join('\n');
 
     const embed = new EmbedBuilder()
         .setTitle('💡 ' + titleText)
-        .setDescription(`${descPrefix}\n\n${emojiPreviews}`)
-        .addFields(resolvedFields)
+        .setDescription(`${descPrefix}\n\n${emojiListText}`)
         .setColor('#00FFFF')
         .setFooter({ text: footerText + ` • ${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
 
