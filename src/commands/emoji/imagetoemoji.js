@@ -71,7 +71,15 @@ async function execute(interaction, langCode, usedUrls) {
         usedUrls[imageTrackingKey] = emj.id;
         await db.addEmojiRecord(interaction.guild.id, emj.id, emj.name, interaction.user.tag);
         const convertedText = await t('Image converted to emoji!', langCode);
-        const embed = new EmbedBuilder().setDescription('✅ ' + convertedText).setColor('#00FF00').setFooter({ text: `${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
+        const nameText = await t('Name:', langCode);
+        const typeText = await t('Type:', langCode);
+        const animatedText = emj.animated ? await t('Animated', langCode) : await t('Static', langCode);
+        const embed = new EmbedBuilder()
+            .setTitle('✅ ' + await t('Emoji Created!', langCode))
+            .setDescription(`${convertedText}\n\n${emj.toString()} **${nameText}** \`${cleanedName}\`\n**${typeText}** ${animatedText}`)
+            .setThumbnail(emj.imageURL())
+            .setColor('#00FF00')
+            .setFooter({ text: `${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
         await interaction.editReply({ embeds: [embed] });
     } catch (error) {
         const errorMsg = error.code === 50138 ? 

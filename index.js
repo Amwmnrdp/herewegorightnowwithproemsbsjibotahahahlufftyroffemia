@@ -1171,6 +1171,68 @@ client.on('messageCreate', async message => {
             }
         }
 
+        // Handle sticker to emoji conversion
+        const stickerToEmojiSession = stickerToEmojiSessions.get(message.reference?.messageId);
+        if (stickerToEmojiSession && message.author.id === stickerToEmojiSession.userId) {
+            const sessionLang = stickerToEmojiSession.langCode;
+            stickerToEmojiSessions.delete(message.reference.messageId);
+
+            try {
+                const stickerUrl = sticker.url;
+                const emojiName = stickerToEmojiSession.emojiName;
+                
+                // Check if sticker is animated (APNG format)
+                const isAnimated = sticker.format === 2; // StickerFormatType.APNG = 2
+                
+                // Download and process the sticker
+                const response = await axios.get(stickerUrl, { responseType: 'arraybuffer' });
+                let buffer = Buffer.from(response.data);
+                
+                // Resize to emoji size (128x128 max, under 256KB)
+                let finalBuffer;
+                if (isAnimated) {
+                    // For animated stickers, try to use as-is or convert
+                    // Note: Discord stickers are APNG, which may not work as emoji
+                    // We'll try to convert or use the first frame
+                    finalBuffer = await sharp(buffer, { animated: false })
+                        .resize(128, 128, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+                        .png()
+                        .toBuffer();
+                } else {
+                    finalBuffer = await sharp(buffer)
+                        .resize(128, 128, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+                        .png()
+                        .toBuffer();
+                }
+                
+                const newEmoji = await message.guild.emojis.create({
+                    attachment: finalBuffer,
+                    name: emojiName,
+                    reason: `Converted from sticker by ${message.author.tag}`
+                });
+                
+                await db.addEmojiRecord(message.guild.id, newEmoji.id, newEmoji.name, message.author.tag);
+                
+                const successText = await t('Sticker converted to emoji successfully!', sessionLang);
+                const embed = new EmbedBuilder()
+                    .setTitle('✅ ' + await t('Emoji Created!', sessionLang))
+                    .setDescription(successText + `\n\n${newEmoji.toString()} \`${emojiName}\``)
+                    .setThumbnail(newEmoji.imageURL())
+                    .setColor('#00FF00')
+                    .setFooter({ text: `${message.author.displayName} (@${message.author.username})`, iconURL: message.author.displayAvatarURL() });
+                
+                await message.reply({ embeds: [embed] });
+            } catch (error) {
+                console.error('Error in sticker to emoji conversion:', error);
+                const errorText = await t('Error converting sticker to emoji:', sessionLang);
+                const embed = new EmbedBuilder()
+                    .setDescription('❌ ' + errorText + ' ' + error.message)
+                    .setColor('#FF0000');
+                await message.reply({ embeds: [embed] });
+            }
+            return;
+        }
+
         if (enhanceSession && message.author.id === enhanceSession.userId) {
             const sessionLang = enhanceSession.langCode;
             stickerEnhanceSessions.delete(message.reference.messageId);

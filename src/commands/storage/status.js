@@ -33,6 +33,9 @@ async function execute(interaction, langCode) {
     const stickerCount = interaction.guild.stickers.cache.size;
     const animatedCount = interaction.guild.emojis.cache.filter(e => e.animated).size;
     const staticCount = emojiCount - animatedCount;
+    
+    const staticEmojisText = await t('Static Emojis', langCode);
+    const animatedEmojisText = await t('Animated Emojis', langCode);
 
     const embed = new EmbedBuilder()
         .setAuthor({ name: interaction.guild.name, iconURL: interaction.guild.iconURL() })
@@ -40,7 +43,7 @@ async function execute(interaction, langCode) {
         .addFields(
             { 
                 name: `📁 ${serverStatsText}`, 
-                value: `> ${emojisText}: **${emojiCount}** (\`🎞️ ${animatedCount}\` | \`🖼️ ${staticCount}\`)\n> ${stickersText}: **${stickerCount}**`, 
+                value: `> 🖼️ **${staticEmojisText}:** ${staticCount}\n> 🎞️ **${animatedEmojisText}:** ${animatedCount}\n> 📊 **${emojisText}:** ${emojiCount}\n> 🎨 **${stickersText}:** ${stickerCount}`, 
                 inline: false 
             },
             { 
