@@ -215,3 +215,27 @@ Chinese (zh), English (en), Arabic (ar), Spanish (es), Russian (ru), Turkish (tr
 - **Fixed help menu page 3 bug** - Emoji Commands pagination now properly handles all 3 pages without jumping to incorrect category
 - Added bounds checking and stored state for reliable page navigation
 - Title and page content now preserved correctly when switching pages
+
+### Image to Emoji/Sticker Command Improvements (January 26, 2026)
+- **Removed attachment option** from `/image_to_emoji` and `/image_to_sticker` commands
+- **URL is now optional** - if not provided, bot asks user to reply with an image
+- **Reply-based image input** - works like sticker commands where user replies to bot's message with image
+- Session-based workflow with `imageToEmojiSessions` and `imageToStickerSessions` maps
+
+### Timeout Handling (January 26, 2026)
+- **3-minute timeout** for all commands waiting for user input
+- When timeout expires, bot sends embed: "⏰ Time expired! Please run the command again."
+- **/help command excluded** - menu simply disables without timeout message
+- All session-based commands now show timeout messages: sticker deletion, rename, add, enhance, and image conversions
+
+### Database Functions Added
+- `removeEmojiFromPacksById(emojiId)` - Remove emoji from all packs
+- `removeEmojiRecord(guildId, emojiId)` - Remove emoji record from database
+- `removeStickerRecord(guildId, stickerId)` - Remove sticker record from database
+
+### Known Limitation: Sticker ID Addition
+- **Cannot add stickers by ID if not in bot's servers** - This is a Discord API limitation
+- Emojis can be fetched from CDN using their ID (https://cdn.discordapp.com/emojis/ID.png)
+- Stickers cannot be accessed from CDN without the bot having access to that guild
+- The sticker URL/data is only available if the bot is in the server where the sticker exists
+- **Workaround**: Use `/add_sticker` without ID and reply with the sticker instead
