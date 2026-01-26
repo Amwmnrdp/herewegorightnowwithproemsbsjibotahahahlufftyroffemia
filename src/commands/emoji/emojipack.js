@@ -12,8 +12,13 @@ function getEmojiLimit(premiumTier) {
 }
 
 async function execute(interaction, langCode, client) {
-    if (!interaction.replied && !interaction.deferred) {
-        await interaction.deferReply().catch(() => {});
+    try {
+        if (!interaction.replied && !interaction.deferred) {
+            await interaction.deferReply();
+        }
+    } catch (err) {
+        console.error('Failed to defer emoji_pack:', err.message);
+        return;
     }
     const mainEmbed = new EmbedBuilder()
         .setTitle('🎁 ' + await t('Emoji Pack', langCode))

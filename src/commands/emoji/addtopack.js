@@ -36,11 +36,12 @@ async function execute(interaction, langCode) {
     };
 
     for (const emoji of emojiMatches) {
-        const emojiMatch = emoji.match(/<a?:(\w+):(\d+)>/);
+        const emojiMatch = emoji.match(/<(a)?:(\w+):(\d+)>/);
         if (!emojiMatch) continue;
 
-        const emojiName = emojiMatch[1];
-        const emojiId = emojiMatch[2];
+        const isAnimated = emojiMatch[1] === 'a';
+        const emojiName = emojiMatch[2];
+        const emojiId = emojiMatch[3];
 
         try {
             const exists = await db.isEmojiInPack(emojiId, packName);
@@ -49,7 +50,7 @@ async function execute(interaction, langCode) {
                 continue;
             }
 
-            await db.addEmojiToPack(emojiId, emojiName, packName);
+            await db.addEmojiToPack(emojiId, emojiName, packName, isAnimated);
             results.added.push({ emoji, name: emojiName });
         } catch (error) {
             console.error('Error adding emoji to pack:', error);
