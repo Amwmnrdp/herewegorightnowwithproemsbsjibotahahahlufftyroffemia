@@ -5,10 +5,8 @@ const { t } = require('../../utils/languages');
 async function execute(interaction, langCode) {
     if (interaction.guild.id !== '1118153648938160191' || interaction.user.id !== '815701106235670558') {
         const errMsg = await t('🚫 This command is restricted to the bot owner in a specific server.', langCode);
-        return await interaction.reply({ content: errMsg, flags: MessageFlags.Ephemeral });
+        return await interaction.editReply({ content: errMsg });
     }
-
-    await interaction.deferReply();
 
     const emojiStr = interaction.options.getString('emoji');
     const packName = interaction.options.getString('pack_select');
