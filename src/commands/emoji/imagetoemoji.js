@@ -1,5 +1,4 @@
 const { EmbedBuilder, PermissionsBitField } = require('discord.js');
-const isImageUrl = require('is-image-url');
 const { t } = require('../../utils/languages');
 
 async function execute(interaction, langCode, usedUrls) {
@@ -14,9 +13,7 @@ async function execute(interaction, langCode, usedUrls) {
 
     const nameOption = interaction.options.getString('name');
     const urlOption = interaction.options.getString('url');
-    const attachment = interaction.options.getAttachment('attachment');
 
-    // Clean name for Discord (2-32 chars, alphanumeric + underscores)
     const cleanedName = nameOption.replace(/[^a-zA-Z0-9_]/g, '_').substring(0, 32);
     if (cleanedName.length < 2) {
         const embed = new EmbedBuilder()
@@ -26,28 +23,22 @@ async function execute(interaction, langCode, usedUrls) {
         return;
     }
 
-    if (urlOption && attachment) {
+    if (!urlOption) {
+        const titleText = await t('Convert Image to Emoji', langCode);
+        const descText = await t('Reply to this message with the image you want to convert into an emoji.', langCode);
         const embed = new EmbedBuilder()
-            .setDescription('❌ ' + await t('You cannot provide both a URL and an attachment!', langCode))
-            .setColor('#FF0000')
+            .setTitle('🖼️ ' + titleText)
+            .setDescription(descText)
+            .setColor('#00FFFF')
             .setFooter({ text: `${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
-        await interaction.editReply({ embeds: [embed] });
-        return;
+
+        const response = await interaction.editReply({ embeds: [embed], fetchReply: true });
+        return { waitingForImage: true, messageId: response.id, emojiName: cleanedName, userId: interaction.user.id, langCode, guildId: interaction.guild.id };
     }
 
     const db = require('../../utils/database');
-    const finalUrl = attachment ? attachment.url : urlOption;
+    const finalUrl = urlOption;
 
-    if (!finalUrl) {
-        const embed = new EmbedBuilder()
-            .setDescription('❌ ' + await t('You must provide either a URL or an attachment!', langCode))
-            .setColor('#FF0000')
-            .setFooter({ text: `${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
-        await interaction.editReply({ embeds: [embed] });
-        return;
-    }
-
-    // Memory check for images
     const imageTrackingKey = `${interaction.guild.id}:${finalUrl}`;
     if (usedUrls[imageTrackingKey]) {
         const embed = new EmbedBuilder()

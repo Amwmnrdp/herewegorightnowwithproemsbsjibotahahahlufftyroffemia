@@ -11,7 +11,6 @@ async function execute(interaction, langCode, convertedImagesToStickers) {
     
     const nameOption = interaction.options.getString('name');
     const urlOption = interaction.options.getString('url');
-    const attachment = interaction.options.getAttachment('attachment');
     const integrationOption = interaction.options.getString('integration') === 'true';
 
     const cleanedName = nameOption.substring(0, 32);
@@ -23,22 +22,20 @@ async function execute(interaction, langCode, convertedImagesToStickers) {
         return;
     }
 
-    if (urlOption && attachment) {
+    if (!urlOption) {
+        const titleText = await t('Convert Image to Sticker', langCode);
+        const descText = await t('Reply to this message with the image you want to convert into a sticker.', langCode);
         const embed = new EmbedBuilder()
-            .setDescription('❌ ' + await t('You cannot provide both a URL and an attachment!', langCode))
-            .setColor('#FF0000');
-        await interaction.editReply({ embeds: [embed] });
-        return;
+            .setTitle('🖼️ ' + titleText)
+            .setDescription(descText)
+            .setColor('#00FFFF')
+            .setFooter({ text: `${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
+
+        const response = await interaction.editReply({ embeds: [embed], fetchReply: true });
+        return { waitingForImage: true, messageId: response.id, stickerName: cleanedName, userId: interaction.user.id, langCode, guildId: interaction.guild.id, integration: integrationOption };
     }
 
-    const finalUrl = attachment ? attachment.url : urlOption;
-    if (!finalUrl) {
-        const embed = new EmbedBuilder()
-            .setDescription('❌ ' + await t('You must provide either a URL or an attachment!', langCode))
-            .setColor('#FF0000');
-        await interaction.editReply({ embeds: [embed] });
-        return;
-    }
+    const finalUrl = urlOption;
 
     const imageTrackingKey = `${interaction.guild.id}:${finalUrl}`;
     if (convertedImagesToStickers.has(imageTrackingKey)) {
@@ -73,13 +70,11 @@ async function execute(interaction, langCode, convertedImagesToStickers) {
         let sharpInstance = sharp(inputBuffer);
 
         if (integrationOption) {
-            // Integration mode: Force square 512x512 with FILL to cover the entire canvas
             sharpInstance = sharpInstance.resize(512, 512, {
                 fit: 'cover',
                 position: 'center'
             });
         } else {
-            // Original form mode: Preserve aspect ratio within 512x512
             const metadata = await sharpInstance.metadata();
             const ratio = metadata.width / metadata.height;
             
@@ -94,7 +89,6 @@ async function execute(interaction, langCode, convertedImagesToStickers) {
             .png({ quality: 80, compressionLevel: 9 })
             .toBuffer();
 
-        // Safety check for size
         if (processedBuffer.length > 512000) {
             processedBuffer = await sharp(processedBuffer)
                 .png({ palette: true, colors: 128 })

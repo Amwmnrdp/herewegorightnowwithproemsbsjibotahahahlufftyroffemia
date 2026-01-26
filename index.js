@@ -92,6 +92,8 @@ const emojiEnhanceSessions = new Map();
 const convertedEmojisToStickers = new Map();
 const convertedImagesToStickers = new Map();
 const convertedStickersToEmojis = new Map();
+const imageToEmojiSessions = new Map();
+const imageToStickerSessions = new Map();
 
 const TOP_GG_API_KEY = process.env.TOP_GG_API_KEY;
 const TOP_GG_BOT_ID = process.env.TOP_GG_BOT_ID;
@@ -405,6 +407,23 @@ client.on('interactionCreate', async interaction => {
                         console.error('Error in help collector:', e);
                     }
                 });
+
+                collector.on('end', async () => {
+                    try {
+                        const disabledRow = new ActionRowBuilder().addComponents(
+                            new StringSelectMenuBuilder()
+                                .setCustomId('help_category_disabled')
+                                .setPlaceholder(await t('Menu expired', currentLangCode))
+                                .addOptions([{ label: 'Expired', value: 'expired' }])
+                                .setDisabled(true)
+                        );
+                        const disabledButtonRow = new ActionRowBuilder().addComponents(
+                            new ButtonBuilder().setCustomId('prev_help_disabled').setEmoji('⬅️').setStyle(ButtonStyle.Primary).setDisabled(true),
+                            new ButtonBuilder().setCustomId('next_help_disabled').setEmoji('➡️').setStyle(ButtonStyle.Primary).setDisabled(true)
+                        );
+                        await interaction.message.edit({ components: storedTotalPages > 1 ? [disabledRow, disabledButtonRow] : [disabledRow] }).catch(() => {});
+                    } catch (e) {}
+                });
             }
         } catch (e) {
             console.error('Error in help interaction handler:', e);
@@ -503,9 +522,20 @@ client.on('interactionCreate', async interaction => {
                     langCode: langCode,
                     messageId: response.id,
                     channelId: response.channel.id,
-                    isIdRetrieval: true
+                    isIdRetrieval: true,
+                    interaction: interaction
                 });
-                setTimeout(() => stickerDeletionSessions.has(response.id) && stickerDeletionSessions.delete(response.id), 180000);
+                setTimeout(async () => {
+                    if (stickerDeletionSessions.has(response.id)) {
+                        stickerDeletionSessions.delete(response.id);
+                        try {
+                            const timeoutEmbed = new EmbedBuilder()
+                                .setDescription('⏰ ' + await t('Time expired! Please run the command again.', langCode))
+                                .setColor('#FF0000');
+                            await interaction.editReply({ embeds: [timeoutEmbed] }).catch(() => {});
+                        } catch (e) {}
+                    }
+                }, 180000);
             }
         }
         else if (interaction.commandName === 'status') {
@@ -831,9 +861,20 @@ client.on('interactionCreate', async interaction => {
                     userId: interaction.user.id,
                     langCode: langCode,
                     messageId: response.id,
-                    channelId: response.channel.id
+                    channelId: response.channel.id,
+                    interaction: interaction
                 });
-                setTimeout(() => stickerEnhanceSessions.has(response.id) && stickerEnhanceSessions.delete(response.id), 180000);
+                setTimeout(async () => {
+                    if (stickerEnhanceSessions.has(response.id)) {
+                        stickerEnhanceSessions.delete(response.id);
+                        try {
+                            const timeoutEmbed = new EmbedBuilder()
+                                .setDescription('⏰ ' + await t('Time expired! Please run the command again.', langCode))
+                                .setColor('#FF0000');
+                            await interaction.editReply({ embeds: [timeoutEmbed] }).catch(() => {});
+                        } catch (e) {}
+                    }
+                }, 180000);
             }
         }
         else if (interaction.commandName === 'enhance_emoji') {
@@ -864,7 +905,7 @@ client.on('interactionCreate', async interaction => {
         }
         else if (interaction.commandName === 'image_to_emoji') {
             await safeDefer();
-            await imagetoemoji.execute(interaction, langCode, usedUrls).catch(async err => {
+            const result = await imagetoemoji.execute(interaction, langCode, usedUrls).catch(async err => {
                 console.error(`Error in image_to_emoji: ${err.message}`);
                 const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
                 if (interaction.replied || interaction.deferred) {
@@ -873,6 +914,26 @@ client.on('interactionCreate', async interaction => {
                     await interaction.reply({ content: errMsg, flags: MessageFlags.Ephemeral }).catch(() => {});
                 }
             });
+            if (result && result.waitingForImage) {
+                imageToEmojiSessions.set(result.messageId, {
+                    userId: result.userId,
+                    emojiName: result.emojiName,
+                    langCode: result.langCode,
+                    guildId: result.guildId,
+                    interaction: interaction
+                });
+                setTimeout(async () => {
+                    if (imageToEmojiSessions.has(result.messageId)) {
+                        imageToEmojiSessions.delete(result.messageId);
+                        try {
+                            const timeoutEmbed = new EmbedBuilder()
+                                .setDescription('⏰ ' + await t('Time expired! Please run the command again.', result.langCode))
+                                .setColor('#FF0000');
+                            await interaction.editReply({ embeds: [timeoutEmbed] }).catch(() => {});
+                        } catch (e) {}
+                    }
+                }, 180000);
+            }
         }
         else if (interaction.commandName === 'emoji_to_sticker') {
             await safeDefer();
@@ -947,9 +1008,20 @@ client.on('interactionCreate', async interaction => {
                     userId: interaction.user.id,
                     langCode: langCode,
                     messageId: msg.id,
-                    channelId: msg.channel.id
+                    channelId: msg.channel.id,
+                    interaction: interaction
                 });
-                setTimeout(() => stickerDeletionSessions.has(msg.id) && stickerDeletionSessions.delete(msg.id), 180000);
+                setTimeout(async () => {
+                    if (stickerDeletionSessions.has(msg.id)) {
+                        stickerDeletionSessions.delete(msg.id);
+                        try {
+                            const timeoutEmbed = new EmbedBuilder()
+                                .setDescription('⏰ ' + await t('Time expired! Please run the command again.', langCode))
+                                .setColor('#FF0000');
+                            await interaction.editReply({ embeds: [timeoutEmbed] }).catch(() => {});
+                        } catch (e) {}
+                    }
+                }, 180000);
             }
         }
         else if (interaction.commandName === 'rename_sticker') {
@@ -972,9 +1044,20 @@ client.on('interactionCreate', async interaction => {
                     langCode: langCode,
                     messageId: msg.id,
                     channelId: msg.channel.id,
-                    newName: newName
+                    newName: newName,
+                    interaction: interaction
                 });
-                setTimeout(() => stickerRenameSessions.has(msg.id) && stickerRenameSessions.delete(msg.id), 180000);
+                setTimeout(async () => {
+                    if (stickerRenameSessions.has(msg.id)) {
+                        stickerRenameSessions.delete(msg.id);
+                        try {
+                            const timeoutEmbed = new EmbedBuilder()
+                                .setDescription('⏰ ' + await t('Time expired! Please run the command again.', langCode))
+                                .setColor('#FF0000');
+                            await interaction.editReply({ embeds: [timeoutEmbed] }).catch(() => {});
+                        } catch (e) {}
+                    }
+                }, 180000);
             }
         }
         else if (interaction.commandName === 'sticker_to_emoji') {
@@ -997,14 +1080,25 @@ client.on('interactionCreate', async interaction => {
                     langCode: langCode,
                     messageId: msg.id,
                     channelId: msg.channel.id,
-                    emojiName: emojiName
+                    emojiName: emojiName,
+                    interaction: interaction
                 });
-                setTimeout(() => stickerToEmojiSessions.has(msg.id) && stickerToEmojiSessions.delete(msg.id), 180000);
+                setTimeout(async () => {
+                    if (stickerToEmojiSessions.has(msg.id)) {
+                        stickerToEmojiSessions.delete(msg.id);
+                        try {
+                            const timeoutEmbed = new EmbedBuilder()
+                                .setDescription('⏰ ' + await t('Time expired! Please run the command again.', langCode))
+                                .setColor('#FF0000');
+                            await interaction.editReply({ embeds: [timeoutEmbed] }).catch(() => {});
+                        } catch (e) {}
+                    }
+                }, 180000);
             }
         }
         else if (interaction.commandName === 'image_to_sticker') {
             await safeDefer();
-            await imagetosticker.execute(interaction, langCode, convertedImagesToStickers).catch(async err => {
+            const result = await imagetosticker.execute(interaction, langCode, convertedImagesToStickers).catch(async err => {
                 console.error(`Error in image_to_sticker: ${err.message}`);
                 const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
                 if (interaction.replied || interaction.deferred) {
@@ -1013,6 +1107,27 @@ client.on('interactionCreate', async interaction => {
                     await interaction.reply({ content: errMsg, flags: MessageFlags.Ephemeral }).catch(() => {});
                 }
             });
+            if (result && result.waitingForImage) {
+                imageToStickerSessions.set(result.messageId, {
+                    userId: result.userId,
+                    stickerName: result.stickerName,
+                    langCode: result.langCode,
+                    guildId: result.guildId,
+                    integration: result.integration,
+                    interaction: interaction
+                });
+                setTimeout(async () => {
+                    if (imageToStickerSessions.has(result.messageId)) {
+                        imageToStickerSessions.delete(result.messageId);
+                        try {
+                            const timeoutEmbed = new EmbedBuilder()
+                                .setDescription('⏰ ' + await t('Time expired! Please run the command again.', result.langCode))
+                                .setColor('#FF0000');
+                            await interaction.editReply({ embeds: [timeoutEmbed] }).catch(() => {});
+                        } catch (e) {}
+                    }
+                }, 180000);
+            }
         }
         else if (interaction.commandName === 'emoji_to_image') {
             await safeDefer();
@@ -1080,9 +1195,20 @@ client.on('interactionCreate', async interaction => {
                     userId: interaction.user.id,
                     langCode: langCode,
                     messageId: msg.id,
-                    channelId: msg.channel.id
+                    channelId: msg.channel.id,
+                    interaction: interaction
                 });
-                setTimeout(() => stickerEnhanceSessions.has(msg.id) && stickerEnhanceSessions.delete(msg.id), 180000);
+                setTimeout(async () => {
+                    if (stickerEnhanceSessions.has(msg.id)) {
+                        stickerEnhanceSessions.delete(msg.id);
+                        try {
+                            const timeoutEmbed = new EmbedBuilder()
+                                .setDescription('⏰ ' + await t('Time expired! Please run the command again.', langCode))
+                                .setColor('#FF0000');
+                            await interaction.editReply({ embeds: [timeoutEmbed] }).catch(() => {});
+                        } catch (e) {}
+                    }
+                }, 180000);
             }
         }
         else if (interaction.commandName === 'list_stickers') {
@@ -1112,9 +1238,20 @@ client.on('interactionCreate', async interaction => {
                     langCode: langCode,
                     messageId: msg.id,
                     channelId: msg.channel.id,
-                    stickerName: stickerName
+                    stickerName: stickerName,
+                    interaction: interaction
                 });
-                setTimeout(() => stickerAddSessions.has(msg.id) && stickerAddSessions.delete(msg.id), 180000);
+                setTimeout(async () => {
+                    if (stickerAddSessions.has(msg.id)) {
+                        stickerAddSessions.delete(msg.id);
+                        try {
+                            const timeoutEmbed = new EmbedBuilder()
+                                .setDescription('⏰ ' + await t('Time expired! Please run the command again.', langCode))
+                                .setColor('#FF0000');
+                            await interaction.editReply({ embeds: [timeoutEmbed] }).catch(() => {});
+                        } catch (e) {}
+                    }
+                }, 180000);
             }
         }
         else if (interaction.commandName === 'suggest_sticker') {
@@ -1147,8 +1284,143 @@ client.on('messageCreate', async message => {
     const langCode = await db.getServerLanguage(message.guild.id);
 
     try {
+        const imageToEmojiSession = imageToEmojiSessions.get(message.reference?.messageId);
+        if (imageToEmojiSession && message.author.id === imageToEmojiSession.userId) {
+            const attachment = message.attachments.first();
+            if (!attachment || !attachment.contentType?.startsWith('image/')) {
+                const embed = new EmbedBuilder()
+                    .setDescription('❌ ' + await t('Please reply with an image!', imageToEmojiSession.langCode))
+                    .setColor('#FF0000');
+                await message.reply({ embeds: [embed] });
+                return;
+            }
+
+            imageToEmojiSessions.delete(message.reference.messageId);
+            const sessionLang = imageToEmojiSession.langCode;
+            const emojiName = imageToEmojiSession.emojiName;
+            const imageUrl = attachment.url;
+
+            try {
+                const serverEmojis = await message.guild.emojis.fetch();
+                if (serverEmojis.find(e => e.name.toLowerCase() === emojiName.toLowerCase())) {
+                    const duplicateText = await t('An emoji with the name "{name}" already exists!', sessionLang);
+                    const embed = new EmbedBuilder().setDescription('❌ ' + duplicateText.replace('{name}', emojiName)).setColor('#FF0000');
+                    await message.reply({ embeds: [embed] });
+                    return;
+                }
+
+                const emj = await message.guild.emojis.create({ attachment: imageUrl, name: emojiName });
+                await db.addEmojiRecord(message.guild.id, emj.id, emj.name, message.author.tag);
+                
+                const convertedText = await t('Image converted to emoji!', sessionLang);
+                const nameText = await t('Name:', sessionLang);
+                const typeText = await t('Type:', sessionLang);
+                const animatedText = emj.animated ? await t('Animated', sessionLang) : await t('Static', sessionLang);
+                const embed = new EmbedBuilder()
+                    .setTitle('✅ ' + await t('Emoji Created!', sessionLang))
+                    .setDescription(`${convertedText}\n\n${emj.toString()} **${nameText}** \`${emojiName}\`\n**${typeText}** ${animatedText}`)
+                    .setThumbnail(emj.imageURL())
+                    .setColor('#00FF00')
+                    .setFooter({ text: `${message.author.displayName} (@${message.author.username})`, iconURL: message.author.displayAvatarURL() });
+                await message.reply({ embeds: [embed] });
+            } catch (error) {
+                const errorMsg = error.code === 50138 ? 
+                    await t('Image must be under 256KB', sessionLang) :
+                    await t('Error:', sessionLang) + ' ' + error.message;
+                const embed = new EmbedBuilder().setDescription(`❌ ${errorMsg}`).setColor('#FF0000');
+                await message.reply({ embeds: [embed] });
+            }
+            return;
+        }
+
+        const imageToStickerSession = imageToStickerSessions.get(message.reference?.messageId);
+        if (imageToStickerSession && message.author.id === imageToStickerSession.userId) {
+            const attachment = message.attachments.first();
+            if (!attachment || !attachment.contentType?.startsWith('image/')) {
+                const embed = new EmbedBuilder()
+                    .setDescription('❌ ' + await t('Please reply with an image!', imageToStickerSession.langCode))
+                    .setColor('#FF0000');
+                await message.reply({ embeds: [embed] });
+                return;
+            }
+
+            imageToStickerSessions.delete(message.reference.messageId);
+            const sessionLang = imageToStickerSession.langCode;
+            const stickerName = imageToStickerSession.stickerName;
+            const integrationOption = imageToStickerSession.integration;
+            const imageUrl = attachment.url;
+
+            try {
+                const stickers = await message.guild.stickers.fetch();
+                if (stickers.size >= 5) {
+                    const embed = new EmbedBuilder()
+                        .setDescription('❌ ' + await t('Maximum number of stickers reached (5)', sessionLang))
+                        .setColor('#FF0000');
+                    await message.reply({ embeds: [embed] });
+                    return;
+                }
+
+                if (stickers.find(s => s.name.toLowerCase() === stickerName.toLowerCase())) {
+                    const duplicateText = await t('A sticker with the name "{name}" already exists!', sessionLang);
+                    const embed = new EmbedBuilder().setDescription('❌ ' + duplicateText.replace('{name}', stickerName)).setColor('#FF0000');
+                    await message.reply({ embeds: [embed] });
+                    return;
+                }
+
+                const response = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+                const inputBuffer = Buffer.from(response.data);
+
+                let sharpInstance = sharp(inputBuffer);
+                if (integrationOption) {
+                    sharpInstance = sharpInstance.resize(512, 512, { fit: 'cover', position: 'center' });
+                } else {
+                    const metadata = await sharpInstance.metadata();
+                    const ratio = metadata.width / metadata.height;
+                    if (ratio > 1) {
+                        sharpInstance = sharpInstance.resize(512, Math.round(512 / ratio));
+                    } else {
+                        sharpInstance = sharpInstance.resize(Math.round(512 * ratio), 512);
+                    }
+                }
+
+                let processedBuffer = await sharpInstance.png({ quality: 80, compressionLevel: 9 }).toBuffer();
+                if (processedBuffer.length > 512000) {
+                    processedBuffer = await sharp(processedBuffer).png({ palette: true, colors: 128 }).toBuffer();
+                }
+
+                const sticker = await message.guild.stickers.create({
+                    file: processedBuffer,
+                    name: stickerName,
+                    description: await t('Converted by ProEmoji', sessionLang),
+                    tags: 'emoji',
+                    reason: `By ${message.author.tag}`
+                });
+
+                await db.addStickerRecord(message.guild.id, sticker.id, sticker.name, message.author.tag);
+
+                const stickerCreatedTitle = await t('Sticker Created!', sessionLang);
+                const stickerCreatedDesc = await t('Successfully converted image to sticker!', sessionLang);
+                const nameText = await t('Name:', sessionLang);
+                const modeText = await t('Mode:', sessionLang);
+                const integrationText = await t('Integration (Full 512x512)', sessionLang);
+                const originalText = await t('Original Form', sessionLang);
+
+                const embed = new EmbedBuilder()
+                    .setTitle('✅ ' + stickerCreatedTitle)
+                    .setDescription(stickerCreatedDesc + `\n**${nameText}** ${stickerName}\n**${modeText}** ${integrationOption ? integrationText : originalText}`)
+                    .setImage(imageUrl)
+                    .setColor('#00FF00');
+                await message.reply({ embeds: [embed] });
+            } catch (error) {
+                let errorMsg = error.message;
+                if (error.code === 50045) errorMsg = 'Asset exceeds maximum size (512KB).';
+                const embed = new EmbedBuilder().setDescription(`❌ ${errorMsg}`).setColor('#FF0000');
+                await message.reply({ embeds: [embed] });
+            }
+            return;
+        }
+
         if (!message.stickers.size) {
-            // Check for sticker enhancement session
             const stickerEnhanceSession = stickerEnhanceSessions.get(message.reference?.messageId);
             if (stickerEnhanceSession && message.author.id === stickerEnhanceSession.userId) {
                 const embed = new EmbedBuilder()
