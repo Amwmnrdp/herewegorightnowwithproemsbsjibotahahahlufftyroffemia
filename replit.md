@@ -203,3 +203,15 @@ Chinese (zh), English (en), Arabic (ar), Spanish (es), Russian (ru), Turkish (tr
 - All emoji commands display emojis visually using `<:name:id>` or `<a:name:id>` for animated
 - Commands show emoji thumbnails using `emoji.imageURL()`
 - Proper animated/static type indication in responses
+
+### Emoji Pack & Suggest Emojis Display Fixes
+- **Fixed `/emoji_pack`** - Now shows actual emoji images using proper Discord format, fallback uses stored emoji name instead of generic placeholder
+- **Fixed `/suggest_emojis`** - Redesigned to show each emoji with visual display, name, type icon, and View link in a clean list format
+
+### Emoji Permission Styling
+- **Updated `/emoji_permission`** - Now matches `/sticker_permission` styling with orange color (#FFA500) and emoji icon (😀)
+
+### Help Command Pagination Fix
+- **Fixed help menu page 3 bug** - Emoji Commands pagination now properly handles all 3 pages without jumping to incorrect category
+- Added bounds checking and stored state for reliable page navigation
+- Title and page content now preserved correctly when switching pages
