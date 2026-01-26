@@ -8,10 +8,8 @@ async function execute(interaction, langCode) {
         const embed = new EmbedBuilder()
             .setDescription('🚫 ' + errMsg)
             .setColor('#FF0000');
-        return await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
+        return await interaction.editReply({ embeds: [embed] });
     }
-
-    await interaction.deferReply();
 
     const emojiInput = interaction.options.getString('emoji');
     const packName = interaction.options.getString('pack_select');
