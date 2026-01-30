@@ -35,12 +35,10 @@ async function execute(interaction, langCode, client) {
     });
 
     let currentCategory = null;
-    let page = 0;
+    let currentPage = 0;
     const pageSize = 5;
 
-    const generateDisplay = async (category, resetPage = false) => {
-        if (resetPage) page = 0;
-        
+    const generateDisplay = async (category) => {
         const allInPack = await db.getEmojisByPack(category);
         const serverEmojiIds = interaction.guild.emojis.cache.map(e => e.id);
         
@@ -67,27 +65,35 @@ async function execute(interaction, langCode, client) {
         }
 
         const totalPages = Math.ceil(available.length / pageSize);
-        if (page >= totalPages) page = 0;
+        if (currentPage >= totalPages) currentPage = totalPages - 1;
+        if (currentPage < 0) currentPage = 0;
 
-        const display = available.slice(page * pageSize, (page + 1) * pageSize);
+        const display = available.slice(currentPage * pageSize, (currentPage + 1) * pageSize);
         const emojiList = [];
         
         for (const e of display) {
             const isAnimated = e.animated === true || e.animated === 't';
-            const emojiFormat = isAnimated 
-                ? `<a:${e.emoji_name}:${e.emoji_id}>`
-                : `<:${e.emoji_name}:${e.emoji_id}>`;
-            emojiList.push(`${emojiFormat} \`${e.emoji_name}\``);
+            const ext = isAnimated ? 'gif' : 'png';
+            const cdnUrl = `https://cdn.discordapp.com/emojis/${e.emoji_id}.${ext}`;
+            const emojiIndicator = isAnimated ? '🎞️' : '🖼️';
+            emojiList.push(`${emojiIndicator} **${e.emoji_name}** - [View](${cdnUrl})`);
         }
 
         const packEmbed = new EmbedBuilder()
             .setTitle(`🎁 ${await t(categoryLabel, langCode)}`)
             .setDescription(
                 `${await t('Available emojis to add:', langCode)} (${available.length} remaining)\n\n` + 
-                emojiList.map((e, idx) => `${(page * pageSize) + idx + 1}. ${e}`).join('\n')
+                emojiList.map((e, idx) => `${(currentPage * pageSize) + idx + 1}. ${e}`).join('\n')
             )
-            .setFooter({ text: `Page ${page + 1}/${totalPages}` })
+            .setFooter({ text: `Page ${currentPage + 1}/${totalPages} • Click "View" to preview emoji` })
             .setColor('#00FFFF');
+
+        if (display.length === 1) {
+            const firstEmoji = display[0];
+            const isAnimated = firstEmoji.animated === true || firstEmoji.animated === 't';
+            const ext = isAnimated ? 'gif' : 'png';
+            packEmbed.setThumbnail(`https://cdn.discordapp.com/emojis/${firstEmoji.emoji_id}.${ext}`);
+        }
 
         const buttons = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
@@ -96,21 +102,22 @@ async function execute(interaction, langCode, client) {
                 .setStyle(ButtonStyle.Success),
             new ButtonBuilder()
                 .setCustomId('pack_prev')
-                .setLabel('◀')
+                .setLabel('◀ Prev')
                 .setStyle(ButtonStyle.Primary)
-                .setDisabled(page === 0),
+                .setDisabled(currentPage === 0),
             new ButtonBuilder()
                 .setCustomId('pack_next')
-                .setLabel('▶')
+                .setLabel('Next ▶')
                 .setStyle(ButtonStyle.Primary)
-                .setDisabled(page >= totalPages - 1),
+                .setDisabled(currentPage >= totalPages - 1),
             new ButtonBuilder()
-                .setCustomId('pack_reset')
-                .setLabel(await t('First Page', langCode))
+                .setCustomId('pack_first')
+                .setLabel('⏮ First')
                 .setStyle(ButtonStyle.Secondary)
+                .setDisabled(currentPage === 0)
         );
 
-        return { embeds: [packEmbed], components: [new ActionRowBuilder().addComponents(select), buttons] };
+        return { embeds: [packEmbed], components: [new ActionRowBuilder().addComponents(select), buttons], available, totalPages };
     };
 
     collector.on('collect', async i => {
@@ -119,27 +126,31 @@ async function execute(interaction, langCode, client) {
             
             if (i.isStringSelectMenu()) {
                 currentCategory = i.values[0];
-                const display = await generateDisplay(currentCategory, true);
-                await i.editReply(display).catch(() => {});
+                currentPage = 0;
+                const result = await generateDisplay(currentCategory);
+                await i.editReply({ embeds: result.embeds, components: result.components }).catch(() => {});
             } else if (i.isButton()) {
                 if (!currentCategory) return;
                 
-                if (i.customId === 'pack_reset') {
-                    const display = await generateDisplay(currentCategory, true);
-                    await i.editReply(display).catch(() => {});
+                if (i.customId === 'pack_first') {
+                    currentPage = 0;
+                    const result = await generateDisplay(currentCategory);
+                    await i.editReply({ embeds: result.embeds, components: result.components }).catch(() => {});
                 } else if (i.customId === 'pack_prev') {
-                    page = Math.max(0, page - 1);
-                    const display = await generateDisplay(currentCategory);
-                    await i.editReply(display).catch(() => {});
+                    currentPage = Math.max(0, currentPage - 1);
+                    const result = await generateDisplay(currentCategory);
+                    await i.editReply({ embeds: result.embeds, components: result.components }).catch(() => {});
                 } else if (i.customId === 'pack_next') {
-                    page++;
-                    const display = await generateDisplay(currentCategory);
-                    await i.editReply(display).catch(() => {});
+                    currentPage++;
+                    const result = await generateDisplay(currentCategory);
+                    await i.editReply({ embeds: result.embeds, components: result.components }).catch(() => {});
                 } else if (i.customId === 'pack_add') {
+                    const addPage = currentPage;
+                    
                     const allInPack = await db.getEmojisByPack(currentCategory);
                     const serverEmojiIds = interaction.guild.emojis.cache.map(e => e.id);
                     const available = allInPack.filter(e => !serverEmojiIds.includes(e.emoji_id));
-                    const currentEmojis = available.slice(page * pageSize, (page + 1) * pageSize);
+                    const currentEmojis = available.slice(addPage * pageSize, (addPage + 1) * pageSize);
 
                     if (currentEmojis.length === 0) {
                         const noEmojisEmbed = new EmbedBuilder()
@@ -176,10 +187,9 @@ async function execute(interaction, langCode, client) {
                             const isAnimated = e.animated === true || e.animated === 't';
                             const ext = isAnimated ? 'gif' : 'png';
                             const cdnUrl = `https://cdn.discordapp.com/emojis/${e.emoji_id}.${ext}`;
-                            await interaction.guild.emojis.create({ attachment: cdnUrl, name: e.emoji_name });
+                            const newEmoji = await interaction.guild.emojis.create({ attachment: cdnUrl, name: e.emoji_name });
                             added++;
-                            const emojiFormat = isAnimated ? `<a:${e.emoji_name}:${e.emoji_id}>` : `<:${e.emoji_name}:${e.emoji_id}>`;
-                            addedList.push(emojiFormat);
+                            addedList.push(newEmoji.toString());
                         } catch (err) { 
                             console.error('Error adding emoji:', err.message);
                             if (err.code === 30008) {
