@@ -1,4 +1,4 @@
-const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, ComponentType } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { t } = require('../../utils/languages');
 const db = require('../../utils/database');
 
@@ -44,61 +44,56 @@ async function execute(interaction, langCode, client) {
         const allInPack = await db.getEmojisByPack(category);
         const serverEmojiIds = interaction.guild.emojis.cache.map(e => e.id);
         
-        if (allInPack.length === 0) {
-            const noMoreMsg = await t('No emojis in this pack yet. More will be added in the future.', langCode);
-            const suggestMsg = await t('Suggest more emojis so we can add them, {link}', langCode);
+        const available = allInPack.filter(e => !serverEmojiIds.includes(e.emoji_id));
+        
+        const categoryLabel = category.charAt(0).toUpperCase() + category.slice(1) + ' Pack';
+        
+        if (available.length === 0) {
+            let message = '';
+            if (allInPack.length === 0) {
+                message = `❌ ${await t('This pack is empty. No emojis have been added yet.', langCode)}`;
+            } else {
+                message = `✅ ${await t('You already have all emojis from this pack in your server!', langCode)}`;
+            }
+            message += `\n\n💡 ${await t('Have emoji suggestions? Join our server:', langCode)} [Discord](https://discord.gg/qTHehSfaW4)`;
             
             return {
                 embeds: [new EmbedBuilder()
-                    .setTitle('🎁 ' + await t('Emoji Pack', langCode))
-                    .setDescription(`❌ ${noMoreMsg}\n\n💡 ${suggestMsg.replace('{link}', '[Here](https://discord.gg/qTHehSfaW4)')}`)
-                    .setColor('#FF0000')],
+                    .setTitle(`🎁 ${await t(categoryLabel, langCode)}`)
+                    .setDescription(message)
+                    .setColor(allInPack.length === 0 ? '#FF6B6B' : '#00FF00')],
                 components: [new ActionRowBuilder().addComponents(select)]
             };
         }
 
-        const totalPages = Math.ceil(allInPack.length / pageSize);
+        const totalPages = Math.ceil(available.length / pageSize);
         if (page >= totalPages) page = 0;
 
-        const display = allInPack.slice(page * pageSize, (page + 1) * pageSize);
+        const display = available.slice(page * pageSize, (page + 1) * pageSize);
         const emojiList = [];
-        const availableForAdd = [];
         
         for (const e of display) {
-            const alreadyInServer = serverEmojiIds.includes(e.emoji_id);
             const isAnimated = e.animated === true || e.animated === 't';
             const emojiFormat = isAnimated 
                 ? `<a:${e.emoji_name}:${e.emoji_id}>`
                 : `<:${e.emoji_name}:${e.emoji_id}>`;
-            
-            if (alreadyInServer) {
-                emojiList.push(`${emojiFormat} \`${e.emoji_name}\` ✅`);
-            } else {
-                emojiList.push(`${emojiFormat} \`${e.emoji_name}\``);
-                availableForAdd.push(e);
-            }
+            emojiList.push(`${emojiFormat} \`${e.emoji_name}\``);
         }
 
-        const categoryLabel = category.charAt(0).toUpperCase() + category.slice(1) + ' Pack';
-        const totalAvailable = allInPack.filter(e => !serverEmojiIds.includes(e.emoji_id)).length;
-        
         const packEmbed = new EmbedBuilder()
             .setTitle(`🎁 ${await t(categoryLabel, langCode)}`)
             .setDescription(
-                await t('Emojis in this pack:', langCode) + ` (${allInPack.length} total, ${totalAvailable} available)\n\n` + 
-                emojiList.map((e, idx) => `${(page * pageSize) + idx + 1}. ${e}`).join('\n') +
-                '\n\n✅ = Already in your server'
+                `${await t('Available emojis to add:', langCode)} (${available.length} remaining)\n\n` + 
+                emojiList.map((e, idx) => `${(page * pageSize) + idx + 1}. ${e}`).join('\n')
             )
             .setFooter({ text: `Page ${page + 1}/${totalPages}` })
             .setColor('#00FFFF');
 
-        const hasAvailableOnPage = availableForAdd.length > 0;
         const buttons = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
                 .setCustomId('pack_add')
                 .setLabel(await t('Add to Server', langCode))
-                .setStyle(ButtonStyle.Success)
-                .setDisabled(!hasAvailableOnPage),
+                .setStyle(ButtonStyle.Success),
             new ButtonBuilder()
                 .setCustomId('pack_prev')
                 .setLabel('◀')
@@ -127,6 +122,8 @@ async function execute(interaction, langCode, client) {
                 const display = await generateDisplay(currentCategory, true);
                 await i.editReply(display).catch(() => {});
             } else if (i.isButton()) {
+                if (!currentCategory) return;
+                
                 if (i.customId === 'pack_reset') {
                     const display = await generateDisplay(currentCategory, true);
                     await i.editReply(display).catch(() => {});
@@ -144,6 +141,14 @@ async function execute(interaction, langCode, client) {
                     const available = allInPack.filter(e => !serverEmojiIds.includes(e.emoji_id));
                     const currentEmojis = available.slice(page * pageSize, (page + 1) * pageSize);
 
+                    if (currentEmojis.length === 0) {
+                        const noEmojisEmbed = new EmbedBuilder()
+                            .setDescription('❌ ' + await t('No emojis available to add on this page.', langCode))
+                            .setColor('#FF0000');
+                        await i.editReply({ embeds: [noEmojisEmbed], components: [new ActionRowBuilder().addComponents(select)] }).catch(() => {});
+                        return;
+                    }
+
                     const emojiLimit = getEmojiLimit(interaction.guild.premiumTier);
                     const currentEmojiCount = interaction.guild.emojis.cache.size;
                     const slotsAvailable = emojiLimit - currentEmojiCount;
@@ -159,6 +164,7 @@ async function execute(interaction, langCode, client) {
 
                     let added = 0;
                     let hitLimit = false;
+                    const addedList = [];
                     
                     for (const e of currentEmojis) {
                         if (added >= slotsAvailable) {
@@ -172,8 +178,10 @@ async function execute(interaction, langCode, client) {
                             const cdnUrl = `https://cdn.discordapp.com/emojis/${e.emoji_id}.${ext}`;
                             await interaction.guild.emojis.create({ attachment: cdnUrl, name: e.emoji_name });
                             added++;
+                            const emojiFormat = isAnimated ? `<a:${e.emoji_name}:${e.emoji_id}>` : `<:${e.emoji_name}:${e.emoji_id}>`;
+                            addedList.push(emojiFormat);
                         } catch (err) { 
-                            console.error('Error adding emoji:', err);
+                            console.error('Error adding emoji:', err.message);
                             if (err.code === 30008) {
                                 hitLimit = true;
                                 break;
@@ -183,9 +191,10 @@ async function execute(interaction, langCode, client) {
 
                     let resultEmbed;
                     if (hitLimit && added > 0) {
-                        const partialSuccessMsg = await t('{count} emoji(s) added. The rest were not added because the server emoji limit has been reached: {limit} emojis.', langCode);
+                        const partialSuccessMsg = await t('{count} emoji(s) added. Server emoji limit reached: {limit} emojis.', langCode);
                         resultEmbed = new EmbedBuilder()
-                            .setDescription('⚠️ ' + partialSuccessMsg.replace('{count}', added).replace('{limit}', emojiLimit))
+                            .setTitle('⚠️ Partial Success')
+                            .setDescription(partialSuccessMsg.replace('{count}', added).replace('{limit}', emojiLimit) + '\n\n' + addedList.join(' '))
                             .setColor('#FFA500');
                     } else if (hitLimit && added === 0) {
                         const limitReachedMsg = await t('Cannot add emojis. Your server has reached the emoji limit: {limit} emojis.', langCode);
@@ -194,13 +203,14 @@ async function execute(interaction, langCode, client) {
                             .setColor('#FFA500');
                     } else if (added === 0) {
                         resultEmbed = new EmbedBuilder()
-                            .setDescription('❌ ' + await t('No emojis were added. They may already exist in your server.', langCode))
+                            .setDescription('❌ ' + await t('No emojis were added. They may already exist in your server or are unavailable.', langCode))
                             .setColor('#FF0000');
                     } else {
-                        const successText = await t('Successfully added {count} emojis from the pack!', langCode);
+                        const successText = await t('Successfully added {count} emoji(s) to your server!', langCode);
                         resultEmbed = new EmbedBuilder()
-                            .setDescription('✅ ' + successText.replace('{count}', added))
-                            .setColor('#00FFFF');
+                            .setTitle('✅ Success!')
+                            .setDescription(successText.replace('{count}', added) + '\n\n' + addedList.join(' '))
+                            .setColor('#00FF00');
                     }
                     
                     await i.editReply({ embeds: [resultEmbed], components: [new ActionRowBuilder().addComponents(select)] }).catch(() => {});

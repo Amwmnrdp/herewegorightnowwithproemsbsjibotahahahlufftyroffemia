@@ -1,4 +1,4 @@
-const { EmbedBuilder, MessageFlags } = require('discord.js');
+const { EmbedBuilder } = require('discord.js');
 const db = require('../../utils/database');
 const { t } = require('../../utils/languages');
 
@@ -11,36 +11,49 @@ async function execute(interaction, langCode) {
     const emojiStr = interaction.options.getString('emoji');
     const packName = interaction.options.getString('pack_select');
 
-    let emojiId = emojiStr;
-    let emojiName = emojiStr;
-    const emojiMatch = emojiStr.match(/<a?:(\w+):(\d+)>/);
-    if (emojiMatch) {
-        emojiName = emojiMatch[1];
-        emojiId = emojiMatch[2];
+    const emojiInputs = emojiStr.split(/\s+/).filter(e => e.trim());
+    const addedEmojis = [];
+    const duplicateEmojis = [];
+    const invalidEmojis = [];
+
+    for (const input of emojiInputs) {
+        const emojiMatch = input.match(/<(a)?:(\w+):(\d+)>/);
+        if (!emojiMatch) {
+            invalidEmojis.push(input);
+            continue;
+        }
+
+        const isAnimated = emojiMatch[1] === 'a';
+        const emojiName = emojiMatch[2];
+        const emojiId = emojiMatch[3];
+
+        const exists = await db.isEmojiInPack(emojiId, packName);
+        if (exists) {
+            duplicateEmojis.push(input);
+            continue;
+        }
+
+        await db.addEmojiToPack(emojiId, emojiName, packName, isAnimated);
+        addedEmojis.push(input);
     }
 
-    const exists = await db.isEmojiInPack(emojiId, packName);
-    if (exists) {
-        const errorTitle = await t('Duplicate Emoji', langCode);
-        const errorMsg = await t('This emoji already exists in the {pack}.', langCode);
-        
-        const embed = new EmbedBuilder()
-            .setTitle('⚠️ ' + errorTitle)
-            .setDescription(errorMsg.replace('{pack}', packName.charAt(0).toUpperCase() + packName.slice(1) + ' Pack'))
-            .setColor('#FFA500');
+    const packLabel = packName.charAt(0).toUpperCase() + packName.slice(1) + ' Pack';
+    let description = '';
 
-        return await interaction.editReply({ embeds: [embed] });
+    if (addedEmojis.length > 0) {
+        description += `✅ **Added to ${packLabel}:**\n${addedEmojis.join(' ')}\n\n`;
+    }
+    if (duplicateEmojis.length > 0) {
+        description += `⚠️ **Already in pack:**\n${duplicateEmojis.join(' ')}\n\n`;
+    }
+    if (invalidEmojis.length > 0) {
+        description += `❌ **Invalid format:**\n${invalidEmojis.join(' ')}`;
     }
 
-    await db.addEmojiToPack(emojiId, emojiName, packName);
-
-    const successTitle = await t('Success!', langCode);
-    const successMsg = await t('Added {emoji} to {pack} successfully.', langCode);
-    
     const embed = new EmbedBuilder()
-        .setTitle('✅ ' + successTitle)
-        .setDescription(successMsg.replace('{emoji}', emojiStr).replace('{pack}', packName.charAt(0).toUpperCase() + packName.slice(1) + ' Pack'))
-        .setColor('#00FF00');
+        .setTitle(addedEmojis.length > 0 ? '✅ Success!' : '⚠️ No Emojis Added')
+        .setDescription(description.trim() || 'No emojis were processed.')
+        .setColor(addedEmojis.length > 0 ? '#00FF00' : '#FFA500');
 
     await interaction.editReply({ embeds: [embed] });
 }

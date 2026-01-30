@@ -427,10 +427,10 @@ async function getServerEmojis(serverId) {
     return result.rows;
 }
 
-async function addEmojiToPack(emojiId, emojiName, packName) {
+async function addEmojiToPack(emojiId, emojiName, packName, isAnimated = false) {
     await pool.query(
-        'INSERT INTO emoji_packs (emoji_id, emoji_name, pack_name) VALUES ($1, $2, $3) ON CONFLICT (emoji_id, pack_name) DO NOTHING',
-        [emojiId, emojiName, packName]
+        'INSERT INTO emoji_packs (emoji_id, emoji_name, pack_name, animated) VALUES ($1, $2, $3, $4) ON CONFLICT (emoji_id, pack_name) DO NOTHING',
+        [emojiId, emojiName, packName, isAnimated]
     );
 }
 
