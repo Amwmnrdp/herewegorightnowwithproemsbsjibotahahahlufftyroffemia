@@ -414,58 +414,39 @@ client.on('interactionCreate', async interaction => {
     try {
         if (interaction.commandName === 'ping') {
             await safeDefer();
+            const waitingEmbed = new EmbedBuilder()
+                .setDescription('⏳ ' + await t('Pinging... please wait.', langCode))
+                .setColor('#FFFF00');
+            await interaction.editReply({ embeds: [waitingEmbed] }).catch(() => {});
             const ping = require('./src/commands/storage/ping');
             await ping.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in ping: ${err.message}`);
+                const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
+                await interaction.editReply({ content: errMsg, embeds: [] }).catch(() => {});
             });
-        }
-        else if (interaction.commandName === 'update') {
-            if (interaction.guild.id !== '1118153648938160191' || 
-                interaction.channel.id !== '1456609646205861938' || 
-                interaction.user.id !== '815701106235670558') {
-                return await interaction.reply({ content: '🚫 This command is restricted.', flags: MessageFlags.Ephemeral }).catch(() => {});
-            }
-            await safeDefer(true);
-            
-            try {
-                const commandPath = path.join(__dirname, 'src', 'commands');
-                const utilsPath = path.join(__dirname, 'src', 'utils');
-                
-                Object.keys(require.cache).forEach(key => {
-                    if (key.includes(commandPath) || key.includes(utilsPath) || key.includes('index.js')) {
-                        delete require.cache[key];
-                    }
-                });
-                
-                await interaction.editReply({ content: '✅ Code changes applied dynamically!' }).catch(() => {});
-            } catch (err) {
-                await interaction.editReply({ content: `❌ Update failed: ${err.message}` }).catch(() => {});
-            }
         }
         else if (interaction.commandName === 'get_emoji_id') {
             await interaction.deferReply();
-            await interaction.editReply({ content: '⏳ ' + await t('Please wait while the operation is being completed...', langCode) }).catch(() => {});
+            const waitingEmbed = new EmbedBuilder()
+                .setDescription('⏳ ' + await t('Getting emoji ID... please wait.', langCode))
+                .setColor('#FFFF00');
+            await interaction.editReply({ embeds: [waitingEmbed] }).catch(() => {});
             await getemojiid.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in get_emoji_id: ${err.message}`);
                 const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
-                if (interaction.replied || interaction.deferred) {
-                    await interaction.editReply({ content: errMsg }).catch(() => {});
-                } else {
-                    await interaction.reply({ content: errMsg, flags: MessageFlags.Ephemeral }).catch(() => {});
-                }
+                await interaction.editReply({ content: errMsg, embeds: [] }).catch(() => {});
             });
         }
         else if (interaction.commandName === 'get_sticker_id') {
             await interaction.deferReply();
-            await interaction.editReply({ content: '⏳ ' + await t('Please wait while the operation is being completed...', langCode) }).catch(() => {});
+            const waitingEmbed = new EmbedBuilder()
+                .setDescription('⏳ ' + await t('Getting sticker ID... please wait.', langCode))
+                .setColor('#FFFF00');
+            await interaction.editReply({ embeds: [waitingEmbed] }).catch(() => {});
             const response = await getstickerid.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in get_sticker_id: ${err.message}`);
                 const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
-                if (interaction.replied || interaction.deferred) {
-                    await interaction.editReply({ content: errMsg }).catch(() => {});
-                } else {
-                    await interaction.reply({ content: errMsg, flags: MessageFlags.Ephemeral }).catch(() => {});
-                }
+                await interaction.editReply({ content: errMsg, embeds: [] }).catch(() => {});
             });
             if (response && response.id) {
                 stickerDeletionSessions.set(response.id, {
@@ -481,41 +462,38 @@ client.on('interactionCreate', async interaction => {
         }
         else if (interaction.commandName === 'status') {
             await interaction.deferReply();
-            await interaction.editReply({ content: '⏳ ' + await t('Please wait while the operation is being completed...', langCode) }).catch(() => {});
+            const waitingEmbed = new EmbedBuilder()
+                .setDescription('⏳ ' + await t('Checking status... please wait.', langCode))
+                .setColor('#FFFF00');
+            await interaction.editReply({ embeds: [waitingEmbed] }).catch(() => {});
             await status.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in status: ${err.message}`);
                 const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
-                if (interaction.replied || interaction.deferred) {
-                    await interaction.editReply({ content: errMsg }).catch(() => {});
-                } else {
-                    await interaction.reply({ content: errMsg, flags: MessageFlags.Ephemeral }).catch(() => {});
-                }
+                await interaction.editReply({ content: errMsg, embeds: [] }).catch(() => {});
             });
         }
         else if (interaction.commandName === 'help') {
             await interaction.deferReply();
-            await interaction.editReply({ content: '⏳ ' + await t('Please wait while the operation is being completed...', langCode) }).catch(() => {});
+            const waitingEmbed = new EmbedBuilder()
+                .setDescription('⏳ ' + await t('Loading help... please wait.', langCode))
+                .setColor('#FFFF00');
+            await interaction.editReply({ embeds: [waitingEmbed] }).catch(() => {});
             await help.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in help: ${err.message}`);
                 const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
-                if (interaction.replied || interaction.deferred) {
-                    await interaction.editReply({ content: errMsg }).catch(() => {});
-                } else {
-                    await interaction.reply({ content: errMsg, flags: MessageFlags.Ephemeral }).catch(() => {});
-                }
+                await interaction.editReply({ content: errMsg, embeds: [] }).catch(() => {});
             });
         }
         else if (interaction.commandName === 'vote') {
             await interaction.deferReply();
-            await interaction.editReply({ content: '⏳ ' + await t('Please wait while the operation is being completed...', langCode) }).catch(() => {});
+            const waitingEmbed = new EmbedBuilder()
+                .setDescription('⏳ ' + await t('Loading vote... please wait.', langCode))
+                .setColor('#FFFF00');
+            await interaction.editReply({ embeds: [waitingEmbed] }).catch(() => {});
             await vote.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in vote: ${err.message}`);
                 const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
-                if (interaction.replied || interaction.deferred) {
-                    await interaction.editReply({ content: errMsg }).catch(() => {});
-                } else {
-                    await interaction.reply({ content: errMsg, flags: MessageFlags.Ephemeral }).catch(() => {});
-                }
+                await interaction.editReply({ content: errMsg, embeds: [] }).catch(() => {});
             });
         }
         else if (interaction.commandName === 'delete_all_emojis') {
@@ -603,7 +581,10 @@ client.on('interactionCreate', async interaction => {
         }
         else if (interaction.commandName === 'delete_all_stickers') {
             await interaction.deferReply();
-            await interaction.editReply({ content: '⏳ ' + await t('Please wait while the operation is being completed...', langCode) }).catch(() => {});
+            const waitingEmbed = new EmbedBuilder()
+                .setDescription('⏳ ' + await t('Deleting all stickers... please wait.', langCode))
+                .setColor('#FFFF00');
+            await interaction.editReply({ embeds: [waitingEmbed] }).catch(() => {});
 
             const perms = await db.getServerPermissions(interaction.guild.id);
             const deletePermEnabled = perms ? perms.delete_permission_enabled : true;
