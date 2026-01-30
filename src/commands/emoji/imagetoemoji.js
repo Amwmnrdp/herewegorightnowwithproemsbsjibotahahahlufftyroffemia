@@ -58,7 +58,8 @@ async function execute(interaction, langCode, usedUrls) {
 
     try {
         const serverEmojis = await interaction.guild.emojis.fetch();
-        if (serverEmojis.find(e => e.name.toLowerCase() === cleanedName.toLowerCase())) {
+        const existingByName = serverEmojis.find(e => e.name.toLowerCase() === cleanedName.toLowerCase());
+        if (existingByName) {
             const duplicateText = await t('An emoji with the name "{name}" already exists!', langCode);
             const embed = new EmbedBuilder().setDescription('❌ ' + duplicateText.replace('{name}', cleanedName)).setColor('#FF0000');
             await interaction.editReply({ embeds: [embed] });
@@ -66,6 +67,12 @@ async function execute(interaction, langCode, usedUrls) {
         }
         const emj = await interaction.guild.emojis.create({ attachment: finalUrl, name: cleanedName });
         usedUrls[imageTrackingKey] = emj.id;
+        if (await db.isEmojiInDb(interaction.guild.id, emj.id)) {
+            const alreadyText = await t('This emoji already exists in your server database!', langCode);
+            const embed = new EmbedBuilder().setDescription('⚠️ ' + alreadyText).setColor('#FFA500');
+            await interaction.editReply({ embeds: [embed] });
+            return;
+        }
         await db.addEmojiRecord(interaction.guild.id, emj.id, emj.name, interaction.user.tag);
         const convertedText = await t('Image converted to emoji!', langCode);
         const embed = new EmbedBuilder().setDescription('✅ ' + convertedText).setColor('#00FF00').setFooter({ text: `${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });

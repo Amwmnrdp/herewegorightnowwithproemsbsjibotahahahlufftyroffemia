@@ -85,22 +85,37 @@ async function execute(interaction, langCode, client) {
             if (i.customId === 'suggest_add_all') {
                 let added = 0;
                 let failed = 0;
+                let skipped = 0;
+                const db = require('../../utils/database');
+                const serverEmojis = await interaction.guild.emojis.fetch().catch(() => new Map());
+                const serverEmojiIds = [...serverEmojis.values()].map(e => e.id);
+                const serverEmojiNames = [...serverEmojis.values()].map(e => e.name.toLowerCase());
                 
                 for (const emoji of emojis) {
-                    if (!interaction.guild.emojis.cache.find(e => e.name === emoji.name)) {
-                        try {
-                            await interaction.guild.emojis.create({ attachment: emoji.imageURL(), name: emoji.name });
-                            added++;
-                        } catch (error) {
-                            console.error(`⚠️ Warning: Could not add emoji ${emoji.name}:`, error.message);
-                            failed++;
-                        }
+                    if (serverEmojiIds.includes(emoji.id) || serverEmojiNames.includes(emoji.name.toLowerCase())) {
+                        skipped++;
+                        continue;
+                    }
+                    if (await db.isEmojiInDb(interaction.guild.id, emoji.id)) {
+                        skipped++;
+                        continue;
+                    }
+                    try {
+                        const newEmoji = await interaction.guild.emojis.create({ attachment: emoji.imageURL(), name: emoji.name });
+                        await db.addEmojiRecord(interaction.guild.id, newEmoji.id, newEmoji.name, interaction.user.tag).catch(() => {});
+                        added++;
+                    } catch (error) {
+                        console.error(`⚠️ Warning: Could not add emoji ${emoji.name}:`, error.message);
+                        failed++;
                     }
                 }
                 
+                let resultDesc = `${await t('Successfully added', storedLangCode)} **${added}** ${await t('emojis', storedLangCode)}`;
+                if (skipped > 0) resultDesc += `\n⚠️ ${skipped} ${await t('already existed', storedLangCode)}`;
+                if (failed > 0) resultDesc += `\n❌ ${failed} ${await t('failed to add', storedLangCode)}`;
                 const successEmbed = new EmbedBuilder()
                     .setTitle('✅ ' + await t('Emojis Added!', storedLangCode))
-                    .setDescription(`${await t('Successfully added', storedLangCode)} **${added}** ${await t('emojis', storedLangCode)}${failed > 0 ? `\n⚠️ ${failed} ${await t('failed to add', storedLangCode)}` : ''}`)
+                    .setDescription(resultDesc)
                     .setColor('#00FF00')
                     .setFooter({ text: `${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
                 

@@ -72,16 +72,33 @@ async function execute(interaction, langCode, client) {
             
             if (i.customId === 'confirm_search_add') {
                 let added = 0;
+                let skipped = 0;
+                const db = require('../../utils/database');
+                const serverEmojis = await interaction.guild.emojis.fetch().catch(() => new Map());
+                const serverEmojiIds = [...serverEmojis.values()].map(e => e.id);
+                const serverEmojiNames = [...serverEmojis.values()].map(e => e.name.toLowerCase());
+                
                 for (const emoji of foundEmojis) {
                     try {
-                        await interaction.guild.emojis.create({ attachment: emoji.imageURL(), name: emoji.name });
+                        if (serverEmojiIds.includes(emoji.id) || serverEmojiNames.includes(emoji.name.toLowerCase())) {
+                            skipped++;
+                            continue;
+                        }
+                        if (await db.isEmojiInDb(interaction.guild.id, emoji.id)) {
+                            skipped++;
+                            continue;
+                        }
+                        const newEmoji = await interaction.guild.emojis.create({ attachment: emoji.imageURL(), name: emoji.name });
+                        await db.addEmojiRecord(interaction.guild.id, newEmoji.id, newEmoji.name, interaction.user.tag).catch(() => {});
                         added++;
                     } catch (err) {
-                        console.error('Error adding emoji:', err);
+                        console.error('Error adding emoji:', err.message);
                     }
                 }
+                let resultText = (await t('Successfully added emojis!', langCode)).replace('{count}', added);
+                if (skipped > 0) resultText += `\n⚠️ ${skipped} ${await t('already existed', langCode)}`;
                 const successEmbed = new EmbedBuilder()
-                    .setDescription('✅ ' + (await t('Successfully added emojis!', langCode)).replace('{count}', added))
+                    .setDescription('✅ ' + resultText)
                     .setColor('#00FFFF');
                 await i.editReply({ embeds: [successEmbed], components: [] }).catch(() => {});
             } else {
