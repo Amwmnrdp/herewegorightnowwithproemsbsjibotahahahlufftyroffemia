@@ -1038,7 +1038,8 @@ client.on('interactionCreate', async interaction => {
             });
         }
         else if (interaction.commandName === 'sticker_to_image') {
-            await safeDefer();
+            await interaction.deferReply();
+            await interaction.editReply({ content: '⏳ ' + await t('Please wait while the operation is being completed...', langCode) }).catch(() => {});
             const response = await stickertoimage.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in sticker_to_image: ${err.message}`);
                 const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
@@ -1099,7 +1100,8 @@ client.on('interactionCreate', async interaction => {
             }
         }
         else if (interaction.commandName === 'list_stickers') {
-            await safeDefer();
+            await interaction.deferReply();
+            await interaction.editReply({ content: '⏳ ' + await t('Please wait while the operation is being completed...', langCode) }).catch(() => {});
             await liststicker.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in list_stickers: ${err.message}`);
                 const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
@@ -1111,7 +1113,8 @@ client.on('interactionCreate', async interaction => {
             });
         }
         else if (interaction.commandName === 'add_sticker') {
-            await safeDefer();
+            await interaction.deferReply();
+            await interaction.editReply({ content: '⏳ ' + await t('Please wait while the operation is being completed...', langCode) }).catch(() => {});
             const response = await addsticker.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in add_sticker: ${err.message}`);
                 try { await interaction.editReply({ content: '❌ ' + await t('An error occurred while executing this command.', langCode) }).catch(() => {}); } catch (e) {}
