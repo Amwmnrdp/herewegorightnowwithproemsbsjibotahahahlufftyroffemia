@@ -40,9 +40,9 @@ async function execute(interaction, langCode, client) {
 
     const generateDisplay = async (category) => {
         const allInPack = await db.getEmojisByPack(category);
-        const serverEmojiIds = interaction.guild.emojis.cache.map(e => e.id);
+        const serverEmojiNames = interaction.guild.emojis.cache.map(e => e.name.toLowerCase());
         
-        const available = allInPack.filter(e => !serverEmojiIds.includes(e.emoji_id));
+        const available = allInPack.filter(e => !serverEmojiNames.includes(e.emoji_name.toLowerCase()));
         
         const categoryLabel = category.charAt(0).toUpperCase() + category.slice(1) + ' Pack';
         
@@ -127,29 +127,34 @@ async function execute(interaction, langCode, client) {
             if (i.isStringSelectMenu()) {
                 currentCategory = i.values[0];
                 currentPage = 0;
+                await i.editReply({ content: '⏳ ' + await t('Please wait while the operation is being completed...', langCode) }).catch(() => {});
                 const result = await generateDisplay(currentCategory);
-                await i.editReply({ embeds: result.embeds, components: result.components }).catch(() => {});
+                await i.editReply({ content: null, embeds: result.embeds, components: result.components }).catch(() => {});
             } else if (i.isButton()) {
                 if (!currentCategory) return;
                 
                 if (i.customId === 'pack_first') {
                     currentPage = 0;
+                    await i.editReply({ content: '⏳ ' + await t('Please wait while the operation is being completed...', langCode) }).catch(() => {});
                     const result = await generateDisplay(currentCategory);
-                    await i.editReply({ embeds: result.embeds, components: result.components }).catch(() => {});
+                    await i.editReply({ content: null, embeds: result.embeds, components: result.components }).catch(() => {});
                 } else if (i.customId === 'pack_prev') {
                     currentPage = Math.max(0, currentPage - 1);
+                    await i.editReply({ content: '⏳ ' + await t('Please wait while the operation is being completed...', langCode) }).catch(() => {});
                     const result = await generateDisplay(currentCategory);
-                    await i.editReply({ embeds: result.embeds, components: result.components }).catch(() => {});
+                    await i.editReply({ content: null, embeds: result.embeds, components: result.components }).catch(() => {});
                 } else if (i.customId === 'pack_next') {
                     currentPage++;
+                    await i.editReply({ content: '⏳ ' + await t('Please wait while the operation is being completed...', langCode) }).catch(() => {});
                     const result = await generateDisplay(currentCategory);
-                    await i.editReply({ embeds: result.embeds, components: result.components }).catch(() => {});
+                    await i.editReply({ content: null, embeds: result.embeds, components: result.components }).catch(() => {});
                 } else if (i.customId === 'pack_add') {
                     const addPage = currentPage;
+                    await i.editReply({ content: '⏳ ' + await t('Please wait while the operation is being completed...', langCode) }).catch(() => {});
                     
                     const allInPack = await db.getEmojisByPack(currentCategory);
-                    const serverEmojiIds = interaction.guild.emojis.cache.map(e => e.id);
-                    const available = allInPack.filter(e => !serverEmojiIds.includes(e.emoji_id));
+                    const serverEmojiNames = interaction.guild.emojis.cache.map(e => e.name.toLowerCase());
+                    const available = allInPack.filter(e => !serverEmojiNames.includes(e.emoji_name.toLowerCase()));
                     const currentEmojis = available.slice(addPage * pageSize, (addPage + 1) * pageSize);
 
                     if (currentEmojis.length === 0) {
@@ -223,7 +228,7 @@ async function execute(interaction, langCode, client) {
                             .setColor('#00FF00');
                     }
                     
-                    await i.editReply({ embeds: [resultEmbed], components: [new ActionRowBuilder().addComponents(select)] }).catch(() => {});
+                    await i.editReply({ content: null, embeds: [resultEmbed], components: [new ActionRowBuilder().addComponents(select)] }).catch(() => {});
                 }
             }
         } catch (e) {

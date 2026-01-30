@@ -443,7 +443,8 @@ client.on('interactionCreate', async interaction => {
             }
         }
         else if (interaction.commandName === 'get_emoji_id') {
-            await safeDefer();
+            await interaction.deferReply();
+            await interaction.editReply({ content: '⏳ ' + await t('Please wait while the operation is being completed...', langCode) }).catch(() => {});
             await getemojiid.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in get_emoji_id: ${err.message}`);
                 const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
@@ -455,7 +456,8 @@ client.on('interactionCreate', async interaction => {
             });
         }
         else if (interaction.commandName === 'get_sticker_id') {
-            await safeDefer();
+            await interaction.deferReply();
+            await interaction.editReply({ content: '⏳ ' + await t('Please wait while the operation is being completed...', langCode) }).catch(() => {});
             const response = await getstickerid.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in get_sticker_id: ${err.message}`);
                 const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
@@ -478,7 +480,8 @@ client.on('interactionCreate', async interaction => {
             }
         }
         else if (interaction.commandName === 'status') {
-            await safeDefer();
+            await interaction.deferReply();
+            await interaction.editReply({ content: '⏳ ' + await t('Please wait while the operation is being completed...', langCode) }).catch(() => {});
             await status.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in status: ${err.message}`);
                 const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
@@ -490,7 +493,8 @@ client.on('interactionCreate', async interaction => {
             });
         }
         else if (interaction.commandName === 'help') {
-            await safeDefer();
+            await interaction.deferReply();
+            await interaction.editReply({ content: '⏳ ' + await t('Please wait while the operation is being completed...', langCode) }).catch(() => {});
             await help.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in help: ${err.message}`);
                 const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
@@ -502,7 +506,8 @@ client.on('interactionCreate', async interaction => {
             });
         }
         else if (interaction.commandName === 'vote') {
-            await safeDefer();
+            await interaction.deferReply();
+            await interaction.editReply({ content: '⏳ ' + await t('Please wait while the operation is being completed...', langCode) }).catch(() => {});
             await vote.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in vote: ${err.message}`);
                 const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
@@ -514,7 +519,8 @@ client.on('interactionCreate', async interaction => {
             });
         }
         else if (interaction.commandName === 'delete_all_emojis') {
-            await safeDefer();
+            await interaction.deferReply();
+            await interaction.editReply({ content: '⏳ ' + await t('Please wait while the operation is being completed...', langCode) }).catch(() => {});
             
             const perms = await db.getServerPermissions(interaction.guild.id);
             const deletePermEnabled = perms ? perms.delete_permission_enabled : true;
@@ -596,7 +602,8 @@ client.on('interactionCreate', async interaction => {
             });
         }
         else if (interaction.commandName === 'delete_all_stickers') {
-            await safeDefer();
+            await interaction.deferReply();
+            await interaction.editReply({ content: '⏳ ' + await t('Please wait while the operation is being completed...', langCode) }).catch(() => {});
 
             const perms = await db.getServerPermissions(interaction.guild.id);
             const deletePermEnabled = perms ? perms.delete_permission_enabled : true;
@@ -678,7 +685,8 @@ client.on('interactionCreate', async interaction => {
             });
         }
         else if (interaction.commandName === 'delete_permission') {
-            await safeDefer();
+            await interaction.deferReply();
+            await interaction.editReply({ content: '⏳ ' + await t('Please wait while the operation is being completed...', langCode) }).catch(() => {});
             await deletepermission.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in delete_permission: ${err.message}`);
                 const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
@@ -690,7 +698,8 @@ client.on('interactionCreate', async interaction => {
             });
         }
         else if (interaction.commandName === 'emoji_permission') {
-            await safeDefer();
+            await interaction.deferReply();
+            await interaction.editReply({ content: '⏳ ' + await t('Please wait while the operation is being completed...', langCode) }).catch(() => {});
             const permission = require('./src/commands/storage/permission');
             await permission.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in emoji_permission: ${err.message}`);
@@ -703,7 +712,8 @@ client.on('interactionCreate', async interaction => {
             });
         }
         else if (interaction.commandName === 'sticker_permission') {
-            await safeDefer();
+            await interaction.deferReply();
+            await interaction.editReply({ content: '⏳ ' + await t('Please wait while the operation is being completed...', langCode) }).catch(() => {});
             await stickerPermission.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in sticker_permission: ${err.message}`);
                 const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
@@ -715,7 +725,8 @@ client.on('interactionCreate', async interaction => {
             });
         }
         else if (interaction.commandName === 'emoji_search') {
-            await safeDefer();
+            await interaction.deferReply();
+            await interaction.editReply({ content: '⏳ ' + await t('Please wait while the operation is being completed...', langCode) }).catch(() => {});
             await emojisearch.execute(interaction, langCode, client).catch(async err => {
                 console.error(`Error in emoji_search: ${err.message}`);
                 const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
@@ -727,7 +738,8 @@ client.on('interactionCreate', async interaction => {
             });
         }
         else if (interaction.commandName === 'search_sticker') {
-            await safeDefer();
+            await interaction.deferReply();
+            await interaction.editReply({ content: '⏳ ' + await t('Please wait while the operation is being completed...', langCode) }).catch(() => {});
             await searchsticker.execute(interaction, langCode, client).catch(async err => {
                 console.error(`Error in search_sticker: ${err.message}`);
                 const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
@@ -739,7 +751,8 @@ client.on('interactionCreate', async interaction => {
             });
         }
         else if (interaction.commandName === 'emoji_pack') {
-            await safeDefer();
+            await interaction.deferReply();
+            await interaction.editReply({ content: '⏳ ' + await t('Please wait while the operation is being completed...', langCode) }).catch(() => {});
             await emojipack.execute(interaction, langCode, client).catch(async err => {
                 console.error(`Error in emoji_pack: ${err.message}`);
                 const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
@@ -751,7 +764,8 @@ client.on('interactionCreate', async interaction => {
             });
         }
         else if (interaction.commandName === 'add_to_pack') {
-            await safeDefer();
+            await interaction.deferReply();
+            await interaction.editReply({ content: '⏳ ' + await t('Please wait while the operation is being completed...', langCode) }).catch(() => {});
             await addtopack.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in add_to_pack: ${err.message}`);
                 const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
@@ -761,7 +775,8 @@ client.on('interactionCreate', async interaction => {
             });
         }
         else if (interaction.commandName === 'delete_from_pack') {
-            await safeDefer();
+            await interaction.deferReply();
+            await interaction.editReply({ content: '⏳ ' + await t('Please wait while the operation is being completed...', langCode) }).catch(() => {});
             await deletefrompack.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in delete_from_pack: ${err.message}`);
                 const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
@@ -771,7 +786,8 @@ client.on('interactionCreate', async interaction => {
             });
         }
         else if (interaction.commandName === 'suggest_emojis') {
-            await safeDefer();
+            await interaction.deferReply();
+            await interaction.editReply({ content: '⏳ ' + await t('Please wait while the operation is being completed...', langCode) }).catch(() => {});
             await suggestemojis.execute(interaction, langCode, client).catch(async err => {
                 console.error(`Error in suggest_emojis: ${err.message}`);
                 const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
@@ -783,7 +799,8 @@ client.on('interactionCreate', async interaction => {
             });
         }
         else if (interaction.commandName === 'suggest_sticker') {
-            await safeDefer();
+            await interaction.deferReply();
+            await interaction.editReply({ content: '⏳ ' + await t('Please wait while the operation is being completed...', langCode) }).catch(() => {});
             await suggeststicker.execute(interaction, langCode, client).catch(async err => {
                 console.error(`Error in suggest_sticker: ${err.message}`);
                 const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
@@ -795,7 +812,8 @@ client.on('interactionCreate', async interaction => {
             });
         }
         else if (interaction.commandName === 'enhance_sticker') {
-            await safeDefer();
+            await interaction.deferReply();
+            await interaction.editReply({ content: '⏳ ' + await t('Please wait while the operation is being completed...', langCode) }).catch(() => {});
             const response = await enhancesticker.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in enhance_sticker: ${err.message}`);
                 const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
@@ -817,7 +835,8 @@ client.on('interactionCreate', async interaction => {
             }
         }
         else if (interaction.commandName === 'enhance_emoji') {
-            await safeDefer();
+            await interaction.deferReply();
+            await interaction.editReply({ content: '⏳ ' + await t('Please wait while the operation is being completed...', langCode) }).catch(() => {});
             await enhanceemoji.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in enhance_emoji: ${err.message}`);
                 const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
@@ -829,7 +848,8 @@ client.on('interactionCreate', async interaction => {
             });
         }
         else if (interaction.commandName === 'add_emoji') {
-            await safeDefer();
+            await interaction.deferReply();
+            await interaction.editReply({ content: '⏳ ' + await t('Please wait while the operation is being completed...', langCode) }).catch(() => {});
             await addemojiCmd.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in add_emoji: ${err.message}`);
                 try {
@@ -843,7 +863,8 @@ client.on('interactionCreate', async interaction => {
             });
         }
         else if (interaction.commandName === 'image_to_emoji') {
-            await safeDefer();
+            await interaction.deferReply();
+            await interaction.editReply({ content: '⏳ ' + await t('Please wait while the operation is being completed...', langCode) }).catch(() => {});
             await imagetoemoji.execute(interaction, langCode, usedUrls).catch(async err => {
                 console.error(`Error in image_to_emoji: ${err.message}`);
                 const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
@@ -855,7 +876,8 @@ client.on('interactionCreate', async interaction => {
             });
         }
         else if (interaction.commandName === 'emoji_to_sticker') {
-            await safeDefer();
+            await interaction.deferReply();
+            await interaction.editReply({ content: '⏳ ' + await t('Please wait while the operation is being completed...', langCode) }).catch(() => {});
             await emojiTosticker.execute(interaction, langCode, convertedEmojisToStickers).catch(async err => {
                 console.error(`Error in emoji_to_sticker: ${err.message}`);
                 const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
@@ -867,7 +889,8 @@ client.on('interactionCreate', async interaction => {
             });
         }
         else if (interaction.commandName === 'list_emojis') {
-            await safeDefer();
+            await interaction.deferReply();
+            await interaction.editReply({ content: '⏳ ' + await t('Please wait while the operation is being completed...', langCode) }).catch(() => {});
             await listemoji.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in list_emojis: ${err.message}`);
                 const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
@@ -879,14 +902,16 @@ client.on('interactionCreate', async interaction => {
             });
         }
         else if (interaction.commandName === 'language') {
-            await safeDefer();
+            await interaction.deferReply();
+            await interaction.editReply({ content: '⏳ ' + await t('Please wait while the operation is being completed...', langCode) }).catch(() => {});
             await language.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in language: ${err.message}`);
                 try { await interaction.editReply({ content: '❌ ' + await t('An error occurred while executing this command.', langCode) }).catch(() => {}); } catch (e) {}
             });
         }
         else if (interaction.commandName === 'delete_emoji') {
-            await safeDefer();
+            await interaction.deferReply();
+            await interaction.editReply({ content: '⏳ ' + await t('Please wait while the operation is being completed...', langCode) }).catch(() => {});
             await deletemoji.execute(interaction, langCode, convertedStickersToEmojis).catch(async err => {
                 console.error(`Error in delete_emoji: ${err.message}`);
                 const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
@@ -898,7 +923,8 @@ client.on('interactionCreate', async interaction => {
             });
         }
         else if (interaction.commandName === 'rename_emoji') {
-            await safeDefer();
+            await interaction.deferReply();
+            await interaction.editReply({ content: '⏳ ' + await t('Please wait while the operation is being completed...', langCode) }).catch(() => {});
             await renameemoji.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in rename_emoji: ${err.message}`);
                 const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
@@ -910,7 +936,8 @@ client.on('interactionCreate', async interaction => {
             });
         }
         else if (interaction.commandName === 'delete_sticker') {
-            await safeDefer();
+            await interaction.deferReply();
+            await interaction.editReply({ content: '⏳ ' + await t('Please wait while the operation is being completed...', langCode) }).catch(() => {});
             const response = await deletesticker.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in delete_sticker: ${err.message}`);
                 const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
@@ -933,7 +960,8 @@ client.on('interactionCreate', async interaction => {
             }
         }
         else if (interaction.commandName === 'rename_sticker') {
-            await safeDefer();
+            await interaction.deferReply();
+            await interaction.editReply({ content: '⏳ ' + await t('Please wait while the operation is being completed...', langCode) }).catch(() => {});
             const response = await renamesticker.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in rename_sticker: ${err.message}`);
                 const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
@@ -958,7 +986,8 @@ client.on('interactionCreate', async interaction => {
             }
         }
         else if (interaction.commandName === 'sticker_to_emoji') {
-            await safeDefer();
+            await interaction.deferReply();
+            await interaction.editReply({ content: '⏳ ' + await t('Please wait while the operation is being completed...', langCode) }).catch(() => {});
             const response = await stickertoemi.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in sticker_to_emoji: ${err.message}`);
                 const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
@@ -983,7 +1012,8 @@ client.on('interactionCreate', async interaction => {
             }
         }
         else if (interaction.commandName === 'image_to_sticker') {
-            await safeDefer();
+            await interaction.deferReply();
+            await interaction.editReply({ content: '⏳ ' + await t('Please wait while the operation is being completed...', langCode) }).catch(() => {});
             await imagetosticker.execute(interaction, langCode, convertedImagesToStickers).catch(async err => {
                 console.error(`Error in image_to_sticker: ${err.message}`);
                 const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
@@ -995,7 +1025,8 @@ client.on('interactionCreate', async interaction => {
             });
         }
         else if (interaction.commandName === 'emoji_to_image') {
-            await safeDefer();
+            await interaction.deferReply();
+            await interaction.editReply({ content: '⏳ ' + await t('Please wait while the operation is being completed...', langCode) }).catch(() => {});
             await emojitoimage.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in emoji_to_image: ${err.message}`);
                 const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
@@ -1031,7 +1062,8 @@ client.on('interactionCreate', async interaction => {
             }
         }
         else if (interaction.commandName === 'enhance_emoji') {
-            await safeDefer();
+            await interaction.deferReply();
+            await interaction.editReply({ content: '⏳ ' + await t('Please wait while the operation is being completed...', langCode) }).catch(() => {});
             await enhanceemoji.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in enhance_emoji: ${err.message}`);
                 const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
@@ -1043,7 +1075,8 @@ client.on('interactionCreate', async interaction => {
             });
         }
         else if (interaction.commandName === 'enhance_sticker') {
-            await safeDefer();
+            await interaction.deferReply();
+            await interaction.editReply({ content: '⏳ ' + await t('Please wait while the operation is being completed...', langCode) }).catch(() => {});
             const response = await enhancesticker.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in enhance_sticker: ${err.message}`);
                 const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
@@ -1098,7 +1131,8 @@ client.on('interactionCreate', async interaction => {
             }
         }
         else if (interaction.commandName === 'suggest_sticker') {
-            await safeDefer();
+            await interaction.deferReply();
+            await interaction.editReply({ content: '⏳ ' + await t('Please wait while the operation is being completed...', langCode) }).catch(() => {});
             await suggeststicker.execute(interaction, langCode, client).catch(async err => {
                 console.error(`Error in suggest_sticker: ${err.message}`);
                 const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
