@@ -1386,4 +1386,13 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`🌐 Web server running on port ${PORT}`);
 });
 
-client.login(process.env.token);
+const TOKEN = process.env.token || process.env.DISCORD_BOT_TOKEN;
+
+if (!TOKEN) {
+    console.error('❌ DISCORD_BOT_TOKEN or token secret is missing!');
+    process.exit(1);
+}
+
+client.login(TOKEN).catch(err => {
+    console.error('❌ Failed to login to Discord:', err.message);
+});
