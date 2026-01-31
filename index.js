@@ -1377,7 +1377,7 @@ client.on('guildDelete', async guild => {
         await db.removeServer(guild.id);
         updateStatus();
     } catch (error) {
-        console.error('Error removing server:', error.message);
+        console.error('Error removi"ng server:', error.message);
     }
 });
 
