@@ -101,7 +101,7 @@ async function execute(interaction, langCode, client) {
                         continue;
                     }
                     try {
-                        const newEmoji = await interaction.guild.emojis.create({ attachment: emoji.imageURL(), name: emoji.name });
+                        const newEmoji = await interaction.guild.emojis.create({ attachment: emoji.url, name: emoji.name });
                         await db.addEmojiRecord(interaction.guild.id, newEmoji.id, newEmoji.name, interaction.user.tag).catch(() => {});
                         added++;
                     } catch (error) {

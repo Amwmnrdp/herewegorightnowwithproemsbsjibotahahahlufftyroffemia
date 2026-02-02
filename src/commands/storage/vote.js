@@ -4,7 +4,7 @@ const { t } = require('../../utils/languages');
 async function execute(interaction, langCode) {
     const embed = new EmbedBuilder()
         .setTitle('🙏 ' + await t('Thank You!', langCode))
-        .setDescription(await t('Thank you for supporting ProEmoji! Your help keeps the bot growing.', langCode))
+        .setDescription(await t('Thank you for supporting ProEmoji! Your help keeps the bot growing. Supporting us with a vote helps the bot grow and stay online! Click the button below to vote on Top.gg.', langCode))
         .setColor('#00FFFF')
         .setThumbnail(interaction.client.user.displayAvatarURL());
 
@@ -16,7 +16,7 @@ async function execute(interaction, langCode) {
                 .setStyle(ButtonStyle.Link),
             new ButtonBuilder()
                 .setLabel(await t('Vote', langCode))
-                .setURL('https://discord.gg/qTHehSfaW4')
+                .setURL(`https://top.gg/bot/${interaction.client.user.id}/vote`)
                 .setStyle(ButtonStyle.Link)
         );
 

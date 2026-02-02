@@ -85,7 +85,7 @@ async function execute(interaction, langCode, client) {
                 `${await t('Available emojis to add:', langCode)} (${available.length} remaining)\n\n` + 
                 emojiList.map((e, idx) => `${(currentPage * pageSize) + idx + 1}. ${e}`).join('\n')
             )
-            .setFooter({ text: `Page ${currentPage + 1}/${totalPages} • Click "View" to preview emoji` })
+            .setFooter({ text: `${await t('Page', langCode)} ${currentPage + 1}/${totalPages} • ${await t('Click "View" to preview emoji', langCode)}` })
             .setColor('#00FFFF');
 
         if (display.length === 1) {

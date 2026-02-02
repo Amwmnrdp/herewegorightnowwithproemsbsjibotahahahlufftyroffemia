@@ -95,7 +95,7 @@ async function execute(interaction, langCode, client) {
                         console.error('Error adding emoji:', err.message);
                     }
                 }
-                let resultText = (await t('Successfully added emojis!', langCode)).replace('{count}', added);
+                let resultText = (await t('Successfully added {count} emojis!', langCode)).replace('{count}', added);
                 if (skipped > 0) resultText += `\n⚠️ ${skipped} ${await t('already existed', langCode)}`;
                 const successEmbed = new EmbedBuilder()
                     .setDescription('✅ ' + resultText)
