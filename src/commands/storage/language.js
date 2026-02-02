@@ -48,8 +48,12 @@ async function execute(interaction, langCode) {
     const msg = msgResponse;
     
     const filter = i => i.customId === 'language_select' && i.user.id === interaction.user.id;
-    const collector = msg.createMessageComponentCollector({ filter, time: 60000 });
+    const collector = interaction.channel.createMessageComponentCollector({ filter, time: 60000 });
     
+    collector.on('collect', async i => {
+        // Handled in index.js for consistency
+    });
+
     collector.on('end', async collected => {
         if (collected.size === 0) {
             const disabledSelectMenu = new StringSelectMenuBuilder()

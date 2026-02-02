@@ -420,11 +420,14 @@ client.on('interactionCreate', async interaction => {
     }
 
     if (interaction.isStringSelectMenu() && interaction.customId === 'language_select') {
-        const langCode = interaction.values[0];
-        const langInfo = SUPPORTED_LANGUAGES[langCode];
-        await db.setServerLanguage(interaction.guild.id, langCode);
+        const selectedLang = interaction.values[0];
+        const langInfo = SUPPORTED_LANGUAGES[selectedLang];
+        await db.setServerLanguage(interaction.guild.id, selectedLang);
         
-        const successTitle = await t('Language Updated!', langCode);
+        // Update local cache so it's immediate
+        serverLanguages.set(interaction.guild.id, selectedLang);
+        
+        const successTitle = await t('Language Updated!', selectedLang);
         const embed = new EmbedBuilder()
             .setTitle(successTitle)
             .setDescription(`${langInfo.flag} ${langInfo.native} (${langInfo.name})`)
