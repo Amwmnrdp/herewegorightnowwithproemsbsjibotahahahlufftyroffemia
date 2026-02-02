@@ -1388,7 +1388,7 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`🌐 Web server running on port ${PORT}`);
 });
 
-const TOKEN = process.env.token || process.env.DISCORD_BOT_TOKEN;
+const TOKEN = process.env.token;
 
 if (!TOKEN) {
     console.error('❌ DISCORD_BOT_TOKEN or token secret is missing!');

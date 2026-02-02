@@ -28,14 +28,11 @@ async function t(text, langCode) {
     const translateCode = SUPPORTED_LANGUAGES[langCode]?.translateCode || langCode;
     if (translateCode === 'en') return text;
 
-    // Google Translate can be slow, especially in a tight loop
-    // Ensure we handle concurrent requests for the same text
     const cacheKey = `${translateCode}:${text}`;
     if (translationCache.has(cacheKey)) {
         return translationCache.get(cacheKey);
     }
     
-    // Check if there's a pending translation for this key
     if (translationCache.has(`pending:${cacheKey}`)) {
         return translationCache.get(`pending:${cacheKey}`);
     }
@@ -44,6 +41,10 @@ async function t(text, langCode) {
         try {
             const result = await translate(text, { from: 'en', to: translateCode });
             let translatedText = result.text;
+            
+            // Clean up common Google Translate artifacts
+            translatedText = translatedText.replace(/\{ (\w+) \}/g, '{$1}');
+            
             translationCache.set(cacheKey, translatedText);
             translationCache.delete(`pending:${cacheKey}`);
             return translatedText;
