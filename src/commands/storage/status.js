@@ -33,7 +33,7 @@ async function execute(interaction, langCode) {
     const embed = new EmbedBuilder()
         .setAuthor({ name: 'ProEmoji', iconURL: interaction.client.user.displayAvatarURL() })
         .setTitle('📊 ' + botStatus)
-        .setDescription(`**Ping:** ${ping}ms`)
+        .setDescription(`**${await t('Ping', langCode)}:** ${ping}ms`)
         .addFields(
             { 
                 name: `📁 ${serverStatsText}`, 
