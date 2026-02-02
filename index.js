@@ -257,6 +257,7 @@ const cooldowns = new Map();
 
 client.on('interactionCreate', async interaction => {
     const langCode = interaction.guild ? await db.getServerLanguage(interaction.guild.id) : 'en';
+    console.log(`[Interaction] type: ${interaction.type}, customId: ${interaction.customId}, guild: ${interaction.guild?.id}, lang: ${langCode}`);
 
     if (interaction.isCommand()) {
         const userId = interaction.user.id;
@@ -286,8 +287,6 @@ client.on('interactionCreate', async interaction => {
 
     if (interaction.isStringSelectMenu() && interaction.customId === 'help_category') {
         try {
-            const currentLangCode = interaction.guild ? await db.getServerLanguage(interaction.guild.id) : 'en';
-            
             if (!interaction.deferred && !interaction.replied) {
                 await interaction.deferUpdate().catch(() => {});
             }
@@ -295,11 +294,11 @@ client.on('interactionCreate', async interaction => {
             const row = new ActionRowBuilder().addComponents(
                 new StringSelectMenuBuilder()
                     .setCustomId('help_category')
-                    .setPlaceholder(await t('Select a category', currentLangCode))
+                    .setPlaceholder(await t('Select a category', langCode))
                     .addOptions([
-                        { label: await t('Sticker Commands', currentLangCode), value: 'sticker_help', emoji: '✨' },
-                        { label: await t('Emoji Commands', currentLangCode), value: 'emoji_help', emoji: '😀' },
-                        { label: await t('Info Commands', currentLangCode), value: 'info_help', emoji: 'ℹ️' }
+                        { label: await t('Sticker Commands', langCode), value: 'sticker_help', emoji: '✨' },
+                        { label: await t('Emoji Commands', langCode), value: 'emoji_help', emoji: '😀' },
+                        { label: await t('Info Commands', langCode), value: 'info_help', emoji: 'ℹ️' }
                     ])
             );
 
@@ -307,7 +306,7 @@ client.on('interactionCreate', async interaction => {
             let title = '';
 
             if (interaction.values[0] === 'sticker_help') {
-                title = await t('Sticker Commands', currentLangCode);
+                title = await t('Sticker Commands', langCode);
                 const stickerCommands = [
                     { cmd: '/add_sticker', desc: 'Add a new sticker to your server with a custom name' },
                     { cmd: '/image_to_sticker', desc: 'Convert an image URL or attachment into a server sticker instantly' },
@@ -323,15 +322,15 @@ client.on('interactionCreate', async interaction => {
                 ];
 
                 for (let i = 0; i < stickerCommands.length; i += 5) {
-                    let pageContent = `**${await t('Commands related to stickers', currentLangCode)}**\n\n`;
+                    let pageContent = `**${await t('Commands related to stickers', langCode)}**\n\n`;
                     const chunk = stickerCommands.slice(i, i + 5);
                     for (const item of chunk) {
-                        pageContent += `${await t(item.desc, currentLangCode)}: **${item.cmd}**\n\n`;
+                        pageContent += `${await t(item.desc, langCode)}: **${item.cmd}**\n\n`;
                     }
                     pages.push(pageContent);
                 }
             } else if (interaction.values[0] === 'emoji_help') {
-                title = await t('Emoji Commands', currentLangCode);
+                title = await t('Emoji Commands', langCode);
                 const emojiCommands = [
                     { cmd: '/emoji_search', desc: 'Search for specific emojis by name across multiple servers' },
                     { cmd: '/add_emoji', desc: 'Add a new emoji to your server using a custom name or ID' },
@@ -348,30 +347,30 @@ client.on('interactionCreate', async interaction => {
                 ];
 
                 for (let i = 0; i < emojiCommands.length; i += 5) {
-                    let pageContent = `**${await t('Commands related to emojis', currentLangCode)}**\n\n`;
+                    let pageContent = `**${await t('Commands related to emojis', langCode)}**\n\n`;
                     const chunk = emojiCommands.slice(i, i + 5);
                     for (const item of chunk) {
-                        pageContent += `${await t(item.desc, currentLangCode)}: **${item.cmd}**\n\n`;
+                        pageContent += `${await t(item.desc, langCode)}: **${item.cmd}**\n\n`;
                     }
                     if (i + 5 >= emojiCommands.length) {
-                        pageContent += `💡 *${await t('If you do not have Nitro, you can use /suggest_emojis and the bot will suggest 5 random emojis from other servers it is in.', currentLangCode)}*`;
+                        pageContent += `💡 *${await t('If you do not have Nitro, you can use /suggest_emojis and the bot will suggest 5 random emojis from other servers it is in.', langCode)}*`;
                     }
                     pages.push(pageContent);
                 }
             } else if (interaction.values[0] === 'info_help') {
-                title = await t('Info Commands', currentLangCode);
-                const pageContent = `**${await t('Utility and status commands', currentLangCode)}**\n\n` +
-                    `${await t('Set permissions for emoji suggestions (Owner only)', currentLangCode)}: **/emoji_permission**\n\n` +
-                    `${await t('Set permissions for sticker suggestions (Owner only)', currentLangCode)}: **/sticker_permission**\n\n` +
-                    `${await t('Set mass deletion approval requirement (Owner only)', currentLangCode)}: **/delete_permission**\n\n` +
-                    `${await t('Change the bot\'s language setting (Owner only)', currentLangCode)}: **/language**\n\n` +
-                    `${await t('View bot status, latency, and vote status', currentLangCode)}: **/status**\n\n` +
-                    `🔗 [${await t('Vote ProEmoji', currentLangCode)}](https://top.gg/bot/1009426679061553162/vote)`;
+                title = await t('Info Commands', langCode);
+                const pageContent = `**${await t('Utility and status commands', langCode)}**\n\n` +
+                    `${await t('Set permissions for emoji suggestions (Owner only)', langCode)}: **/emoji_permission**\n\n` +
+                    `${await t('Set permissions for sticker suggestions (Owner only)', langCode)}: **/sticker_permission**\n\n` +
+                    `${await t('Set mass deletion approval requirement (Owner only)', langCode)}: **/delete_permission**\n\n` +
+                    `${await t('Change the bot\'s language setting (Owner only)', langCode)}: **/language**\n\n` +
+                    `${await t('View bot status, latency, and vote status', langCode)}: **/status**\n\n` +
+                    `🔗 [${await t('Vote ProEmoji', langCode)}](https://top.gg/bot/1009426679061553162/vote)`;
                 pages.push(pageContent);
             }
 
             if (pages.length === 0) {
-                pages.push(await t('No commands found in this category.', currentLangCode));
+                pages.push(await t('No commands found in this category.', langCode));
             }
 
             let currentPage = 0;
@@ -395,7 +394,7 @@ client.on('interactionCreate', async interaction => {
             await interaction.editReply({ 
                 embeds: [createHelpEmbed(0)], 
                 components: pages.length > 1 ? [row, createHelpRow(0)] : [row]
-            });
+            }).catch(e => console.error('Error editing help reply:', e));
 
             if (pages.length > 1) {
                 const collector = interaction.message.createMessageComponentCollector({ 
