@@ -28,21 +28,34 @@ async function t(text, langCode) {
     const translateCode = SUPPORTED_LANGUAGES[langCode]?.translateCode || langCode;
     if (translateCode === 'en') return text;
 
+    // Google Translate can be slow, especially in a tight loop
+    // Ensure we handle concurrent requests for the same text
     const cacheKey = `${translateCode}:${text}`;
     if (translationCache.has(cacheKey)) {
         return translationCache.get(cacheKey);
     }
     
-    try {
-        const result = await translate(text, { from: 'en', to: translateCode });
-        let translatedText = result.text;
-        
-        translationCache.set(cacheKey, translatedText);
-        return translatedText;
-    } catch (error) {
-        console.error(`❌ Translation error (${langCode}):`, error.message);
-        return text;
+    // Check if there's a pending translation for this key
+    if (translationCache.has(`pending:${cacheKey}`)) {
+        return translationCache.get(`pending:${cacheKey}`);
     }
+
+    const pendingPromise = (async () => {
+        try {
+            const result = await translate(text, { from: 'en', to: translateCode });
+            let translatedText = result.text;
+            translationCache.set(cacheKey, translatedText);
+            translationCache.delete(`pending:${cacheKey}`);
+            return translatedText;
+        } catch (error) {
+            console.error(`❌ Translation error (${langCode}):`, error.message);
+            translationCache.delete(`pending:${cacheKey}`);
+            return text;
+        }
+    })();
+
+    translationCache.set(`pending:${cacheKey}`, pendingPromise);
+    return pendingPromise;
 }
 
 async function preWarmCache() {

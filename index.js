@@ -7,7 +7,7 @@ const db = require('./src/utils/database');
 const sharp = require('sharp');
 const axios = require('axios');
 const { SUPPORTED_LANGUAGES, COMMAND_DEFINITIONS, OWNER_ONLY_COMMANDS, ADMIN_ONLY_COMMANDS = [], PUBLIC_COMMANDS, EMOJI_PERMISSION_COMMANDS } = require('./src/utils/constants');
-const { t, preWarmCache } = require('./src/utils/languages');
+const { t, preWarmCache, getServerLanguage, serverLanguages } = require('./src/utils/languages');
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json({ limit: '10mb' }));
@@ -256,7 +256,7 @@ async function checkPermissions(interaction, langCode) {
 const cooldowns = new Map();
 
 client.on('interactionCreate', async interaction => {
-    const langCode = interaction.guild ? await db.getServerLanguage(interaction.guild.id) : 'en';
+    const langCode = interaction.guild ? await getServerLanguage(interaction.guild.id) : 'en';
     console.log(`[Interaction] type: ${interaction.type}, customId: ${interaction.customId}, guild: ${interaction.guild?.id}, lang: ${langCode}`);
 
     if (interaction.isCommand()) {
