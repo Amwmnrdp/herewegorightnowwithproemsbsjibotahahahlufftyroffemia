@@ -44,6 +44,19 @@ async function execute(interaction, langCode, usedUrls) {
         return;
     }
 
+    // Check if the URL is an image or a common format like gif, png, webp, jpeg, jpg
+    const extensionMatch = finalUrl.match(/\.(gif|png|webp|jpe?g)(\?.*)?$/i);
+    const isImage = isImageUrl(finalUrl) || extensionMatch;
+
+    if (!isImage) {
+        const embed = new EmbedBuilder()
+            .setDescription('❌ ' + await t('The provided URL or attachment is not a supported image format!', langCode))
+            .setColor('#FF0000')
+            .setFooter({ text: `${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
+        await interaction.editReply({ embeds: [embed] });
+        return;
+    }
+
     // Memory check for images
     const imageTrackingKey = `${interaction.guild.id}:${finalUrl}`;
     if (usedUrls[imageTrackingKey]) {

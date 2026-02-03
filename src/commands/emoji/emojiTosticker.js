@@ -79,18 +79,39 @@ async function execute(interaction, langCode, convertedEmojisToStickers) {
         const response = await axios.get(emojiUrl, { responseType: 'arraybuffer' });
         const inputBuffer = Buffer.from(response.data);
 
-        let processedBuffer = await sharp(inputBuffer)
-            .resize(512, 512, { 
-                fit: 'contain', 
-                background: { r: 0, g: 0, b: 0, alpha: 0 } 
-            })
-            .png({ quality: 90, compressionLevel: 9 })
-            .toBuffer();
+        const isAnimated = emojiUrl.includes('.gif');
+        let sharpInstance = sharp(inputBuffer, { animated: isAnimated });
+
+        let processedBuffer;
+        if (isAnimated) {
+            processedBuffer = await sharpInstance
+                .resize(512, 512, { 
+                    fit: 'contain', 
+                    background: { r: 0, g: 0, b: 0, alpha: 0 } 
+                })
+                .webp({ quality: 80, effort: 6, loop: 0 })
+                .toBuffer();
+        } else {
+            processedBuffer = await sharpInstance
+                .resize(512, 512, { 
+                    fit: 'contain', 
+                    background: { r: 0, g: 0, b: 0, alpha: 0 } 
+                })
+                .png({ quality: 90, compressionLevel: 9 })
+                .toBuffer();
+        }
 
         if (processedBuffer.length > 512000) {
-            processedBuffer = await sharp(processedBuffer)
-                .png({ palette: true, colors: 128 })
-                .toBuffer();
+            if (isAnimated) {
+                processedBuffer = await sharp(inputBuffer, { animated: true })
+                    .resize(320, 320, { fit: 'contain' })
+                    .webp({ quality: 50, effort: 6, loop: 0 })
+                    .toBuffer();
+            } else {
+                processedBuffer = await sharp(processedBuffer)
+                    .png({ palette: true, colors: 128 })
+                    .toBuffer();
+            }
         }
 
         const sticker = await interaction.guild.stickers.create({

@@ -66,7 +66,9 @@ async function execute(interaction, langCode, convertedImagesToStickers) {
         const response = await axios.get(finalUrl, { responseType: 'arraybuffer' });
         const inputBuffer = Buffer.from(response.data);
 
-        let sharpInstance = sharp(inputBuffer);
+        let sharpInstance = sharp(inputBuffer, { animated: true });
+        const metadata = await sharpInstance.metadata();
+        const isAnimated = metadata.pages && metadata.pages > 1;
 
         if (integrationOption) {
             // Integration mode: Force square 512x512 with FILL to cover the entire canvas
@@ -76,7 +78,6 @@ async function execute(interaction, langCode, convertedImagesToStickers) {
             });
         } else {
             // Original form mode: Preserve aspect ratio within 512x512
-            const metadata = await sharpInstance.metadata();
             const ratio = metadata.width / metadata.height;
             
             if (ratio > 1) {
@@ -86,15 +87,30 @@ async function execute(interaction, langCode, convertedImagesToStickers) {
             }
         }
 
-        let processedBuffer = await sharpInstance
-            .png({ quality: 80, compressionLevel: 9 })
-            .toBuffer();
+        let processedBuffer;
+        if (isAnimated) {
+            // For animated stickers, we output as webp which Discord supports for animated stickers
+            processedBuffer = await sharpInstance
+                .webp({ quality: 80, effort: 6, loop: 0 })
+                .toBuffer();
+        } else {
+            processedBuffer = await sharpInstance
+                .png({ quality: 80, compressionLevel: 9 })
+                .toBuffer();
+        }
 
         // Safety check for size
         if (processedBuffer.length > 512000) {
-            processedBuffer = await sharp(processedBuffer)
-                .png({ palette: true, colors: 128 })
-                .toBuffer();
+            if (isAnimated) {
+                processedBuffer = await sharp(inputBuffer, { animated: true })
+                    .resize(320, 320, { fit: 'contain' })
+                    .webp({ quality: 50, effort: 6, loop: 0 })
+                    .toBuffer();
+            } else {
+                processedBuffer = await sharp(processedBuffer)
+                    .png({ palette: true, colors: 128 })
+                    .toBuffer();
+            }
         }
 
         const sticker = await interaction.guild.stickers.create({
