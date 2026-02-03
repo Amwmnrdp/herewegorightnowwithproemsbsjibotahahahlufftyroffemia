@@ -104,15 +104,15 @@ async function execute(interaction, langCode) {
                                 }
 
                                 const successText = await t('Successfully deleted all stickers!', langCode);
-                                await ownerI.editReply({ content: '✅ ' + successText, embeds: [], components: [] }).catch(() => {});
-                                await i.editReply({ content: '✅ ' + successText }).catch(() => {});
+                                await ownerI.deleteReply().catch(() => {}); // Hide owner approval message
+                                await i.editReply({ content: '✅ ' + successText, embeds: [], components: [] }).catch(() => {});
                             } catch (err) {
                                 await i.editReply({ content: '❌ Error: ' + err.message }).catch(() => {});
                             }
                         } else {
                             const deniedText = await t('Deletion request denied by the owner.', langCode);
-                            await ownerI.editReply({ content: '❌ ' + deniedText, embeds: [], components: [] }).catch(() => {});
-                            await i.editReply({ content: '❌ ' + deniedText }).catch(() => {});
+                            await ownerI.deleteReply().catch(() => {}); // Hide owner approval message
+                            await i.editReply({ content: '❌ ' + deniedText, embeds: [], components: [] }).catch(() => {});
                         }
                         ownerCollector.stop();
                     });

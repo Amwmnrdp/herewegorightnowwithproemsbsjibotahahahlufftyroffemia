@@ -13,6 +13,18 @@ async function execute(interaction, langCode) {
 
     const response = await interaction.editReply({ embeds: [embed] });
     
+    // Add to active sticker sessions for deletion
+    const indexFile = require('../../../index.js');
+    if (indexFile.activeStickerSessions) {
+        indexFile.activeStickerSessions.set(interaction.user.id, {
+            type: 'delete_sticker',
+            userId: interaction.user.id,
+            channelId: interaction.channelId,
+            guildId: interaction.guildId,
+            langCode: langCode
+        });
+    }
+
     return response;
 }
 
