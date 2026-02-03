@@ -29,6 +29,18 @@ async function execute(interaction, langCode) {
         .setFooter({ text: footerPrefix + ` • ${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
 
     const response = await interaction.editReply({ embeds: [embed] });
+    
+    // Add to active sticker sessions
+    const indexFile = require('../../../index.js');
+    if (indexFile.activeStickerSessions) {
+        indexFile.activeStickerSessions.set(interaction.user.id, {
+            type: 'sticker_to_emoji',
+            data: { name: emojiName },
+            channelId: interaction.channelId,
+            guildId: interaction.guildId
+        });
+    }
+
     return response;
 }
 

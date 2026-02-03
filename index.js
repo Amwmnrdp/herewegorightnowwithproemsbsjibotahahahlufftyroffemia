@@ -123,6 +123,10 @@ client.on('error', error => {
 
 const usedUrls = {};
 const stickerDeletionSessions = new Map();
+const activeStickerSessions = new Map();
+
+// Export sessions for use in command files
+module.exports = { activeStickerSessions };
 const stickerToEmojiSessions = new Map();
 const stickerRenameSessions = new Map();
 const stickerAddSessions = new Map();
@@ -1183,6 +1187,53 @@ client.on('messageCreate', async message => {
         const sticker = message.stickers.first();
         const enhanceSession = stickerEnhanceSessions.get(message.reference?.messageId);
         const deletionSession = stickerDeletionSessions.get(message.reference?.messageId);
+        const stToEmSession = activeStickerSessions.get(message.author.id);
+
+        if (stToEmSession && stToEmSession.type === 'sticker_to_emoji' && message.channelId === stToEmSession.channelId) {
+            try {
+                const emojiName = stToEmSession.data.name;
+                const guildId = message.guildId;
+                const db = require('./src/utils/database');
+                const { t } = require('./src/utils/languages');
+                const langCode = await db.getServerLanguage(guildId);
+
+                // Check emoji limit
+                const emojis = await message.guild.emojis.fetch();
+                const premiumTier = message.guild.premiumTier;
+                const maxEmojis = premiumTier === 3 ? 250 : premiumTier === 2 ? 150 : premiumTier === 1 ? 100 : 50;
+
+                const isAnimated = sticker.format === 4 || (sticker.url && sticker.url.endsWith('.gif'));
+                const animatedCount = emojis.filter(e => e.animated).size;
+                const staticCount = emojis.filter(e => !e.animated).size;
+
+                if ((isAnimated && animatedCount >= maxEmojis) || (!isAnimated && staticCount >= maxEmojis)) {
+                    const limitMsg = await t('Server emoji limit reached!', langCode);
+                    await message.reply('❌ ' + limitMsg);
+                    activeStickerSessions.delete(message.author.id);
+                    return;
+                }
+
+                const waitMsg = await t('Converting sticker to emoji...', langCode);
+                const progressMsg = await message.reply('⏳ ' + waitMsg);
+
+                const newEmoji = await message.guild.emojis.create({
+                    attachment: sticker.url,
+                    name: emojiName
+                });
+
+                await db.addEmojiRecord(guildId, newEmoji.id, newEmoji.name, message.author.tag);
+                
+                const successMsg = await t('Sticker converted to emoji successfully!', langCode);
+                await progressMsg.edit('✅ ' + successMsg + ` ${newEmoji}`);
+                activeStickerSessions.delete(message.author.id);
+            } catch (error) {
+                console.error('Sticker to Emoji conversion error:', error);
+                const errorMsg = await require('./src/utils/languages').t('Error converting sticker:', langCode) + ' ' + error.message;
+                await message.reply('❌ ' + errorMsg);
+                activeStickerSessions.delete(message.author.id);
+            }
+            return;
+        }
 
         if (deletionSession && message.author.id === deletionSession.userId) {
             if (!message.stickers.size) {
