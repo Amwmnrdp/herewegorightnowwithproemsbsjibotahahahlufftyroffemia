@@ -30,10 +30,34 @@ async function execute(interaction, langCode) {
     
     const ping = Math.round(interaction.client.ws.ping);
 
+    // Vote status check
+    const TOP_GG_API_KEY = process.env.TOP_GG_API_KEY;
+    const TOP_GG_BOT_ID = process.env.TOP_GG_BOT_ID || interaction.client.user.id;
+    let voteStatus = '⚪ ' + await t('Checking...', langCode);
+    
+    try {
+        if (TOP_GG_API_KEY && TOP_GG_BOT_ID) {
+            const axios = require('axios');
+            const response = await axios.get(`https://top.gg/api/bots/${TOP_GG_BOT_ID}/check?userId=${interaction.user.id}`, {
+                headers: { 'Authorization': TOP_GG_API_KEY }
+            });
+            const hasVoted = response.data.voted === 1;
+            if (hasVoted) {
+                voteStatus = '✅ ' + await t('Voted (Active)', langCode);
+            } else {
+                voteStatus = '❌ ' + await t('Not Voted', langCode) + ` • [${await t('Vote Now', langCode)}](https://top.gg/bot/${TOP_GG_BOT_ID}/vote)`;
+            }
+        } else {
+            voteStatus = '⏩ ' + await t('Always Active', langCode);
+        }
+    } catch (e) {
+        voteStatus = '⚠️ ' + await t('Status Unavailable', langCode);
+    }
+
     const embed = new EmbedBuilder()
         .setAuthor({ name: 'ProEmoji', iconURL: interaction.client.user.displayAvatarURL() })
         .setTitle('📊 ' + botStatus)
-        .setDescription(`**${await t('Ping', langCode)}:** ${ping}ms`)
+        .setDescription(`**${await t('Ping', langCode)}:** ${ping}ms\n**${await t('Your Vote Status', langCode)}:** ${voteStatus}`)
         .addFields(
             { 
                 name: `📁 ${serverStatsText}`, 

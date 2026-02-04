@@ -141,27 +141,41 @@ const TOP_GG_BOT_ID = process.env.TOP_GG_BOT_ID;
 
 async function checkVerification(interaction, langCode) {
     const userId = interaction.user.id;
+    const TOP_GG_API_KEY = process.env.TOP_GG_API_KEY;
+    const TOP_GG_BOT_ID = process.env.TOP_GG_BOT_ID || client.user?.id;
+    
     let hasVoted = false;
+    let timeRemaining = 0;
+
     try {
         if (TOP_GG_API_KEY && TOP_GG_BOT_ID) {
             const response = await axios.get(`https://top.gg/api/bots/${TOP_GG_BOT_ID}/check?userId=${userId}`, {
                 headers: { 'Authorization': TOP_GG_API_KEY }
             });
             hasVoted = response.data.voted === 1;
+        } else {
+            // For testing/development if keys are missing
+            hasVoted = true; 
         }
     } catch (error) {
         console.error('⚠️ Top.gg vote check failed:', error.message);
+        hasVoted = true; // Fallback to allow usage if API is down
     }
     
     if (!hasVoted) {
         const embed = new EmbedBuilder()
-            .setTitle('🔐 ' + await t('Verification Required', langCode))
-            .setDescription(await t('You must vote for the bot on Top.gg to use this command.', langCode) + 
-                `\n\n🔗 **${await t('Click here to vote:', langCode)}** https://top.gg/bot/${TOP_GG_BOT_ID}/vote`)
+            .setTitle('🗳️ ' + await t('Voting Required', langCode))
+            .setDescription(await t('To maintain a professional and sustainable service, the `/suggest_emoji` and `/suggest_sticker` commands require a vote on Top.gg.', langCode) + 
+                `\n\n💡 ${await t('You can vote every 12 hours to continue using these features. Your support helps us grow!', langCode)}` +
+                `\n\n🔗 **${await t('Vote here:', langCode)}** https://top.gg/bot/${TOP_GG_BOT_ID}/vote`)
             .setColor('#FF6B6B')
-            .setFooter({ text: await t('This message is only visible to you.', langCode) });
+            .setFooter({ text: await t('Verification expires every 12 hours.', langCode) });
         
-        await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
+        if (interaction.deferred || interaction.replied) {
+            await interaction.editReply({ embeds: [embed], components: [] });
+        } else {
+            await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
+        }
         return false;
     }
     return true;
