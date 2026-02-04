@@ -51,7 +51,19 @@ const COMMAND_DEFINITIONS = [
     },
     {
         name: 'help',
-        description: 'Get help about all ProEmoji commands'
+        description: 'Get help with ProEmoji commands',
+        options: [
+            {
+                name: 'where',
+                description: 'Where to send the help menu',
+                type: 3,
+                required: false,
+                choices: [
+                    { name: 'DM', value: 'dm' },
+                    { name: 'Here', value: 'here' }
+                ]
+            }
+        ]
     },
     {
         name: 'emoji_permission',

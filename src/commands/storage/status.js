@@ -34,6 +34,7 @@ async function execute(interaction, langCode) {
     const TOP_GG_API_KEY = process.env.TOP_GG_API_KEY;
     const TOP_GG_BOT_ID = process.env.TOP_GG_BOT_ID || interaction.client.user.id;
     let voteStatus = '⚪ ' + await t('Checking...', langCode);
+    let nextVoteText = '⚪ ' + await t('Checking...', langCode);
     
     try {
         if (TOP_GG_API_KEY && TOP_GG_BOT_ID) {
@@ -42,22 +43,32 @@ async function execute(interaction, langCode) {
                 headers: { 'Authorization': TOP_GG_API_KEY }
             });
             const hasVoted = response.data.voted === 1;
+            
             if (hasVoted) {
                 voteStatus = '✅ ' + await t('Voted (Active)', langCode);
+                // Since Top.gg doesn't give precise vote time in check endpoint usually, 
+                // we'll use a relative timestamp if we had it, but for now we'll 
+                // show it's active. For a real countdown, Top.gg webhooks or 
+                // individual vote endpoint is better.
+                // Assuming 12h cycle:
+                nextVoteText = '✅ ' + await t('Active for 12 hours', langCode);
             } else {
-                voteStatus = '❌ ' + await t('Not Voted', langCode) + ` • [${await t('Vote Now', langCode)}](https://top.gg/bot/${TOP_GG_BOT_ID}/vote)`;
+                voteStatus = '❌ ' + await t('Not Voted', langCode);
+                nextVoteText = '❌ ' + await t('You have not voted yet!', langCode);
             }
         } else {
             voteStatus = '⏩ ' + await t('Always Active', langCode);
+            nextVoteText = '♾️ ' + await t('No voting required', langCode);
         }
     } catch (e) {
         voteStatus = '⚠️ ' + await t('Status Unavailable', langCode);
+        nextVoteText = '⚠️ ' + await t('Status Unavailable', langCode);
     }
 
     const embed = new EmbedBuilder()
         .setAuthor({ name: 'ProEmoji', iconURL: interaction.client.user.displayAvatarURL() })
         .setTitle('📊 ' + botStatus)
-        .setDescription(`**${await t('Ping', langCode)}:** ${ping}ms\n**${await t('Your Vote Status', langCode)}:** ${voteStatus}`)
+        .setDescription(`**${await t('Ping', langCode)}:** ${ping}ms\n**${await t('Your Vote Status', langCode)}:** ${voteStatus}\n**${await t('Next Vote:', langCode)}** ${nextVoteText}`)
         .addFields(
             { 
                 name: `📁 ${serverStatsText}`, 

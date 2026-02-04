@@ -163,18 +163,30 @@ async function checkVerification(interaction, langCode) {
     }
     
     if (!hasVoted) {
+        const voteEmbed = new EmbedBuilder()
+            .setTitle('🗳️ ' + await t('Vote ProEmoji', langCode))
+            .setDescription(await t('You must vote for the bot on Top.gg to use this command.', langCode) + 
+                `\n\n🔗 **${await t('Vote here:', langCode)}** https://top.gg/bot/${TOP_GG_BOT_ID}/vote`)
+            .setColor('#FF6B6B');
+
         const embed = new EmbedBuilder()
             .setTitle('🗳️ ' + await t('Voting Required', langCode))
             .setDescription(await t('To maintain a professional and sustainable service, the `/suggest_emoji` and `/suggest_sticker` commands require a vote on Top.gg.', langCode) + 
-                `\n\n💡 ${await t('You can vote every 12 hours to continue using these features. Your support helps us grow!', langCode)}` +
-                `\n\n🔗 **${await t('Vote here:', langCode)}** https://top.gg/bot/${TOP_GG_BOT_ID}/vote`)
+                `\n\n💡 ${await t('You can vote every 12 hours to continue using these features. Your support helps us grow!', langCode)}`)
             .setColor('#FF6B6B')
             .setFooter({ text: await t('Verification expires every 12 hours.', langCode) });
         
+        const row = new ActionRowBuilder().addComponents(
+            new ButtonBuilder()
+                .setLabel(await t('Vote', langCode))
+                .setURL(`https://top.gg/bot/${TOP_GG_BOT_ID}/vote`)
+                .setStyle(ButtonStyle.Link)
+        );
+
         if (interaction.deferred || interaction.replied) {
-            await interaction.editReply({ embeds: [embed], components: [] });
+            await interaction.editReply({ embeds: [embed, voteEmbed], components: [row] });
         } else {
-            await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
+            await interaction.reply({ embeds: [embed, voteEmbed], components: [row], flags: MessageFlags.Ephemeral });
         }
         return false;
     }
