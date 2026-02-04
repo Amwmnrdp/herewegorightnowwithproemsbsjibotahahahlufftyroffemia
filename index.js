@@ -807,19 +807,21 @@ client.on('interactionCreate', async interaction => {
         }
         else if (interaction.commandName === 'suggest_emojis') {
             await safeDefer();
+            const verified = await checkVerification(interaction, langCode);
+            if (!verified) return;
             await showLoading('suggest_emojis');
             await suggestemojis.execute(interaction, langCode, client).catch(async err => {
                 console.error(`Error in suggest_emojis: ${err.message}`);
                 const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
                 if (interaction.replied || interaction.deferred) {
-                    await interaction.editReply({ content: errMsg }).catch(() => {});
-                } else {
-                    await interaction.reply({ content: errMsg, flags: MessageFlags.Ephemeral }).catch(() => {});
+                    await interaction.editReply({ content: errMsg, embeds: [] }).catch(() => {});
                 }
             });
         }
         else if (interaction.commandName === 'suggest_sticker') {
             await safeDefer();
+            const verified = await checkVerification(interaction, langCode);
+            if (!verified) return;
             await showLoading('suggest_sticker');
             await suggeststicker.execute(interaction, langCode, client).catch(async err => {
                 console.error(`Error in suggest_sticker: ${err.message}`);
