@@ -435,8 +435,22 @@ client.on('interactionCreate', async interaction => {
                 collector.on('collect', async i => {
                     try {
                         if (!i.deferred && !i.replied) await i.deferUpdate().catch(() => {});
+                        
+                        // Re-fetch the current message to check the current page from the footer
+                        const currentMessage = await interaction.fetchReply();
+                        const currentFooter = currentMessage.embeds[0]?.footer?.text;
+                        if (currentFooter) {
+                            const [pagePart] = currentFooter.split('/');
+                            currentPage = parseInt(pagePart) - 1;
+                        }
+
                         if (i.customId === 'prev_help') currentPage--;
                         else currentPage++;
+                        
+                        // Bounds check
+                        if (currentPage < 0) currentPage = 0;
+                        if (currentPage >= pages.length) currentPage = pages.length - 1;
+
                         await i.editReply({ embeds: [createHelpEmbed(currentPage)], components: [row, createHelpRow(currentPage)] });
                     } catch (e) {
                         console.error('Error in help collector:', e);
