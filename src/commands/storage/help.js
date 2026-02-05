@@ -39,11 +39,11 @@ async function execute(interaction, langCode) {
                 .setDescription('✅ ' + await t('Help Sent to your DMs!', langCode))
                 .setColor('#10b981');
             
-            // Try to follow up if deferred, or reply if not
-            if (interaction.deferred || interaction.replied) {
-                await interaction.editReply({ embeds: [successEmbed], components: [], flags: MessageFlags.Ephemeral }).catch(() => {});
-            } else {
+            // Send only one response
+            if (!interaction.replied && !interaction.deferred) {
                 await interaction.reply({ embeds: [successEmbed], components: [], flags: MessageFlags.Ephemeral }).catch(() => {});
+            } else if (interaction.deferred) {
+                await interaction.editReply({ embeds: [successEmbed], components: [], flags: MessageFlags.Ephemeral }).catch(() => {});
             }
         } catch (err) {
             const errorEmbed = new EmbedBuilder()

@@ -40,7 +40,7 @@ async function execute(interaction, langCode) {
 
     await interaction.editReply({ embeds: [embed], components: [row] });
 
-    const filter = i => (i.customId === 'next_sticker' || i.customId === 'prev_sticker') && i.user.id === interaction.user.id;
+    const filter = i => (i.customId === 'next_sticker' || i.customId === 'prev_sticker') && i.user.id === interaction.user.id && i.message.id === interaction.message.id;
     const collector = interaction.channel.createMessageComponentCollector({ filter, time: 180000 });
 
     collector.on('collect', async i => {

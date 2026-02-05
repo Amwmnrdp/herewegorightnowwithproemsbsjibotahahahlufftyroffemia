@@ -129,7 +129,7 @@ const COMMAND_DEFINITIONS = [
     },
     {
         name: 'image_to_emoji',
-        description: 'Convert an image URL or attachment into a server emoji instantly',
+        description: 'Convert an image attachment into a server emoji instantly',
         options: [
             {
                 name: 'name',
@@ -142,18 +142,12 @@ const COMMAND_DEFINITIONS = [
                 type: 11,
                 description: 'Upload the image file here',
                 required: true
-            },
-            {
-                name: 'url',
-                type: 3,
-                description: 'Or provide a direct image URL link',
-                required: false
             }
         ]
     },
     {
         name: 'image_to_sticker',
-        description: 'Convert an image URL or attachment into a server sticker instantly',
+        description: 'Convert an image attachment into a server sticker instantly',
         options: [
             {
                 name: 'name',
@@ -166,12 +160,6 @@ const COMMAND_DEFINITIONS = [
                 type: 11,
                 description: 'Upload the image file here',
                 required: true
-            },
-            {
-                name: 'url',
-                type: 3,
-                description: 'Or provide a direct image URL link',
-                required: false
             },
             {
                 name: 'integration',
