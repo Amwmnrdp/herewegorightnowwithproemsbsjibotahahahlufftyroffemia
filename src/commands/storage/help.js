@@ -2,7 +2,7 @@ const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, 
 const { t } = require('../../utils/languages');
 
 async function execute(interaction, langCode) {
-    const where = interaction.options.getString('where') || 'here';
+    const where = interaction.options.getString('where');
     const isDM = where === 'dm';
     
     const helpRow = new ActionRowBuilder().addComponents(

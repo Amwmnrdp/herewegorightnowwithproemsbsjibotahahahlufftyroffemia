@@ -57,7 +57,7 @@ const COMMAND_DEFINITIONS = [
                 name: 'where',
                 description: 'Where to send the help menu',
                 type: 3,
-                required: false,
+                required: true,
                 choices: [
                     { name: 'DM', value: 'dm' },
                     { name: 'Here', value: 'here' }
