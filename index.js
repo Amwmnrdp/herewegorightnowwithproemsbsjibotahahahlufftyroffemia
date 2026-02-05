@@ -539,12 +539,15 @@ client.on('interactionCreate', async interaction => {
             });
         }
         else if (interaction.commandName === 'help') {
-            await safeDefer();
-            await showLoading('help');
+            const help = require('./src/commands/storage/help');
             await help.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in help: ${err.message}`);
                 const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
-                await interaction.editReply({ content: errMsg, embeds: [] }).catch(() => {});
+                if (interaction.replied || interaction.deferred) {
+                    await interaction.editReply({ content: errMsg, embeds: [], components: [] }).catch(() => {});
+                } else {
+                    await interaction.reply({ content: errMsg, flags: MessageFlags.Ephemeral }).catch(() => {});
+                }
             });
         }
         else if (interaction.commandName === 'vote') {
