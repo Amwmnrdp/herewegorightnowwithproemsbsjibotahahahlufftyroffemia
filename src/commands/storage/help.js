@@ -38,15 +38,30 @@ async function execute(interaction, langCode) {
             const successEmbed = new EmbedBuilder()
                 .setDescription('✅ ' + await t('Help Sent to your DMs!', langCode))
                 .setColor('#10b981');
-            await interaction.reply({ embeds: [successEmbed], flags: MessageFlags.Ephemeral });
+            
+            // Try to follow up if deferred, or reply if not
+            if (interaction.deferred || interaction.replied) {
+                await interaction.editReply({ embeds: [successEmbed], components: [], flags: MessageFlags.Ephemeral }).catch(() => {});
+            } else {
+                await interaction.reply({ embeds: [successEmbed], components: [], flags: MessageFlags.Ephemeral }).catch(() => {});
+            }
         } catch (err) {
             const errorEmbed = new EmbedBuilder()
                 .setDescription('❌ ' + await t('Could not send DM. Please enable DMs and try again.', langCode))
                 .setColor('#FF6B6B');
-            await interaction.reply({ embeds: [errorEmbed], flags: MessageFlags.Ephemeral });
+            
+            if (interaction.deferred || interaction.replied) {
+                await interaction.editReply({ embeds: [errorEmbed], components: [], flags: MessageFlags.Ephemeral }).catch(() => {});
+            } else {
+                await interaction.reply({ embeds: [errorEmbed], components: [], flags: MessageFlags.Ephemeral }).catch(() => {});
+            }
         }
     } else {
-        await interaction.reply({ embeds: [helpEmbed], components: [helpRow, supportRow] });
+        if (interaction.deferred || interaction.replied) {
+            await interaction.editReply({ embeds: [helpEmbed], components: [helpRow, supportRow] }).catch(() => {});
+        } else {
+            await interaction.reply({ embeds: [helpEmbed], components: [helpRow, supportRow] }).catch(() => {});
+        }
     }
 }
 
