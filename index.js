@@ -286,7 +286,16 @@ async function checkPermissions(interaction, langCode) {
 const cooldowns = new Map();
 
 client.on('interactionCreate', async interaction => {
-    const langCode = interaction.guild ? await getServerLanguage(interaction.guild.id) : 'en';
+    let langCode = 'en';
+    if (interaction.guild) {
+        try {
+            langCode = await db.getServerLanguage(interaction.guild.id);
+            if (!langCode) langCode = 'en';
+        } catch (e) {
+            console.error('Error fetching langCode:', e);
+            langCode = 'en';
+        }
+    }
     console.log(`[Interaction] type: ${interaction.type}, customId: ${interaction.customId}, guild: ${interaction.guild?.id}, lang: ${langCode}`);
 
     if (interaction.isCommand()) {
@@ -334,6 +343,18 @@ client.on('interactionCreate', async interaction => {
 
             const pages = [];
             let title = '';
+
+            if (interaction.values[0] === 'sticker_help' || interaction.values[0] === 'emoji_help' || interaction.values[0] === 'info_help') {
+                currentPage = 0;
+            } else {
+                // If it's a pagination button, try to get the current page from the footer
+                const msg = await interaction.fetchReply().catch(() => null);
+                const footer = msg?.embeds[0]?.footer?.text;
+                if (footer) {
+                    const [pageStr] = footer.split('/');
+                    currentPage = (parseInt(pageStr) || 1) - 1;
+                }
+            }
 
             if (interaction.values[0] === 'sticker_help') {
                 title = await t('Sticker Commands', langCode);
@@ -451,7 +472,13 @@ client.on('interactionCreate', async interaction => {
                         if (currentPage < 0) currentPage = 0;
                         if (currentPage >= pages.length) currentPage = pages.length - 1;
 
-                        await i.editReply({ embeds: [createHelpEmbed(currentPage)], components: [row, createHelpRow(currentPage)] });
+                        const newEmbed = createHelpEmbed(currentPage);
+                        const newRow = createHelpRow(currentPage);
+
+                        await i.editReply({ 
+                            embeds: [newEmbed], 
+                            components: pages.length > 1 ? [row, newRow] : [row]
+                        }).catch(() => {});
                     } catch (e) {
                         console.error('Error in help collector:', e);
                     }
