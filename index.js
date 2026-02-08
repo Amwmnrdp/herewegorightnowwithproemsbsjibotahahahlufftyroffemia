@@ -299,7 +299,7 @@ const cooldowns = new Map();
         
         // Command types (type 2) don't have a customId, so we use commandName for logging
         const interactionId = interaction.isCommand() ? interaction.commandName : (interaction.customId || 'N/A');
-        console.log(`[Interaction] type: ${interaction.type}, id: ${interactionId}, guild: ${interaction.guild?.id}, lang: ${langCode}`);
+        // console.log(`[Interaction] type: ${interaction.type}, id: ${interactionId}, guild: ${interaction.guild?.id}, lang: ${langCode}`);
 
         if (interaction.isCommand()) {
             const userId = interaction.user.id;
