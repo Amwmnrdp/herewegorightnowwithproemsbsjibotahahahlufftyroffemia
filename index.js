@@ -285,44 +285,47 @@ async function checkPermissions(interaction, langCode) {
 
 const cooldowns = new Map();
 
-client.on('interactionCreate', async interaction => {
-    let langCode = 'en';
-    if (interaction.guild) {
-        try {
-            langCode = await db.getServerLanguage(interaction.guild.id);
-            if (!langCode) langCode = 'en';
-        } catch (e) {
-            console.error('Error fetching langCode:', e);
-            langCode = 'en';
-        }
-    }
-    console.log(`[Interaction] type: ${interaction.type}, customId: ${interaction.customId}, guild: ${interaction.guild?.id}, lang: ${langCode}`);
-
-    if (interaction.isCommand()) {
-        const userId = interaction.user.id;
-        const now = Date.now();
-        const cooldownAmount = 3000;
-        if (cooldowns.has(userId)) {
-            const expirationTime = cooldowns.get(userId) + cooldownAmount;
-            if (now < expirationTime) {
-                const timeLeft = (expirationTime - now) / 1000;
-                const cooldownEmbed = new EmbedBuilder()
-                    .setDescription(await t(`❌ Please wait {time} more second(s) before using commands again.`, langCode).then(text => text.replace('{time}', timeLeft.toFixed(1))))
-                    .setColor('#FF0000');
-                
-                try {
-                    if (interaction.deferred || interaction.replied) {
-                        return await interaction.editReply({ embeds: [cooldownEmbed] });
-                    } else {
-                        return await interaction.reply({ embeds: [cooldownEmbed], flags: MessageFlags.Ephemeral });
-                    }
-                } catch (e) {}
-                return;
+    client.on('interactionCreate', async interaction => {
+        let langCode = 'en';
+        if (interaction.guild) {
+            try {
+                langCode = await db.getServerLanguage(interaction.guild.id);
+                if (!langCode) langCode = 'en';
+            } catch (e) {
+                console.error('Error fetching langCode:', e);
+                langCode = 'en';
             }
         }
-        cooldowns.set(userId, now);
-        setTimeout(() => cooldowns.delete(userId), cooldownAmount);
-    }
+        
+        // Command types (type 2) don't have a customId, so we use commandName for logging
+        const interactionId = interaction.isCommand() ? interaction.commandName : (interaction.customId || 'N/A');
+        console.log(`[Interaction] type: ${interaction.type}, id: ${interactionId}, guild: ${interaction.guild?.id}, lang: ${langCode}`);
+
+        if (interaction.isCommand()) {
+            const userId = interaction.user.id;
+            const now = Date.now();
+            const cooldownAmount = 3000;
+            if (cooldowns.has(userId)) {
+                const expirationTime = cooldowns.get(userId) + cooldownAmount;
+                if (now < expirationTime) {
+                    const timeLeft = (expirationTime - now) / 1000;
+                    const cooldownEmbed = new EmbedBuilder()
+                        .setDescription(await t(`❌ Please wait {time} more second(s) before using commands again.`, langCode).then(text => text.replace('{time}', timeLeft.toFixed(1))))
+                        .setColor('#FF0000');
+                    
+                    try {
+                        if (interaction.deferred || interaction.replied) {
+                            return await interaction.editReply({ embeds: [cooldownEmbed] });
+                        } else {
+                            return await interaction.reply({ embeds: [cooldownEmbed], flags: MessageFlags.Ephemeral });
+                        }
+                    } catch (e) {}
+                    return;
+                }
+            }
+            cooldowns.set(userId, now);
+            setTimeout(() => cooldowns.delete(userId), cooldownAmount);
+        }
 
     if (interaction.isStringSelectMenu() && interaction.customId === 'help_category') {
         try {
