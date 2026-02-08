@@ -346,24 +346,15 @@ const cooldowns = new Map();
 
             const pages = [];
             let title = '';
+            let currentPage = 0; // Fixed: Defined locally to prevent ReferenceError
 
-            if (interaction.values[0] === 'sticker_help' || interaction.values[0] === 'emoji_help' || interaction.values[0] === 'info_help') {
-                currentPage = 0;
-            } else {
-                // If it's a pagination button, try to get the current page from the footer
-                const msg = await interaction.fetchReply().catch(() => null);
-                const footer = msg?.embeds[0]?.footer?.text;
-                if (footer) {
-                    const [pageStr] = footer.split('/');
-                    currentPage = (parseInt(pageStr) || 1) - 1;
-                }
-            }
-
-            if (interaction.values[0] === 'sticker_help') {
+            const category = interaction.values[0];
+            
+            if (category === 'sticker_help') {
                 title = await t('Sticker Commands', langCode);
                 const stickerCommands = [
                     { cmd: '/add_sticker', desc: 'Add a new sticker to your server with a custom name' },
-                    { cmd: '/image_to_sticker', desc: 'Convert an image URL or attachment into a server sticker instantly' },
+                    { cmd: '/image_to_sticker', desc: 'Convert an image attachment into a server sticker instantly' },
                     { cmd: '/rename_sticker', desc: 'Change the name of an existing server sticker' },
                     { cmd: '/delete_sticker', desc: 'Permanently remove a specific sticker from your server' },
                     { cmd: '/delete_all_stickers', desc: 'Remove all stickers from your server (Admin only, requires confirmation)' },
@@ -383,12 +374,12 @@ const cooldowns = new Map();
                     }
                     pages.push(pageContent);
                 }
-            } else if (interaction.values[0] === 'emoji_help') {
+            } else if (category === 'emoji_help') {
                 title = await t('Emoji Commands', langCode);
                 const emojiCommands = [
                     { cmd: '/emoji_search', desc: 'Search for specific emojis by name across multiple servers' },
                     { cmd: '/add_emoji', desc: 'Add a new emoji to your server using a custom name or ID' },
-                    { cmd: '/image_to_emoji', desc: 'Convert an image URL or attachment into a server emoji instantly' },
+                    { cmd: '/image_to_emoji', desc: 'Convert an image attachment into a server emoji instantly' },
                     { cmd: '/rename_emoji', desc: 'Change the name of an existing server emoji' },
                     { cmd: '/delete_emoji', desc: 'Permanently remove a specific emoji from your server' },
                     { cmd: '/delete_all_emojis', desc: 'Remove all emojis from your server (Admin only, requires confirmation)' },
@@ -411,7 +402,7 @@ const cooldowns = new Map();
                     }
                     pages.push(pageContent);
                 }
-            } else if (interaction.values[0] === 'info_help') {
+            } else if (category === 'info_help') {
                 title = await t('Info Commands', langCode);
                 const pageContent = `**${await t('Utility and status commands', langCode)}**\n\n` +
                     `${await t('Set permissions for emoji suggestions (Owner only)', langCode)}: **/emoji_permission**\n\n` +
@@ -427,7 +418,6 @@ const cooldowns = new Map();
                 pages.push(await t('No commands found in this category.', langCode));
             }
 
-            let currentPage = 0;
             const createHelpEmbed = (idx) => {
                 const desc = pages[idx] || '...';
                 return new EmbedBuilder()
@@ -453,16 +443,23 @@ const cooldowns = new Map();
             if (pages.length > 1) {
                 const collector = interaction.message.createMessageComponentCollector({ 
                     filter: i => i.user.id === interaction.user.id && (i.customId === 'prev_help' || i.customId === 'next_help'),
-                    time: 180000 
+                    time: 60000 
                 });
 
                 collector.on('collect', async i => {
                     try {
                         if (!i.deferred && !i.replied) await i.deferUpdate().catch(() => {});
                         
-                        // Re-fetch the current message to check the current page from the footer
                         const currentMessage = await interaction.fetchReply();
                         const currentFooter = currentMessage.embeds[0]?.footer?.text;
+                        const currentTitle = currentMessage.embeds[0]?.title;
+                        
+                        // Ensure title hasn't changed to prevent category interference
+                        if (currentTitle !== '📖 ' + title) {
+                            collector.stop();
+                            return;
+                        }
+
                         if (currentFooter) {
                             const [pagePart] = currentFooter.split('/');
                             currentPage = parseInt(pagePart) - 1;
@@ -471,7 +468,6 @@ const cooldowns = new Map();
                         if (i.customId === 'prev_help') currentPage--;
                         else currentPage++;
                         
-                        // Bounds check
                         if (currentPage < 0) currentPage = 0;
                         if (currentPage >= pages.length) currentPage = pages.length - 1;
 
