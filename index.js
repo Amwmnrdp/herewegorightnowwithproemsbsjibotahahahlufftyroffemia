@@ -580,7 +580,15 @@ client.on('interactionCreate', async interaction => {
         else if (interaction.commandName === 'add_sticker') { await safeDefer(); await showLoading('add_sticker'); const response = await addsticker.execute(interaction, langCode); if (response && response.id) { stickerAddSessions.set(response.id, { guildId: interaction.guild.id, userId: interaction.user.id, langCode: langCode, messageId: response.id, channelId: response.channel.id, stickerId: response.stickerId, stickerName: response.stickerName }); setTimeout(() => stickerAddSessions.delete(response.id), 300000); } }
         else if (interaction.commandName === 'image_to_sticker') { await safeDefer(); await showLoading('image_to_sticker'); await imagetosticker.execute(interaction, langCode); }
         else if (interaction.commandName === 'sticker_to_emoji') { await safeDefer(); await showLoading('sticker_to_emoji'); const response = await stickertoemi.execute(interaction, langCode); if (response && response.id) { stickerToEmojiSessions.set(response.id, { guildId: interaction.guild.id, userId: interaction.user.id, langCode: langCode, messageId: response.id, channelId: response.channel.id, stickerUrl: response.url, emojiName: response.emojiName }); setTimeout(() => stickerToEmojiSessions.delete(response.id), 300000); } }
-        else if (interaction.commandName === 'sticker_to_image') { await safeDefer(); await showLoading('sticker_to_image'); await stickertoimage.execute(interaction, langCode); }
+        else if (interaction.commandName === 'sticker_to_image') {
+            await safeDefer();
+            await showLoading('sticker_to_image');
+            await stickertoimage.execute(interaction, langCode).catch(async err => {
+                console.error(`Error in sticker_to_image: ${err.message}`);
+                const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
+                await interaction.editReply({ content: errMsg, embeds: [] }).catch(() => {});
+            });
+        }
         else if (interaction.commandName === 'delete_sticker') { await safeDefer(); await showLoading('delete_sticker'); const response = await deletesticker.execute(interaction, langCode); if (response && response.id) { stickerDeletionSessions.set(response.id, { guildId: interaction.guild.id, userId: interaction.user.id, langCode: langCode, messageId: response.id, channelId: response.channel.id, stickerId: response.stickerId }); setTimeout(() => stickerDeletionSessions.delete(response.id), 300000); } }
         else if (interaction.commandName === 'rename_sticker') { await safeDefer(); await showLoading('rename_sticker'); const response = await renamesticker.execute(interaction, langCode); if (response && response.id) { stickerRenameSessions.set(response.id, { guildId: interaction.guild.id, userId: interaction.user.id, langCode: langCode, messageId: response.id, channelId: response.channel.id, stickerId: response.stickerId, newName: response.newName }); setTimeout(() => stickerRenameSessions.delete(response.id), 300000); } }
         else if (interaction.commandName === 'update') {
@@ -595,6 +603,58 @@ client.on('interactionCreate', async interaction => {
         console.error('Interaction error:', error);
         const errMsg = '❌ ' + await t('An error occurred while processing this command.', langCode);
         try { if (interaction.deferred || interaction.replied) { await interaction.editReply({ content: errMsg, embeds: [] }).catch(() => {}); } else { await interaction.reply({ content: errMsg, flags: MessageFlags.Ephemeral }).catch(() => {}); } } catch (e) {}
+    }
+});
+
+client.on('messageCreate', async message => {
+    if (message.author.bot) return;
+
+    const session = activeStickerSessions.get(message.author.id);
+    if (!session) return;
+
+    if (message.channelId !== session.channelId) return;
+
+    const sticker = message.stickers.first();
+    if (!sticker) return;
+
+    const langCode = session.langCode || 'en';
+
+    try {
+        if (session.type === 'sticker_to_image') {
+            const embed = new EmbedBuilder()
+                .setTitle('🖼️ ' + await t('Sticker to Image', langCode))
+                .setDescription(await t('Here is your sticker as an image:', langCode))
+                .setImage(sticker.url)
+                .setColor('#00FFFF');
+            
+            await message.reply({ embeds: [embed] });
+            activeStickerSessions.delete(message.author.id);
+        } else if (session.type === 'delete_sticker') {
+            if (sticker.guild.id !== message.guild.id) {
+                return message.reply('❌ ' + await t('You can only delete stickers from this server.', langCode));
+            }
+            await sticker.delete();
+            await message.reply('✅ ' + await t('Sticker deleted successfully.', langCode));
+            activeStickerSessions.delete(message.author.id);
+        } else if (session.type === 'add_sticker') {
+            await message.guild.stickers.create({
+                file: sticker.url,
+                name: session.stickerName || sticker.name,
+                tags: sticker.tags || 'emoji'
+            });
+            await message.reply('✅ ' + await t('Sticker added successfully.', langCode));
+            activeStickerSessions.delete(message.author.id);
+        } else if (session.type === 'rename_sticker') {
+            if (sticker.guild.id !== message.guild.id) {
+                return message.reply('❌ ' + await t('You can only rename stickers from this server.', langCode));
+            }
+            await sticker.edit({ name: session.newName });
+            await message.reply('✅ ' + await t('Sticker renamed successfully.', langCode));
+            activeStickerSessions.delete(message.author.id);
+        }
+    } catch (error) {
+        console.error('Session error:', error);
+        await message.reply('❌ ' + await t('An error occurred:', langCode) + ' ' + error.message);
     }
 });
 
@@ -628,7 +688,7 @@ async function startServer() {
         app.listen(PORT, '0.0.0.0', () => {
             console.log(`🌐 Web server running on port ${PORT}`);
         });
-        await client.login(process.env.token);
+        await client.login(process.env.token || process.env.DISCORD_TOKEN);
     } catch (error) {
         console.error('❌ Failed to start bot:', error);
         process.exit(1);

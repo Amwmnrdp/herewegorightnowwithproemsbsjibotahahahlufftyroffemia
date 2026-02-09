@@ -1,10 +1,8 @@
 const { Pool } = require('pg');
 
-const connectionString = process.env.DATABASE_URL || '';
+const connectionString = "postgresql://neondb_owner:npg_VSGhvMa0YBc3@ep-bitter-shape-ahb2vr5d-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require";
 const pool = new Pool({
-    connectionString: connectionString.includes('sslmode=') 
-        ? connectionString.replace(/sslmode=(require|prefer|verify-ca)/, 'sslmode=verify-full')
-        : connectionString + (connectionString.includes('?') ? '&' : '?') + 'sslmode=verify-full',
+    connectionString: connectionString,
     ssl: {
         rejectUnauthorized: false
     }

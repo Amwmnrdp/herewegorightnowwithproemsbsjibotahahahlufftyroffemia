@@ -28,7 +28,7 @@ async function execute(interaction, langCode) {
             if (indexFile.activeStickerSessions.get(interaction.user.id)?.messageId === response.id) {
                 indexFile.activeStickerSessions.delete(interaction.user.id);
             }
-        }, 180000);
+        }, 300000);
     }
     
     return response;
