@@ -16,7 +16,7 @@ async function execute(interaction, langCode) {
             .setDescription('❌ ' + noEmojis)
             .setColor('#FF0000')
             .setFooter({ text: `${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
-        await interaction.editReply({ embeds: [embed] });
+        await interaction.editReply({ embeds: [embed] }).catch(() => {});
         return;
     }
     

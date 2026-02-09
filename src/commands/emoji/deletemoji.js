@@ -8,7 +8,7 @@ async function execute(interaction, langCode, convertedStickersToEmojis) {
 
     if (emojiMatches.length === 0) {
         const embed = new EmbedBuilder().setDescription('❌ ' + await t('No valid emojis found!', langCode)).setColor('#FF0000').setFooter({ text: `${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
-        await interaction.editReply({ embeds: [embed] });
+        await interaction.editReply({ embeds: [embed] }).catch(() => {});
         return;
     }
 

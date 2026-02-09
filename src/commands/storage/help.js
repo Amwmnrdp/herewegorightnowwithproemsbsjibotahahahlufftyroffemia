@@ -24,7 +24,7 @@ async function execute(interaction, langCode) {
     const supportRow = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
             .setLabel(await t('Support Server', langCode))
-            .setURL('https://discord.gg/your-support-server') // Replace with actual support server link
+            .setURL('https://discord.gg/qTHehSfaW4')
             .setStyle(ButtonStyle.Link),
         new ButtonBuilder()
             .setLabel(await t('Vote', langCode))

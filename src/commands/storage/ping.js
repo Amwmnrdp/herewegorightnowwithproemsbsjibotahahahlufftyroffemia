@@ -21,7 +21,7 @@ async function execute(interaction, langCode) {
         .setColor('#00FF00')
         .setFooter({ text: `${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
 
-    await interaction.editReply({ embeds: [resultEmbed] });
+    await interaction.editReply({ embeds: [resultEmbed] }).catch(() => {});
 }
 
 module.exports = { execute };
