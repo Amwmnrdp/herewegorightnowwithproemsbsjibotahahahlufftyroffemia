@@ -595,7 +595,7 @@ client.on('interactionCreate', async interaction => {
             if (interaction.user.id !== '815701106235670558') { return await interaction.reply({ content: 'Only the bot owner can use this command.', flags: MessageFlags.Ephemeral }); }
             await interaction.deferReply({ flags: MessageFlags.Ephemeral });
             const { REST, Routes } = require('discord.js');
-            const rest = new REST({ version: '10' }).setToken(process.env.token);
+            const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_BOT_TOKEN || process.env.token || process.env.DISCORD_TOKEN);
             try { await rest.put(Routes.applicationCommands(client.user.id), { body: COMMAND_DEFINITIONS }); await interaction.editReply('✅ Commands updated successfully!'); }
             catch (error) { console.error(error); await interaction.editReply('❌ Failed to update commands.'); }
         }
@@ -667,7 +667,7 @@ client.once('clientReady', async () => {
     
     try {
         const { REST, Routes } = require('discord.js');
-        const rest = new REST({ version: '10' }).setToken(process.env.token);
+        const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_BOT_TOKEN || process.env.token || process.env.DISCORD_TOKEN);
         const ownerId = '815701106235670558';
         const targetGuildId = '1118153648938160191';
         const restrictedCommands = COMMAND_DEFINITIONS.filter(cmd => ['update', 'add_to_pack', 'delete_from_pack'].includes(cmd.name));
@@ -688,7 +688,7 @@ async function startServer() {
         app.listen(PORT, '0.0.0.0', () => {
             console.log(`🌐 Web server running on port ${PORT}`);
         });
-        await client.login(process.env.token || process.env.DISCORD_TOKEN);
+        await client.login(process.env.DISCORD_BOT_TOKEN || process.env.token || process.env.DISCORD_TOKEN);
     } catch (error) {
         console.error('❌ Failed to start bot:', error);
         process.exit(1);
