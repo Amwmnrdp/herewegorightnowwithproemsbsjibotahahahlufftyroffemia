@@ -44,6 +44,7 @@ const deletepermission = require('./src/commands/storage/deletepermission');
 const status = require('./src/commands/storage/status');
 const vote = require('./src/commands/storage/vote');
 const language = require('./src/commands/storage/language');
+const verify = require('./src/commands/storage/verify');
 const emojiPermission = require('./src/commands/storage/emoji_permission');
 const stickerPermission = require('./src/commands/storage/sticker_permission');
 
@@ -543,7 +544,13 @@ client.on('interactionCreate', async interaction => {
                 await interaction.editReply({ content: errMsg, embeds: [] }).catch(() => {});
             });
         }
-        else if (interaction.commandName === 'verify') { /* Already handled */ }
+        else if (interaction.commandName === 'verify') {
+            await interaction.deferReply({ flags: 64 });
+            await verify.execute(interaction, langCode).catch(async err => {
+                console.error(`Error in verify: ${err.message}`);
+                try { await interaction.editReply({ content: '❌ ' + await t('An error occurred while executing this command.', langCode) }).catch(() => {}); } catch (e) {}
+            });
+        }
         else if (interaction.commandName === 'help') {
             const help = require('./src/commands/storage/help');
             await help.execute(interaction, langCode).catch(async err => {

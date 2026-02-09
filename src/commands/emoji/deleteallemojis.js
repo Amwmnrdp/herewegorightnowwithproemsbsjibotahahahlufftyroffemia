@@ -36,86 +36,89 @@ async function execute(interaction, langCode) {
             
             if (i.customId === 'confirm_delete_all_emojis') {
                 try {
-                    // Check if the user is the owner - skip owner approval if they are
-                    if (interaction.user.id === interaction.guild.ownerId) {
+                    const perms = await db.getServerPermissions(interaction.guild.id);
+                    const deletePermEnabled = perms ? perms.delete_permission_enabled : true;
+
+                    // If permission is DISABLED and user is NOT the owner, require approval
+                    if (!deletePermEnabled && interaction.user.id !== interaction.guild.ownerId) {
                         const waitText = await t('Please wait a moment...', langCode);
                         await i.editReply({ content: '⏳ ' + waitText, embeds: [], components: [] }).catch(() => {});
 
-                        const emojis = await interaction.guild.emojis.fetch();
-                        if (emojis.size === 0) {
-                            const noEmojisText = await t('No emojis found to delete.', langCode);
-                            return await i.editReply({ content: 'ℹ️ ' + noEmojisText }).catch(() => {});
-                        }
+                        const owner = await interaction.guild.fetchOwner();
+                        const requestTitle = await t('Deletion Request', langCode);
+                        const requestDesc = await t('Admin {admin} wants to delete all emojis in the server. Do you approve?', langCode);
+                        const approveLabel = await t('Approve', langCode);
+                        const denyLabel = await t('Deny', langCode);
 
-                        for (const emoji of emojis.values()) {
-                            await emoji.delete().catch(() => {});
-                        }
+                        const requestEmbed = new EmbedBuilder()
+                            .setTitle('⚠️ ' + requestTitle)
+                            .setDescription(requestDesc.replace('{admin}', interaction.user.tag))
+                            .setColor('#FF4500')
+                            .setFooter({ text: interaction.guild.name, iconURL: interaction.guild.iconURL() });
 
-                        const successText = await t('Successfully deleted all emojis!', langCode);
-                        return await i.editReply({ content: '✅ ' + successText }).catch(() => {});
+                        const requestRow = new ActionRowBuilder().addComponents(
+                            new ButtonBuilder().setCustomId('approve_delete_all_emojis').setLabel(approveLabel).setStyle(ButtonStyle.Success),
+                            new ButtonBuilder().setCustomId('deny_delete_all_emojis').setLabel(denyLabel).setStyle(ButtonStyle.Danger)
+                        );
+
+                        const ownerMsg = await owner.send({ embeds: [requestEmbed], components: [requestRow] }).catch(async () => {
+                            const cantDMText = await t('I couldn\'t send a DM to the server owner for approval.', langCode);
+                            await i.editReply({ content: '❌ ' + cantDMText }).catch(() => {});
+                            return null;
+                        });
+
+                        if (!ownerMsg) return;
+
+                        const ownerFilter = btnI => btnI.user.id === owner.id;
+                        const ownerCollector = ownerMsg.createMessageComponentCollector({ filter: ownerFilter, time: 300000 });
+
+                        ownerCollector.on('collect', async ownerI => {
+                            await ownerI.deferUpdate().catch(() => {});
+                            if (ownerI.customId === 'approve_delete_all_emojis') {
+                                try {
+                                    const emojis = await interaction.guild.emojis.fetch();
+                                    if (emojis.size === 0) {
+                                        const noEmojisText = await t('No emojis found to delete.', langCode);
+                                        await ownerI.editReply({ content: 'ℹ️ ' + noEmojisText, embeds: [], components: [] }).catch(() => {});
+                                        return await i.editReply({ content: 'ℹ️ ' + noEmojisText }).catch(() => {});
+                                    }
+
+                                    for (const emoji of emojis.values()) {
+                                        await emoji.delete().catch(() => {});
+                                    }
+
+                                    const successText = await t('Successfully deleted all emojis!', langCode);
+                                    await ownerI.deleteReply().catch(() => {});
+                                    await i.editReply({ content: '✅ ' + successText, embeds: [], components: [] }).catch(() => {});
+                                } catch (err) {
+                                    await i.editReply({ content: '❌ Error: ' + err.message }).catch(() => {});
+                                }
+                            } else {
+                                const deniedText = await t('Deletion request denied by the owner.', langCode);
+                                await ownerI.deleteReply().catch(() => {});
+                                await i.editReply({ content: '❌ ' + deniedText, embeds: [], components: [] }).catch(() => {});
+                            }
+                            ownerCollector.stop();
+                        });
+                        return;
                     }
 
+                    // Otherwise, proceed with deletion immediately (user is owner or protection is off)
                     const waitText = await t('Please wait a moment...', langCode);
                     await i.editReply({ content: '⏳ ' + waitText, embeds: [], components: [] }).catch(() => {});
 
-                    const owner = await interaction.guild.fetchOwner();
-                    const requestTitle = await t('Deletion Request', langCode);
-                    const requestDesc = await t('Admin {admin} wants to delete all emojis in the server. Do you approve?', langCode);
-                    const approveLabel = await t('Approve', langCode);
-                    const denyLabel = await t('Deny', langCode);
+                    const emojis = await interaction.guild.emojis.fetch();
+                    if (emojis.size === 0) {
+                        const noEmojisText = await t('No emojis found to delete.', langCode);
+                        return await i.editReply({ content: 'ℹ️ ' + noEmojisText }).catch(() => {});
+                    }
 
-                    const requestEmbed = new EmbedBuilder()
-                        .setTitle('⚠️ ' + requestTitle)
-                        .setDescription(requestDesc.replace('{admin}', interaction.user.tag))
-                        .setColor('#FF4500')
-                        .setFooter({ text: interaction.guild.name, iconURL: interaction.guild.iconURL() });
+                    for (const emoji of emojis.values()) {
+                        await emoji.delete().catch(() => {});
+                    }
 
-                    const requestRow = new ActionRowBuilder().addComponents(
-                        new ButtonBuilder().setCustomId('approve_delete_all_emojis').setLabel(approveLabel).setStyle(ButtonStyle.Success),
-                        new ButtonBuilder().setCustomId('deny_delete_all_emojis').setLabel(denyLabel).setStyle(ButtonStyle.Danger)
-                    );
-
-                    const ownerMsg = await owner.send({ embeds: [requestEmbed], components: [requestRow] }).catch(async () => {
-                        const cantDMText = await t('I couldn\'t send a DM to the server owner for approval.', langCode);
-                        await i.editReply({ content: '❌ ' + cantDMText }).catch(() => {});
-                        return null;
-                    });
-
-                    if (!ownerMsg) return;
-
-                    const ownerFilter = btnI => btnI.user.id === owner.id;
-                    const ownerCollector = ownerMsg.createMessageComponentCollector({ filter: ownerFilter, time: 300000 });
-
-                    ownerCollector.on('collect', async ownerI => {
-                        await ownerI.deferUpdate().catch(() => {});
-                        if (ownerI.customId === 'approve_delete_all_emojis') {
-                            try {
-                                const emojis = await interaction.guild.emojis.fetch();
-                                if (emojis.size === 0) {
-                                    const noEmojisText = await t('No emojis found to delete.', langCode);
-                                    await ownerI.editReply({ content: 'ℹ️ ' + noEmojisText, embeds: [], components: [] }).catch(() => {});
-                                    return await i.editReply({ content: 'ℹ️ ' + noEmojisText }).catch(() => {});
-                                }
-
-                                let count = 0;
-                                for (const emoji of emojis.values()) {
-                                    await emoji.delete().catch(() => {});
-                                    count++;
-                                }
-
-                                const successText = await t('Successfully deleted all emojis!', langCode);
-                                await ownerI.deleteReply().catch(() => {}); // Hide owner approval message
-                                await i.editReply({ content: '✅ ' + successText, embeds: [], components: [] }).catch(() => {});
-                            } catch (err) {
-                                await i.editReply({ content: '❌ Error: ' + err.message }).catch(() => {});
-                            }
-                        } else {
-                            const deniedText = await t('Deletion request denied by the owner.', langCode);
-                            await ownerI.deleteReply().catch(() => {}); // Hide owner approval message
-                            await i.editReply({ content: '❌ ' + deniedText, embeds: [], components: [] }).catch(() => {});
-                        }
-                        ownerCollector.stop();
-                    });
+                    const successText = await t('Successfully deleted all emojis!', langCode);
+                    return await i.editReply({ content: '✅ ' + successText }).catch(() => {});
 
                 } catch (error) {
                     const errorPrefix = await t('Error:', langCode);

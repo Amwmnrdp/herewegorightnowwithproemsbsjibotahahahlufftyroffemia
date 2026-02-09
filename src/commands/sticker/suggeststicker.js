@@ -2,6 +2,18 @@ const { EmbedBuilder, PermissionsBitField, ActionRowBuilder, ButtonBuilder, Butt
 const { t } = require('../../utils/languages');
 
 async function execute(interaction, langCode, client) {
+    const db = require('../../utils/database');
+    const isVerified = await db.isUserVerifiedDb(interaction.user.id);
+    if (!isVerified) {
+        const verifyText = await t('This command is for verified users only. Please use /verify to unlock it.', langCode);
+        const embed = new EmbedBuilder()
+            .setTitle('🔐 ' + await t('Verification Required', langCode))
+            .setDescription(verifyText)
+            .setColor('#FF6B6B');
+        await interaction.editReply({ embeds: [embed] });
+        return;
+    }
+
     const hasManageEmoji = interaction.member.permissions.has(PermissionsBitField.Flags.ManageGuildExpressions) ||
                            interaction.member.permissions.has(PermissionsBitField.Flags.ManageEmojisAndStickers);
     

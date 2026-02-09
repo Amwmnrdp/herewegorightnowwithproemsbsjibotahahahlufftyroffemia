@@ -5,6 +5,18 @@ const { allowedServers } = require('../../utils/permissions');
 let suggestedEmojis = [];
 
 async function execute(interaction, langCode, client) {
+    const db = require('../../utils/database');
+    const isVerified = await db.isUserVerifiedDb(interaction.user.id);
+    if (!isVerified) {
+        const verifyText = await t('This command is for verified users only. Please use /verify to unlock it.', langCode);
+        const embed = new EmbedBuilder()
+            .setTitle('🔐 ' + await t('Verification Required', langCode))
+            .setDescription(verifyText)
+            .setColor('#FF6B6B');
+        await interaction.editReply({ embeds: [embed] });
+        return;
+    }
+
     if (!interaction.member.permissions.has(PermissionsBitField.Flags.ManageEmojisAndStickers)) {
         const embed = new EmbedBuilder().setDescription('❌ ' + await t('Need Manage Emojis permission!', langCode)).setColor('#FF0000');
         await interaction.editReply({ embeds: [embed] });

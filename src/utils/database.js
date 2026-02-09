@@ -83,6 +83,14 @@ async function initDatabase() {
                 expires_at TIMESTAMP
             );
 
+            -- Ensure expires_at exists if table was created previously
+            DO $$ 
+            BEGIN 
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='verified_users' AND column_name='expires_at') THEN
+                    ALTER TABLE verified_users ADD COLUMN expires_at TIMESTAMP;
+                END IF;
+            END $$;
+
             CREATE TABLE IF NOT EXISTS emojis_added (
                 id SERIAL PRIMARY KEY,
                 server_id VARCHAR(255) NOT NULL,
