@@ -327,6 +327,10 @@ const COMMAND_DEFINITIONS = [
         description: 'Check bot status and ping'
     },
     {
+        name: 'verify',
+        description: 'Verify your Top.gg vote to unlock premium features'
+    },
+    {
         name: 'vote',
         description: 'Get links to vote and support the bot'
     },

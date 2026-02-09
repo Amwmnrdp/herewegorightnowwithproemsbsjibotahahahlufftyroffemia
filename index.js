@@ -86,7 +86,8 @@ const LOADING_MESSAGES = {
     'delete_sticker': 'Deleting sticker',
     'rename_sticker': 'Renaming sticker',
     'get_sticker_id': 'Getting sticker ID',
-    'update': 'Updating bot'
+    'update': 'Updating bot',
+    'verify': 'Verifying vote'
 };
 
 const client = new Client({
@@ -135,63 +136,6 @@ const emojiEnhanceSessions = new Map();
 const convertedEmojisToStickers = new Map();
 const convertedImagesToStickers = new Map();
 const convertedStickersToEmojis = new Map();
-
-const TOP_GG_API_KEY = process.env.TOP_GG_API_KEY;
-const TOP_GG_BOT_ID = process.env.TOP_GG_BOT_ID;
-
-async function checkVerification(interaction, langCode) {
-    const userId = interaction.user.id;
-    const TOP_GG_API_KEY = process.env.TOP_GG_API_KEY;
-    const TOP_GG_BOT_ID = process.env.TOP_GG_BOT_ID || client.user?.id;
-    
-    let hasVoted = false;
-    let timeRemaining = 0;
-
-    try {
-        if (TOP_GG_API_KEY && TOP_GG_BOT_ID) {
-            const response = await axios.get(`https://top.gg/api/bots/${TOP_GG_BOT_ID}/check?userId=${userId}`, {
-                headers: { 'Authorization': TOP_GG_API_KEY }
-            });
-            hasVoted = response.data.voted === 1;
-        } else {
-            // For testing/development if keys are missing
-            hasVoted = true; 
-        }
-    } catch (error) {
-        console.error('⚠️ Top.gg vote check failed:', error.message);
-        hasVoted = true; // Fallback to allow usage if API is down
-    }
-    
-    if (!hasVoted) {
-        const voteEmbed = new EmbedBuilder()
-            .setTitle('🗳️ ' + await t('Vote ProEmoji', langCode))
-            .setDescription(await t('You must vote for the bot on Top.gg to use this command.', langCode) + 
-                `\n\n🔗 **${await t('Vote here:', langCode)}** https://top.gg/bot/${TOP_GG_BOT_ID}/vote`)
-            .setColor('#FF6B6B');
-
-        const embed = new EmbedBuilder()
-            .setTitle('🗳️ ' + await t('Voting Required', langCode))
-            .setDescription(await t('To maintain a professional and sustainable service, the `/suggest_emoji` and `/suggest_sticker` commands require a vote on Top.gg.', langCode) + 
-                `\n\n💡 ${await t('You can vote every 12 hours to continue using these features. Your support helps us grow!', langCode)}`)
-            .setColor('#FF6B6B')
-            .setFooter({ text: await t('Verification expires every 12 hours.', langCode) });
-        
-        const row = new ActionRowBuilder().addComponents(
-            new ButtonBuilder()
-                .setLabel(await t('Vote', langCode))
-                .setURL(`https://top.gg/bot/${TOP_GG_BOT_ID}/vote`)
-                .setStyle(ButtonStyle.Link)
-        );
-
-        if (interaction.deferred || interaction.replied) {
-            await interaction.editReply({ embeds: [embed, voteEmbed], components: [row] });
-        } else {
-            await interaction.reply({ embeds: [embed, voteEmbed], components: [row], flags: MessageFlags.Ephemeral });
-        }
-        return false;
-    }
-    return true;
-}
 
 async function checkPermissions(interaction, langCode) {
     if (!interaction.guild) {
@@ -266,6 +210,24 @@ async function checkPermissions(interaction, langCode) {
         return true;
     }
 
+    if (commandName === 'suggest_emojis' || commandName === 'suggest_sticker') {
+        const isVerified = await db.isUserVerifiedDb(interaction.user.id);
+        if (!isVerified) {
+            const TOP_GG_BOT_ID = process.env.TOP_GG_BOT_ID || client.user?.id;
+            const embed = new EmbedBuilder()
+                .setTitle('🗳️ ' + await t('Vote Required', langCode))
+                .setDescription(await t('To use this premium feature, you must vote for the bot [here]. After voting, use `/verify` to unlock access for 12 hours.', langCode).replace('[here]', `[${await t('here', langCode)}](https://top.gg/bot/${TOP_GG_BOT_ID}/vote)`))
+                .setColor('#FF6B6B');
+            
+            if (interaction.deferred || interaction.replied) {
+                await interaction.editReply({ embeds: [embed] });
+            } else {
+                await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
+            }
+            return false;
+        }
+    }
+
     if (!hasManageEmoji) {
         const embed = new EmbedBuilder()
             .setTitle('🚫 ' + await t('Permission Denied', langCode))
@@ -285,47 +247,107 @@ async function checkPermissions(interaction, langCode) {
 
 const cooldowns = new Map();
 
-    client.on('interactionCreate', async interaction => {
-        let langCode = 'en';
-        if (interaction.guild) {
-            try {
-                langCode = await db.getServerLanguage(interaction.guild.id);
-                if (!langCode) langCode = 'en';
-            } catch (e) {
-                console.error('Error fetching langCode:', e);
-                langCode = 'en';
-            }
+client.on('interactionCreate', async interaction => {
+    let langCode = 'en';
+    if (interaction.guild) {
+        try {
+            langCode = await db.getServerLanguage(interaction.guild.id);
+            if (!langCode) langCode = 'en';
+        } catch (e) {
+            console.error('Error fetching langCode:', e);
+            langCode = 'en';
         }
-        
-        // Command types (type 2) don't have a customId, so we use commandName for logging
-        const interactionId = interaction.isCommand() ? interaction.commandName : (interaction.customId || 'N/A');
-        // console.log(`[Interaction] type: ${interaction.type}, id: ${interactionId}, guild: ${interaction.guild?.id}, lang: ${langCode}`);
+    }
+    
+    const interactionId = interaction.isCommand() ? interaction.commandName : (interaction.customId || 'N/A');
 
-        if (interaction.isCommand()) {
-            const userId = interaction.user.id;
-            const now = Date.now();
-            const cooldownAmount = 3000;
-            if (cooldowns.has(userId)) {
-                const expirationTime = cooldowns.get(userId) + cooldownAmount;
-                if (now < expirationTime) {
-                    const timeLeft = (expirationTime - now) / 1000;
-                    const cooldownEmbed = new EmbedBuilder()
-                        .setDescription(await t(`❌ Please wait {time} more second(s) before using commands again.`, langCode).then(text => text.replace('{time}', timeLeft.toFixed(1))))
-                        .setColor('#FF0000');
-                    
-                    try {
-                        if (interaction.deferred || interaction.replied) {
-                            return await interaction.editReply({ embeds: [cooldownEmbed] });
-                        } else {
-                            return await interaction.reply({ embeds: [cooldownEmbed], flags: MessageFlags.Ephemeral });
-                        }
-                    } catch (e) {}
-                    return;
-                }
-            }
-            cooldowns.set(userId, now);
-            setTimeout(() => cooldowns.delete(userId), cooldownAmount);
+    if (interaction.isCommand()) {
+        const commandName = interaction.commandName;
+        
+        if (commandName === 'verify') {
+            const TOP_GG_BOT_ID = process.env.TOP_GG_BOT_ID || client.user?.id;
+            const embed = new EmbedBuilder()
+                .setTitle('🛡️ ' + await t('Vote Verification', langCode))
+                .setDescription(await t('Click the button below to verify your vote on Top.gg and unlock premium features for 12 hours.', langCode) + 
+                    `\n\n🔗 [${await t('Vote here', langCode)}](https://top.gg/bot/${TOP_GG_BOT_ID}/vote)`)
+                .setColor('#0099ff');
+            
+            const row = new ActionRowBuilder().addComponents(
+                new ButtonBuilder()
+                    .setCustomId('verify_vote')
+                    .setLabel(await t('Verify', langCode))
+                    .setStyle(ButtonStyle.Success)
+            );
+
+            return await interaction.reply({ embeds: [embed], components: [row], flags: MessageFlags.Ephemeral });
         }
+
+        const userId = interaction.user.id;
+        const now = Date.now();
+        const cooldownAmount = 3000;
+        if (cooldowns.has(userId)) {
+            const expirationTime = cooldowns.get(userId) + cooldownAmount;
+            if (now < expirationTime) {
+                const timeLeft = (expirationTime - now) / 1000;
+                const cooldownEmbed = new EmbedBuilder()
+                    .setDescription(await t(`❌ Please wait {time} more second(s) before using commands again.`, langCode).then(text => text.replace('{time}', timeLeft.toFixed(1))))
+                    .setColor('#FF0000');
+                
+                try {
+                    if (interaction.deferred || interaction.replied) {
+                        return await interaction.editReply({ embeds: [cooldownEmbed] });
+                    } else {
+                        return await interaction.reply({ embeds: [cooldownEmbed], flags: MessageFlags.Ephemeral });
+                    }
+                } catch (e) {}
+                return;
+            }
+        }
+        cooldowns.set(userId, now);
+        setTimeout(() => cooldowns.delete(userId), cooldownAmount);
+    }
+
+    if (interaction.isButton() && interaction.customId === 'verify_vote') {
+        try {
+            await interaction.deferUpdate();
+            const userId = interaction.user.id;
+            const TOP_GG_API_KEY = process.env.TOP_GG_API_KEY;
+            const TOP_GG_BOT_ID = process.env.TOP_GG_BOT_ID || client.user?.id;
+            
+            let voted = false;
+            if (TOP_GG_API_KEY && TOP_GG_BOT_ID) {
+                const response = await axios.get(`https://top.gg/api/bots/${TOP_GG_BOT_ID}/check?userId=${userId}`, {
+                    headers: { 'Authorization': TOP_GG_API_KEY }
+                }).catch(() => null);
+                voted = response?.data?.voted === 1;
+            } else {
+                voted = true; 
+            }
+
+            if (voted) {
+                await db.verifyUserDb(userId, interaction.user.username, interaction.user.displayAvatarURL());
+                const embed = new EmbedBuilder()
+                    .setTitle('✅ ' + await t('Success', langCode))
+                    .setDescription(await t('Your vote has been verified! You can now use `/suggest_emoji` and `/suggest_sticker` for the next 12 hours.', langCode))
+                    .setColor('#00FF00');
+                return await interaction.editReply({ embeds: [embed], components: [] });
+            } else {
+                const embed = new EmbedBuilder()
+                    .setTitle('❌ ' + await t('Not Voted', langCode))
+                    .setDescription(await t('Verification failed. You must vote on Top.gg first before verifying.', langCode) + 
+                        `\n\n🔗 [${await t('Vote here', langCode)}](https://top.gg/bot/${TOP_GG_BOT_ID}/vote)`)
+                    .setColor('#FF0000');
+                return await interaction.editReply({ embeds: [embed] });
+            }
+        } catch (e) {
+            console.error('Error in verification button:', e);
+            const embed = new EmbedBuilder()
+                .setTitle('❌ ' + await t('Error', langCode))
+                .setDescription(await t('Verification failed. Please try again later.', langCode))
+                .setColor('#FF0000');
+            return await interaction.editReply({ embeds: [embed] });
+        }
+    }
 
     if (interaction.isStringSelectMenu() && interaction.customId === 'help_category') {
         try {
@@ -346,10 +368,26 @@ const cooldowns = new Map();
 
             const pages = [];
             let title = '';
-            let currentPage = 0; // Fixed: Defined locally to prevent ReferenceError
-
+            let currentPage = 0;
             const category = interaction.values[0];
             
+            const createHelpEmbed = (idx) => {
+                const desc = pages[idx] || '...';
+                return new EmbedBuilder()
+                    .setTitle('📖 ' + title)
+                    .setDescription(desc)
+                    .setColor('#0099ff')
+                    .setFooter({ text: `${idx + 1}/${pages.length}` });
+            };
+
+            const createHelpRow = (idx) => {
+                const rowComponents = [
+                    new ButtonBuilder().setCustomId('prev_help').setEmoji('⬅️').setStyle(ButtonStyle.Primary).setDisabled(idx === 0),
+                    new ButtonBuilder().setCustomId('next_help').setEmoji('➡️').setStyle(ButtonStyle.Primary).setDisabled(idx === pages.length - 1)
+                ];
+                return new ActionRowBuilder().addComponents(rowComponents);
+            };
+
             if (category === 'sticker_help') {
                 title = await t('Sticker Commands', langCode);
                 const stickerCommands = [
@@ -365,13 +403,10 @@ const cooldowns = new Map();
                     { cmd: '/suggest_sticker', desc: 'Suggests 5 random stickers from other servers (useful if you don\'t have Nitro)' },
                     { cmd: '/get_sticker_id', desc: 'Get the ID of a specific sticker' }
                 ];
-
                 for (let i = 0; i < stickerCommands.length; i += 5) {
                     let pageContent = `**${await t('Commands related to stickers', langCode)}**\n\n`;
                     const chunk = stickerCommands.slice(i, i + 5);
-                    for (const item of chunk) {
-                        pageContent += `${await t(item.desc, langCode)}: **${item.cmd}**\n\n`;
-                    }
+                    for (const item of chunk) { pageContent += `${await t(item.desc, langCode)}: **${item.cmd}**\n\n`; }
                     pages.push(pageContent);
                 }
             } else if (category === 'emoji_help') {
@@ -390,16 +425,11 @@ const cooldowns = new Map();
                     { cmd: '/emoji_pack', desc: 'Get a curated pack of suggested emojis to enhance your server' },
                     { cmd: '/get_emoji_id', desc: 'Get the ID of a specific emoji' }
                 ];
-
                 for (let i = 0; i < emojiCommands.length; i += 5) {
                     let pageContent = `**${await t('Commands related to emojis', langCode)}**\n\n`;
                     const chunk = emojiCommands.slice(i, i + 5);
-                    for (const item of chunk) {
-                        pageContent += `${await t(item.desc, langCode)}: **${item.cmd}**\n\n`;
-                    }
-                    if (i + 5 >= emojiCommands.length) {
-                        pageContent += `💡 *${await t('If you do not have Nitro, you can use /suggest_emojis and the bot will suggest 5 random emojis from other servers it is in.', langCode)}*`;
-                    }
+                    for (const item of chunk) { pageContent += `${await t(item.desc, langCode)}: **${item.cmd}**\n\n`; }
+                    if (i + 5 >= emojiCommands.length) { pageContent += `💡 *${await t('If you do not have Nitro, you can use /suggest_emojis and the bot will suggest 5 random emojis from other servers it is in.', langCode)}*`; }
                     pages.push(pageContent);
                 }
             } else if (category === 'info_help') {
@@ -414,26 +444,7 @@ const cooldowns = new Map();
                 pages.push(pageContent);
             }
 
-            if (pages.length === 0) {
-                pages.push(await t('No commands found in this category.', langCode));
-            }
-
-            const createHelpEmbed = (idx) => {
-                const desc = pages[idx] || '...';
-                return new EmbedBuilder()
-                    .setTitle('📖 ' + title)
-                    .setDescription(desc)
-                    .setColor('#0099ff')
-                    .setFooter({ text: `${idx + 1}/${pages.length}` });
-            };
-
-            const createHelpRow = (idx) => {
-                const rowComponents = [
-                    new ButtonBuilder().setCustomId('prev_help').setEmoji('⬅️').setStyle(ButtonStyle.Primary).setDisabled(idx === 0),
-                    new ButtonBuilder().setCustomId('next_help').setEmoji('➡️').setStyle(ButtonStyle.Primary).setDisabled(idx === pages.length - 1)
-                ];
-                return new ActionRowBuilder().addComponents(rowComponents);
-            };
+            if (pages.length === 0) { pages.push(await t('No commands found in this category.', langCode)); }
 
             await interaction.editReply({ 
                 embeds: [createHelpEmbed(0)], 
@@ -445,47 +456,24 @@ const cooldowns = new Map();
                     filter: i => i.user.id === interaction.user.id && (i.customId === 'prev_help' || i.customId === 'next_help'),
                     time: 60000 
                 });
-
                 collector.on('collect', async i => {
                     try {
                         if (!i.deferred && !i.replied) await i.deferUpdate().catch(() => {});
-                        
                         const currentMessage = await interaction.fetchReply();
                         const currentFooter = currentMessage.embeds[0]?.footer?.text;
                         const currentTitle = currentMessage.embeds[0]?.title;
-                        
-                        // Ensure title hasn't changed to prevent category interference
-                        if (currentTitle !== '📖 ' + title) {
-                            collector.stop();
-                            return;
-                        }
-
-                        if (currentFooter) {
-                            const [pagePart] = currentFooter.split('/');
-                            currentPage = parseInt(pagePart) - 1;
-                        }
-
-                        if (i.customId === 'prev_help') currentPage--;
-                        else currentPage++;
-                        
+                        if (currentTitle !== '📖 ' + title) { collector.stop(); return; }
+                        if (currentFooter) { const [pagePart] = currentFooter.split('/'); currentPage = parseInt(pagePart) - 1; }
+                        if (i.customId === 'prev_help') currentPage--; else currentPage++;
                         if (currentPage < 0) currentPage = 0;
                         if (currentPage >= pages.length) currentPage = pages.length - 1;
-
                         const newEmbed = createHelpEmbed(currentPage);
                         const newRow = createHelpRow(currentPage);
-
-                        await i.editReply({ 
-                            embeds: [newEmbed], 
-                            components: pages.length > 1 ? [row, newRow] : [row]
-                        }).catch(() => {});
-                    } catch (e) {
-                        console.error('Error in help collector:', e);
-                    }
+                        await i.editReply({ embeds: [newEmbed], components: pages.length > 1 ? [row, newRow] : [row] }).catch(() => {});
+                    } catch (e) { console.error('Error in help collector:', e); }
                 });
             }
-        } catch (e) {
-            console.error('Error in help interaction handler:', e);
-        }
+        } catch (e) { console.error('Error in help interaction handler:', e); }
         return;
     }
 
@@ -493,20 +481,10 @@ const cooldowns = new Map();
         const selectedLang = interaction.values[0];
         const langInfo = SUPPORTED_LANGUAGES[selectedLang];
         await db.setServerLanguage(interaction.guild.id, selectedLang);
-        
-        // Update local cache so it's immediate
         serverLanguages.set(interaction.guild.id, selectedLang);
-        
         const successTitle = await t('Language Updated!', selectedLang);
-        const embed = new EmbedBuilder()
-            .setTitle(successTitle)
-            .setDescription(`${langInfo.flag} ${langInfo.native} (${langInfo.name})`)
-            .setColor('#00FFFF');
-        try {
-            if (!interaction.deferred && !interaction.replied) {
-                await interaction.update({ embeds: [embed], components: [] });
-            }
-        } catch (e) {}
+        const embed = new EmbedBuilder().setTitle(successTitle).setDescription(`${langInfo.flag} ${langInfo.native} (${langInfo.name})`).setColor('#00FFFF');
+        try { if (!interaction.deferred && !interaction.replied) { await interaction.update({ embeds: [embed], components: [] }); } } catch (e) {}
         return;
     }
     
@@ -523,16 +501,13 @@ const cooldowns = new Map();
 
     const showLoading = async (cmdName) => {
         const loadingText = LOADING_MESSAGES[cmdName] || 'Processing';
-        const loadingEmbed = new EmbedBuilder()
-            .setDescription('⏳ ' + await t(loadingText + '... please wait.', langCode))
-            .setColor('#FFFF00');
+        const loadingEmbed = new EmbedBuilder().setDescription('⏳ ' + await t(loadingText + '... please wait.', langCode)).setColor('#FFFF00');
         await interaction.editReply({ embeds: [loadingEmbed] }).catch(() => {});
     };
 
     try {
         if (interaction.commandName === 'ping') {
-            await safeDefer();
-            await showLoading('ping');
+            await safeDefer(); await showLoading('ping');
             const ping = require('./src/commands/storage/ping');
             await ping.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in ping: ${err.message}`);
@@ -541,8 +516,7 @@ const cooldowns = new Map();
             });
         }
         else if (interaction.commandName === 'get_emoji_id') {
-            await safeDefer();
-            await showLoading('get_emoji_id');
+            await safeDefer(); await showLoading('get_emoji_id');
             await getemojiid.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in get_emoji_id: ${err.message}`);
                 const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
@@ -550,1007 +524,116 @@ const cooldowns = new Map();
             });
         }
         else if (interaction.commandName === 'get_sticker_id') {
-            await safeDefer();
-            await showLoading('get_sticker_id');
+            await safeDefer(); await showLoading('get_sticker_id');
             const response = await getstickerid.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in get_sticker_id: ${err.message}`);
                 const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
                 await interaction.editReply({ content: errMsg, embeds: [] }).catch(() => {});
             });
             if (response && response.id) {
-                stickerDeletionSessions.set(response.id, {
-                    guildId: interaction.guild.id,
-                    userId: interaction.user.id,
-                    langCode: langCode,
-                    messageId: response.id,
-                    channelId: response.channel.id,
-                    isIdRetrieval: true
-                });
+                stickerDeletionSessions.set(response.id, { guildId: interaction.guild.id, userId: interaction.user.id, langCode: langCode, messageId: response.id, channelId: response.channel.id, isIdRetrieval: true });
                 setTimeout(() => stickerDeletionSessions.has(response.id) && stickerDeletionSessions.delete(response.id), 180000);
             }
         }
         else if (interaction.commandName === 'status') {
-            await safeDefer();
-            await showLoading('status');
+            await safeDefer(); await showLoading('status');
             await status.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in status: ${err.message}`);
                 const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
                 await interaction.editReply({ content: errMsg, embeds: [] }).catch(() => {});
             });
         }
+        else if (interaction.commandName === 'verify') { /* Already handled */ }
         else if (interaction.commandName === 'help') {
             const help = require('./src/commands/storage/help');
             await help.execute(interaction, langCode).catch(async err => {
                 console.error(`Error in help: ${err.message}`);
                 const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
-                if (interaction.replied || interaction.deferred) {
-                    await interaction.editReply({ content: errMsg, embeds: [], components: [] }).catch(() => {});
-                } else {
-                    await interaction.reply({ content: errMsg, flags: MessageFlags.Ephemeral }).catch(() => {});
-                }
+                if (interaction.replied || interaction.deferred) { await interaction.editReply({ content: errMsg, embeds: [] }).catch(() => {}); }
+                else { await interaction.reply({ content: errMsg, flags: MessageFlags.Ephemeral }).catch(() => {}); }
             });
         }
-        else if (interaction.commandName === 'vote') {
-            await safeDefer();
-            await showLoading('vote');
-            await vote.execute(interaction, langCode).catch(async err => {
-                console.error(`Error in vote: ${err.message}`);
-                const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
-                await interaction.editReply({ content: errMsg, embeds: [] }).catch(() => {});
-            });
-        }
-        else if (interaction.commandName === 'delete_all_emojis') {
-            await safeDefer();
-            await showLoading('delete_all_emojis');
-            
-            const perms = await db.getServerPermissions(interaction.guild.id);
-            const deletePermEnabled = perms ? perms.delete_permission_enabled : true;
-            
-            if (!deletePermEnabled && interaction.user.id !== interaction.guild.ownerId) {
-                const approvalEmbed = new EmbedBuilder()
-                    .setTitle('🛡️ ' + await t('Approval Required', langCode))
-                    .setDescription(`**${interaction.user.displayName} (@${interaction.user.username})** ` + await t('wants to delete all emojis.', langCode) + `\n\n**${await t('Do you approve?', langCode)}**`)
-                    .setColor('#FFA500')
-                    .setFooter({ text: await t('3-minute timeout for owner to respond.', langCode) });
-
-                const buttons = new ActionRowBuilder().addComponents(
-                    new ButtonBuilder().setCustomId('approve_delete_emojis').setLabel(await t('Allow', langCode)).setStyle(ButtonStyle.Success),
-                    new ButtonBuilder().setCustomId('deny_delete_emojis').setLabel(await t('Deny', langCode)).setStyle(ButtonStyle.Danger)
-                );
-
-                const approvalMsg = await interaction.channel.send({ content: `<@${interaction.guild.ownerId}>`, embeds: [approvalEmbed], components: [buttons] });
-                
-                const waitEmbed = new EmbedBuilder()
-                    .setDescription('⏳ ' + await t('Approval request sent to the server owner.', langCode))
-                    .setColor('#FFFF00');
-                await interaction.editReply({ embeds: [waitEmbed] }).catch(() => {});
-                
-                const filter = i => i.user.id === interaction.guild.ownerId && (i.customId === 'approve_delete_emojis' || i.customId === 'deny_delete_emojis');
-                const collector = approvalMsg.createMessageComponentCollector({ filter, time: 180000 });
-
-                collector.on('collect', async i => {
-                    if (!i.deferred && !i.replied) await i.deferUpdate().catch(() => {});
-                    if (i.customId === 'approve_delete_emojis') {
-                        const processingEmbed = new EmbedBuilder()
-                            .setDescription('⏳ ' + await t('Processing request... Please wait.', langCode))
-                            .setColor('#FFFF00');
-                        await interaction.editReply({ embeds: [processingEmbed], components: [] }).catch(() => {});
-
-                        await deleteallemojis.execute(interaction, langCode).catch(async err => {
-                            console.error(`Error in delete_all_emojis: ${err.message}`);
-                            const errorEmbed = new EmbedBuilder()
-                                .setDescription('❌ ' + await t('An error occurred while executing this command.', langCode))
-                                .setColor('#FF0000');
-                            await interaction.editReply({ embeds: [errorEmbed], components: [] }).catch(() => {});
-                        });
-                        await interaction.followUp({ content: `<@${interaction.user.id}> ✅ ` + await t('Your request to delete all emojis was approved.', langCode) }).catch(() => {});
-                    } else {
-                        const denyEmbed = new EmbedBuilder()
-                            .setDescription('❌ ' + await t('Mass deletion request rejected.', langCode))
-                            .setColor('#FF0000');
-                        await interaction.editReply({ embeds: [denyEmbed], components: [] }).catch(() => {});
-                        
-                        try {
-                            const owner = await interaction.guild.fetchOwner();
-                            const warningEmbed = new EmbedBuilder()
-                                .setTitle('⚠️ ' + await t('Mass Deletion Denied', langCode))
-                                .setDescription(await t('An administrator tried to delete all emojis, but the request was denied.', langCode) + `\n\n**Admin:** ${interaction.user.tag}`)
-                                .setColor('#FF0000')
-                                .setTimestamp();
-                            await owner.send({ embeds: [warningEmbed] }).catch(() => {});
-                        } catch (e) {
-                            console.error('Failed to send DM to owner:', e.message);
-                        }
-
-                        await interaction.followUp({ content: `<@${interaction.user.id}> ❌ ` + await t('Your request to delete all emojis was rejected.', langCode) }).catch(() => {});
-                    }
-                    collector.stop();
-                });
-                return;
-            }
-
-            await showLoading('delete_all_emojis');
-
-            await deleteallemojis.execute(interaction, langCode).catch(async err => {
-                console.error(`Error in delete_all_emojis: ${err.message}`);
-                const errorEmbed = new EmbedBuilder()
-                    .setDescription('❌ ' + await t('An error occurred while executing this command.', langCode))
-                    .setColor('#FF0000');
-                await interaction.editReply({ embeds: [errorEmbed] }).catch(() => {});
-            });
-        }
-        else if (interaction.commandName === 'delete_all_stickers') {
-            await safeDefer();
-            await showLoading('delete_all_stickers');
-
-            const perms = await db.getServerPermissions(interaction.guild.id);
-            const deletePermEnabled = perms ? perms.delete_permission_enabled : true;
-
-            if (!deletePermEnabled && interaction.user.id !== interaction.guild.ownerId) {
-                const approvalEmbed = new EmbedBuilder()
-                    .setTitle('🛡️ ' + await t('Approval Required', langCode))
-                    .setDescription(`**${interaction.user.displayName} (@${interaction.user.username})** ` + await t('wants to delete all stickers.', langCode) + `\n\n**${await t('Do you approve?', langCode)}**`)
-                    .setColor('#FFA500')
-                    .setFooter({ text: await t('3-minute timeout for owner to respond.', langCode) });
-
-                const buttons = new ActionRowBuilder().addComponents(
-                    new ButtonBuilder().setCustomId('approve_delete_stickers').setLabel(await t('Allow', langCode)).setStyle(ButtonStyle.Success),
-                    new ButtonBuilder().setCustomId('deny_delete_stickers').setLabel(await t('Deny', langCode)).setStyle(ButtonStyle.Danger)
-                );
-
-                const approvalMsg = await interaction.channel.send({ content: `<@${interaction.guild.ownerId}>`, embeds: [approvalEmbed], components: [buttons] });
-                
-                const waitEmbed = new EmbedBuilder()
-                    .setDescription('⏳ ' + await t('Approval request sent to the server owner.', langCode))
-                    .setColor('#FFFF00');
-                await interaction.editReply({ embeds: [waitEmbed] }).catch(() => {});
-                
-                const filter = i => i.user.id === interaction.guild.ownerId && (i.customId === 'approve_delete_stickers' || i.customId === 'deny_delete_stickers');
-                const collector = approvalMsg.createMessageComponentCollector({ filter, time: 180000 });
-
-                collector.on('collect', async i => {
-                    if (!i.deferred && !i.replied) await i.deferUpdate().catch(() => {});
-                    if (i.customId === 'approve_delete_stickers') {
-                        const processingEmbed = new EmbedBuilder()
-                            .setDescription('⏳ ' + await t('Processing request... Please wait.', langCode))
-                            .setColor('#FFFF00');
-                        await interaction.editReply({ embeds: [processingEmbed], components: [] }).catch(() => {});
-
-                        await deleteallstickers.execute(interaction, langCode).catch(async err => {
-                            console.error(`Error in delete_all_stickers: ${err.message}`);
-                            const errorEmbed = new EmbedBuilder()
-                                .setDescription('❌ ' + await t('An error occurred while executing this command.', langCode))
-                                .setColor('#FF0000');
-                            await interaction.editReply({ embeds: [errorEmbed], components: [] }).catch(() => {});
-                        });
-                        await interaction.followUp({ content: `<@${interaction.user.id}> ✅ ` + await t('Your request to delete all stickers was approved.', langCode) }).catch(() => {});
-                    } else {
-                        const denyEmbed = new EmbedBuilder()
-                            .setDescription('❌ ' + await t('Mass deletion request rejected.', langCode))
-                            .setColor('#FF0000');
-                        await interaction.editReply({ embeds: [denyEmbed], components: [] }).catch(() => {});
-                        
-                        try {
-                            const owner = await interaction.guild.fetchOwner();
-                            const warningEmbed = new EmbedBuilder()
-                                .setTitle('⚠️ ' + await t('Mass Deletion Denied', langCode))
-                                .setDescription(await t('An administrator tried to delete all stickers, but the request was denied.', langCode) + `\n\n**Admin:** ${interaction.user.tag}`)
-                                .setColor('#FF0000')
-                                .setTimestamp();
-                            await owner.send({ embeds: [warningEmbed] }).catch(() => {});
-                        } catch (e) {
-                            console.error('Failed to send DM to owner:', e.message);
-                        }
-
-                        await interaction.followUp({ content: `<@${interaction.user.id}> ❌ ` + await t('Your request to delete all stickers was rejected.', langCode) }).catch(() => {});
-                    }
-                    collector.stop();
-                });
-                return;
-            }
-
-            await showLoading('delete_all_stickers');
-
-            await deleteallstickers.execute(interaction, langCode).catch(async err => {
-                console.error(`Error in delete_all_stickers: ${err.message}`);
-                const errorEmbed = new EmbedBuilder()
-                    .setDescription('❌ ' + await t('An error occurred while executing this command.', langCode))
-                    .setColor('#FF0000');
-                await interaction.editReply({ embeds: [errorEmbed] }).catch(() => {});
-            });
-        }
-        else if (interaction.commandName === 'delete_permission') {
-            await safeDefer();
-            await showLoading('delete_permission');
-            await deletepermission.execute(interaction, langCode).catch(async err => {
-                console.error(`Error in delete_permission: ${err.message}`);
-                const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
-                if (interaction.deferred || interaction.replied) {
-                    await interaction.editReply({ content: errMsg }).catch(() => {});
-                } else {
-                    await interaction.reply({ content: errMsg, flags: 64 }).catch(() => {});
-                }
-            });
-        }
-        else if (interaction.commandName === 'emoji_permission') {
-            await safeDefer();
-            await showLoading('emoji_permission');
-            const permission = require('./src/commands/storage/permission');
-            await permission.execute(interaction, langCode).catch(async err => {
-                console.error(`Error in emoji_permission: ${err.message}`);
-                const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
-                if (interaction.replied || interaction.deferred) {
-                    await interaction.editReply({ content: errMsg }).catch(() => {});
-                } else {
-                    await interaction.reply({ content: errMsg, flags: MessageFlags.Ephemeral }).catch(() => {});
-                }
-            });
-        }
-        else if (interaction.commandName === 'sticker_permission') {
-            await safeDefer();
-            await showLoading('sticker_permission');
-            await stickerPermission.execute(interaction, langCode).catch(async err => {
-                console.error(`Error in sticker_permission: ${err.message}`);
-                const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
-                if (interaction.replied || interaction.deferred) {
-                    await interaction.editReply({ content: errMsg }).catch(() => {});
-                } else {
-                    await interaction.reply({ content: errMsg, flags: MessageFlags.Ephemeral }).catch(() => {});
-                }
-            });
-        }
-        else if (interaction.commandName === 'emoji_search') {
-            await safeDefer();
-            await showLoading('emoji_search');
-            await emojisearch.execute(interaction, langCode, client).catch(async err => {
-                console.error(`Error in emoji_search: ${err.message}`);
-                const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
-                if (interaction.replied || interaction.deferred) {
-                    await interaction.editReply({ content: errMsg }).catch(() => {});
-                } else {
-                    await interaction.reply({ content: errMsg, flags: MessageFlags.Ephemeral }).catch(() => {});
-                }
-            });
-        }
-        else if (interaction.commandName === 'search_sticker') {
-            await safeDefer();
-            await showLoading('search_sticker');
-            await searchsticker.execute(interaction, langCode, client).catch(async err => {
-                console.error(`Error in search_sticker: ${err.message}`);
-                const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
-                if (interaction.replied || interaction.deferred) {
-                    await interaction.editReply({ content: errMsg }).catch(() => {});
-                } else {
-                    await interaction.reply({ content: errMsg, flags: MessageFlags.Ephemeral }).catch(() => {});
-                }
-            });
-        }
-        else if (interaction.commandName === 'emoji_pack') {
-            await safeDefer();
-            await showLoading('emoji_pack');
-            await emojipack.execute(interaction, langCode, client).catch(async err => {
-                console.error(`Error in emoji_pack: ${err.message}`);
-                const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
-                if (interaction.replied || interaction.deferred) {
-                    await interaction.editReply({ content: errMsg }).catch(() => {});
-                } else {
-                    await interaction.reply({ content: errMsg, flags: MessageFlags.Ephemeral }).catch(() => {});
-                }
-            });
-        }
-        else if (interaction.commandName === 'add_to_pack') {
-            await safeDefer();
-            await showLoading('add_to_pack');
-            await addtopack.execute(interaction, langCode).catch(async err => {
-                console.error(`Error in add_to_pack: ${err.message}`);
-                const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
-                if (interaction.replied || interaction.deferred) {
-                    await interaction.editReply({ content: errMsg }).catch(() => {});
-                }
-            });
-        }
-        else if (interaction.commandName === 'delete_from_pack') {
-            await safeDefer();
-            await showLoading('delete_from_pack');
-            await deletefrompack.execute(interaction, langCode).catch(async err => {
-                console.error(`Error in delete_from_pack: ${err.message}`);
-                const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
-                if (interaction.replied || interaction.deferred) {
-                    await interaction.editReply({ content: errMsg }).catch(() => {});
-                }
-            });
-        }
-        else if (interaction.commandName === 'suggest_emojis') {
-            await safeDefer();
-            const verified = await checkVerification(interaction, langCode);
-            if (!verified) return;
-            await showLoading('suggest_emojis');
-            await suggestemojis.execute(interaction, langCode, client).catch(async err => {
-                console.error(`Error in suggest_emojis: ${err.message}`);
-                const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
-                if (interaction.replied || interaction.deferred) {
-                    await interaction.editReply({ content: errMsg, embeds: [] }).catch(() => {});
-                }
-            });
-        }
-        else if (interaction.commandName === 'suggest_sticker') {
-            await safeDefer();
-            const verified = await checkVerification(interaction, langCode);
-            if (!verified) return;
-            await showLoading('suggest_sticker');
-            await suggeststicker.execute(interaction, langCode, client).catch(async err => {
-                console.error(`Error in suggest_sticker: ${err.message}`);
-                const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
-                if (interaction.replied || interaction.deferred) {
-                    await interaction.editReply({ content: errMsg }).catch(() => {});
-                } else {
-                    await interaction.reply({ content: errMsg, flags: MessageFlags.Ephemeral }).catch(() => {});
-                }
-            });
-        }
-        else if (interaction.commandName === 'enhance_sticker') {
-            await safeDefer();
-            await showLoading('enhance_sticker');
-            const response = await enhancesticker.execute(interaction, langCode).catch(async err => {
-                console.error(`Error in enhance_sticker: ${err.message}`);
-                const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
-                if (interaction.replied || interaction.deferred) {
-                    await interaction.editReply({ content: errMsg }).catch(() => {});
-                } else {
-                    await interaction.reply({ content: errMsg, flags: MessageFlags.Ephemeral }).catch(() => {});
-                }
-            });
-            if (response && response.id) {
-                stickerEnhanceSessions.set(response.id, {
-                    guildId: interaction.guild.id,
-                    userId: interaction.user.id,
-                    langCode: langCode,
-                    messageId: response.id,
-                    channelId: response.channel.id
-                });
-                setTimeout(() => stickerEnhanceSessions.has(response.id) && stickerEnhanceSessions.delete(response.id), 180000);
-            }
-        }
-        else if (interaction.commandName === 'enhance_emoji') {
-            await safeDefer();
-            await showLoading('enhance_emoji');
-            await enhanceemoji.execute(interaction, langCode).catch(async err => {
-                console.error(`Error in enhance_emoji: ${err.message}`);
-                const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
-                if (interaction.replied || interaction.deferred) {
-                    await interaction.editReply({ content: errMsg }).catch(() => {});
-                } else {
-                    await interaction.reply({ content: errMsg, flags: MessageFlags.Ephemeral }).catch(() => {});
-                }
-            });
-        }
-        else if (interaction.commandName === 'add_emoji') {
-            await safeDefer();
-            await showLoading('add_emoji');
-            await addemojiCmd.execute(interaction, langCode).catch(async err => {
-                console.error(`Error in add_emoji: ${err.message}`);
-                try {
-                    const errorMessage = '❌ ' + await t('An error occurred while executing this command.', langCode);
-                    if (interaction.replied || interaction.deferred) {
-                        await interaction.editReply({ content: errorMessage }).catch(() => {});
-                    } else {
-                        await interaction.reply({ content: errorMessage, flags: 64 }).catch(() => {});
-                    }
-                } catch (e) {}
-            });
-        }
-        else if (interaction.commandName === 'image_to_emoji') {
-            await safeDefer();
-            await showLoading('image_to_emoji');
-            await imagetoemoji.execute(interaction, langCode, usedUrls).catch(async err => {
-                console.error(`Error in image_to_emoji: ${err.message}`);
-                const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
-                if (interaction.replied || interaction.deferred) {
-                    await interaction.editReply({ content: errMsg }).catch(() => {});
-                } else {
-                    await interaction.reply({ content: errMsg, flags: MessageFlags.Ephemeral }).catch(() => {});
-                }
-            });
-        }
-        else if (interaction.commandName === 'emoji_to_sticker') {
-            await safeDefer();
-            await showLoading('emoji_to_sticker');
-            await emojiTosticker.execute(interaction, langCode, convertedEmojisToStickers).catch(async err => {
-                console.error(`Error in emoji_to_sticker: ${err.message}`);
-                const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
-                if (interaction.replied || interaction.deferred) {
-                    await interaction.editReply({ content: errMsg }).catch(() => {});
-                } else {
-                    await interaction.reply({ content: errMsg, flags: MessageFlags.Ephemeral }).catch(() => {});
-                }
-            });
-        }
-        else if (interaction.commandName === 'list_emojis') {
-            await safeDefer();
-            await showLoading('list_emojis');
-            await listemoji.execute(interaction, langCode).catch(async err => {
-                console.error(`Error in list_emojis: ${err.message}`);
-                const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
-                if (interaction.replied || interaction.deferred) {
-                    await interaction.editReply({ content: errMsg }).catch(() => {});
-                } else {
-                    await interaction.reply({ content: errMsg, flags: MessageFlags.Ephemeral }).catch(() => {});
-                }
-            });
-        }
-        else if (interaction.commandName === 'language') {
-            await safeDefer();
-            await showLoading('language');
-            await language.execute(interaction, langCode).catch(async err => {
-                console.error(`Error in language: ${err.message}`);
-                try { await interaction.editReply({ content: '❌ ' + await t('An error occurred while executing this command.', langCode) }).catch(() => {}); } catch (e) {}
-            });
-        }
-        else if (interaction.commandName === 'delete_emoji') {
-            await safeDefer();
-            await showLoading('delete_emoji');
-            await deletemoji.execute(interaction, langCode, convertedStickersToEmojis).catch(async err => {
-                console.error(`Error in delete_emoji: ${err.message}`);
-                const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
-                if (interaction.replied || interaction.deferred) {
-                    await interaction.editReply({ content: errMsg }).catch(() => {});
-                } else {
-                    await interaction.reply({ content: errMsg, flags: MessageFlags.Ephemeral }).catch(() => {});
-                }
-            });
-        }
-        else if (interaction.commandName === 'rename_emoji') {
-            await safeDefer();
-            await showLoading('rename_emoji');
-            await renameemoji.execute(interaction, langCode).catch(async err => {
-                console.error(`Error in rename_emoji: ${err.message}`);
-                const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
-                if (interaction.replied || interaction.deferred) {
-                    await interaction.editReply({ content: errMsg }).catch(() => {});
-                } else {
-                    await interaction.reply({ content: errMsg, flags: MessageFlags.Ephemeral }).catch(() => {});
-                }
-            });
-        }
-        else if (interaction.commandName === 'delete_sticker') {
-            await safeDefer();
-            await showLoading('delete_sticker');
-            const response = await deletesticker.execute(interaction, langCode).catch(async err => {
-                console.error(`Error in delete_sticker: ${err.message}`);
-                const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
-                if (interaction.replied || interaction.deferred) {
-                    await interaction.editReply({ content: errMsg }).catch(() => {});
-                } else {
-                    await interaction.reply({ content: errMsg, flags: MessageFlags.Ephemeral }).catch(() => {});
-                }
-            });
-            if (response && response.id) {
-                const msg = response;
-                stickerDeletionSessions.set(msg.id, {
-                    guildId: interaction.guild.id,
-                    userId: interaction.user.id,
-                    langCode: langCode,
-                    messageId: msg.id,
-                    channelId: msg.channel.id
-                });
-                setTimeout(() => stickerDeletionSessions.has(msg.id) && stickerDeletionSessions.delete(msg.id), 180000);
-            }
-        }
-        else if (interaction.commandName === 'rename_sticker') {
-            await safeDefer();
-            await showLoading('rename_sticker');
-            const response = await renamesticker.execute(interaction, langCode).catch(async err => {
-                console.error(`Error in rename_sticker: ${err.message}`);
-                const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
-                if (interaction.replied || interaction.deferred) {
-                    await interaction.editReply({ content: errMsg }).catch(() => {});
-                } else {
-                    await interaction.reply({ content: errMsg, flags: MessageFlags.Ephemeral }).catch(() => {});
-                }
-            });
-            if (response && response.id) {
-                const msg = response;
-                const newName = interaction.options.getString('name');
-                stickerRenameSessions.set(msg.id, {
-                    guildId: interaction.guild.id,
-                    userId: interaction.user.id,
-                    langCode: langCode,
-                    messageId: msg.id,
-                    channelId: msg.channel.id,
-                    newName: newName
-                });
-                setTimeout(() => stickerRenameSessions.has(msg.id) && stickerRenameSessions.delete(msg.id), 180000);
-            }
-        }
-        else if (interaction.commandName === 'sticker_to_emoji') {
-            await safeDefer();
-            await showLoading('sticker_to_emoji');
-            const response = await stickertoemi.execute(interaction, langCode).catch(async err => {
-                console.error(`Error in sticker_to_emoji: ${err.message}`);
-                const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
-                if (interaction.replied || interaction.deferred) {
-                    await interaction.editReply({ content: errMsg }).catch(() => {});
-                } else {
-                    await interaction.reply({ content: errMsg, flags: MessageFlags.Ephemeral }).catch(() => {});
-                }
-            });
-            if (response && response.id) {
-                const msg = response;
-                const emojiName = interaction.options.getString('name');
-                stickerToEmojiSessions.set(msg.id, {
-                    guildId: interaction.guild.id,
-                    userId: interaction.user.id,
-                    langCode: langCode,
-                    messageId: msg.id,
-                    channelId: msg.channel.id,
-                    emojiName: emojiName
-                });
-                setTimeout(() => stickerToEmojiSessions.has(msg.id) && stickerToEmojiSessions.delete(msg.id), 180000);
-            }
-        }
-        else if (interaction.commandName === 'image_to_sticker') {
-            await safeDefer();
-            await showLoading('image_to_sticker');
-            await imagetosticker.execute(interaction, langCode, convertedImagesToStickers).catch(async err => {
-                console.error(`Error in image_to_sticker: ${err.message}`);
-                const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
-                if (interaction.replied || interaction.deferred) {
-                    await interaction.editReply({ content: errMsg }).catch(() => {});
-                } else {
-                    await interaction.reply({ content: errMsg, flags: MessageFlags.Ephemeral }).catch(() => {});
-                }
-            });
-        }
-        else if (interaction.commandName === 'emoji_to_image') {
-            await safeDefer();
-            await showLoading('emoji_to_image');
-            await emojitoimage.execute(interaction, langCode).catch(async err => {
-                console.error(`Error in emoji_to_image: ${err.message}`);
-                const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
-                if (interaction.replied || interaction.deferred) {
-                    await interaction.editReply({ content: errMsg }).catch(() => {});
-                } else {
-                    await interaction.reply({ content: errMsg, flags: MessageFlags.Ephemeral }).catch(() => {});
-                }
-            });
-        }
-        else if (interaction.commandName === 'sticker_to_image') {
-            await safeDefer();
-            await showLoading('sticker_to_image');
-            const response = await stickertoimage.execute(interaction, langCode).catch(async err => {
-                console.error(`Error in sticker_to_image: ${err.message}`);
-                const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
-                if (interaction.replied || interaction.deferred) {
-                    await interaction.editReply({ content: errMsg }).catch(() => {});
-                } else {
-                    await interaction.reply({ content: errMsg, flags: MessageFlags.Ephemeral }).catch(() => {});
-                }
-            });
-            if (response && response.id) {
-                const msg = response;
-                convertedStickersToEmojis.set(msg.id, {
-                    guildId: interaction.guild.id,
-                    userId: interaction.user.id,
-                    langCode: langCode,
-                    messageId: msg.id,
-                    channelId: msg.channel.id,
-                    type: 'image'
-                });
-                setTimeout(() => convertedStickersToEmojis.has(msg.id) && convertedStickersToEmojis.delete(msg.id), 180000);
-            }
-        }
-        else if (interaction.commandName === 'enhance_emoji') {
-            await safeDefer();
-            await showLoading('enhance_emoji');
-            await enhanceemoji.execute(interaction, langCode).catch(async err => {
-                console.error(`Error in enhance_emoji: ${err.message}`);
-                const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
-                if (interaction.replied || interaction.deferred) {
-                    await interaction.editReply({ content: errMsg }).catch(() => {});
-                } else {
-                    await interaction.reply({ content: errMsg, flags: MessageFlags.Ephemeral }).catch(() => {});
-                }
-            });
-        }
-        else if (interaction.commandName === 'enhance_sticker') {
-            await safeDefer();
-            await showLoading('enhance_sticker');
-            const response = await enhancesticker.execute(interaction, langCode).catch(async err => {
-                console.error(`Error in enhance_sticker: ${err.message}`);
-                const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
-                if (interaction.replied || interaction.deferred) {
-                    await interaction.editReply({ content: errMsg }).catch(() => {});
-                } else {
-                    await interaction.reply({ content: errMsg, flags: MessageFlags.Ephemeral }).catch(() => {});
-                }
-            });
-            if (response && response.id) {
-                const msg = response;
-                stickerEnhanceSessions.set(msg.id, {
-                    guildId: interaction.guild.id,
-                    userId: interaction.user.id,
-                    langCode: langCode,
-                    messageId: msg.id,
-                    channelId: msg.channel.id
-                });
-                setTimeout(() => stickerEnhanceSessions.has(msg.id) && stickerEnhanceSessions.delete(msg.id), 180000);
-            }
-        }
-        else if (interaction.commandName === 'list_stickers') {
-            await safeDefer();
-            await showLoading('list_stickers');
-            await liststicker.execute(interaction, langCode).catch(async err => {
-                console.error(`Error in list_stickers: ${err.message}`);
-                const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
-                if (interaction.replied || interaction.deferred) {
-                    await interaction.editReply({ content: errMsg }).catch(() => {});
-                } else {
-                    await interaction.reply({ content: errMsg, flags: MessageFlags.Ephemeral }).catch(() => {});
-                }
-            });
-        }
-        else if (interaction.commandName === 'add_sticker') {
-            await safeDefer();
-            await showLoading('add_sticker');
-            const response = await addsticker.execute(interaction, langCode).catch(async err => {
-                console.error(`Error in add_sticker: ${err.message}`);
-                try { await interaction.editReply({ content: '❌ ' + await t('An error occurred while executing this command.', langCode) }).catch(() => {}); } catch (e) {}
-            });
-            if (response && response.id) {
-                const msg = response;
-                const stickerName = interaction.options.getString('name');
-                stickerAddSessions.set(msg.id, {
-                    guildId: interaction.guild.id,
-                    userId: interaction.user.id,
-                    langCode: langCode,
-                    messageId: msg.id,
-                    channelId: msg.channel.id,
-                    stickerName: stickerName
-                });
-                setTimeout(() => stickerAddSessions.has(msg.id) && stickerAddSessions.delete(msg.id), 180000);
-            }
-        }
-        else if (interaction.commandName === 'suggest_sticker') {
-            await safeDefer();
-            await showLoading('suggest_sticker');
-            await suggeststicker.execute(interaction, langCode, client).catch(async err => {
-                console.error(`Error in suggest_sticker: ${err.message}`);
-                const errMsg = '❌ ' + await t('An error occurred while executing this command.', langCode);
-                if (interaction.replied || interaction.deferred) {
-                    await interaction.editReply({ content: errMsg }).catch(() => {});
-                } else {
-                    await interaction.reply({ content: errMsg, flags: MessageFlags.Ephemeral }).catch(() => {});
-                }
-            });
+        else if (interaction.commandName === 'vote') { await safeDefer(); await showLoading('vote'); await vote.execute(interaction, langCode); }
+        else if (interaction.commandName === 'language') { await safeDefer(true); await showLoading('language'); await language.execute(interaction, langCode); }
+        else if (interaction.commandName === 'delete_all_emojis') { await safeDefer(true); await showLoading('delete_all_emojis'); await deleteallemojis.execute(interaction, langCode); }
+        else if (interaction.commandName === 'delete_all_stickers') { await safeDefer(true); await showLoading('delete_all_stickers'); await deleteallstickers.execute(interaction, langCode); }
+        else if (interaction.commandName === 'delete_permission') { await safeDefer(true); await showLoading('delete_permission'); await deletepermission.execute(interaction, langCode); }
+        else if (interaction.commandName === 'emoji_permission') { await safeDefer(true); await showLoading('emoji_permission'); await emojiPermission.execute(interaction, langCode); }
+        else if (interaction.commandName === 'sticker_permission') { await safeDefer(true); await showLoading('sticker_permission'); await stickerPermission.execute(interaction, langCode); }
+        else if (interaction.commandName === 'emoji_search') { await safeDefer(); await showLoading('emoji_search'); await emojisearch.execute(interaction, langCode); }
+        else if (interaction.commandName === 'search_sticker') { await safeDefer(); await showLoading('search_sticker'); await searchsticker.execute(interaction, langCode); }
+        else if (interaction.commandName === 'emoji_pack') { await safeDefer(); await showLoading('emoji_pack'); await emojipack.execute(interaction, langCode); }
+        else if (interaction.commandName === 'add_to_pack') { await safeDefer(true); await showLoading('add_to_pack'); await addtopack.execute(interaction, langCode); }
+        else if (interaction.commandName === 'delete_from_pack') { await safeDefer(true); await showLoading('delete_from_pack'); await deletefrompack.execute(interaction, langCode); }
+        else if (interaction.commandName === 'suggest_emojis') { await safeDefer(); await showLoading('suggest_emojis'); await suggestemojis.execute(interaction, langCode); }
+        else if (interaction.commandName === 'suggest_sticker') { await safeDefer(); await showLoading('suggest_sticker'); await suggeststicker.execute(interaction, langCode); }
+        else if (interaction.commandName === 'enhance_sticker') { await safeDefer(); await showLoading('enhance_sticker'); const response = await enhancesticker.execute(interaction, langCode); if (response && response.id) { stickerEnhanceSessions.set(response.id, { guildId: interaction.guild.id, userId: interaction.user.id, langCode: langCode, messageId: response.id, channelId: response.channel.id, stickerUrl: response.url }); setTimeout(() => stickerEnhanceSessions.delete(response.id), 300000); } }
+        else if (interaction.commandName === 'enhance_emoji') { await safeDefer(); await showLoading('enhance_emoji'); const response = await enhanceemoji.execute(interaction, langCode); if (response && response.id) { emojiEnhanceSessions.set(response.id, { guildId: interaction.guild.id, userId: interaction.user.id, langCode: langCode, messageId: response.id, channelId: response.channel.id, emojiUrl: response.url }); setTimeout(() => emojiEnhanceSessions.delete(response.id), 300000); } }
+        else if (interaction.commandName === 'add_emoji') { await safeDefer(); await showLoading('add_emoji'); await addemojiCmd.execute(interaction, langCode); }
+        else if (interaction.commandName === 'image_to_emoji') { await safeDefer(); await showLoading('image_to_emoji'); await imagetoemoji.execute(interaction, langCode); }
+        else if (interaction.commandName === 'emoji_to_sticker') { await safeDefer(); await showLoading('emoji_to_sticker'); await emojiTosticker.execute(interaction, langCode); }
+        else if (interaction.commandName === 'list_emojis') { await safeDefer(); await showLoading('list_emojis'); await listemoji.execute(interaction, langCode); }
+        else if (interaction.commandName === 'list_stickers') { await safeDefer(); await showLoading('list_stickers'); await liststicker.execute(interaction, langCode); }
+        else if (interaction.commandName === 'delete_emoji') { await safeDefer(); await showLoading('delete_emoji'); await deletemoji.execute(interaction, langCode); }
+        else if (interaction.commandName === 'rename_emoji') { await safeDefer(); await showLoading('rename_emoji'); await renameemoji.execute(interaction, langCode); }
+        else if (interaction.commandName === 'emoji_to_image') { await safeDefer(); await showLoading('emoji_to_image'); await emojitoimage.execute(interaction, langCode); }
+        else if (interaction.commandName === 'add_sticker') { await safeDefer(); await showLoading('add_sticker'); const response = await addsticker.execute(interaction, langCode); if (response && response.id) { stickerAddSessions.set(response.id, { guildId: interaction.guild.id, userId: interaction.user.id, langCode: langCode, messageId: response.id, channelId: response.channel.id, stickerId: response.stickerId, stickerName: response.stickerName }); setTimeout(() => stickerAddSessions.delete(response.id), 300000); } }
+        else if (interaction.commandName === 'image_to_sticker') { await safeDefer(); await showLoading('image_to_sticker'); await imagetosticker.execute(interaction, langCode); }
+        else if (interaction.commandName === 'sticker_to_emoji') { await safeDefer(); await showLoading('sticker_to_emoji'); const response = await stickertoemi.execute(interaction, langCode); if (response && response.id) { stickerToEmojiSessions.set(response.id, { guildId: interaction.guild.id, userId: interaction.user.id, langCode: langCode, messageId: response.id, channelId: response.channel.id, stickerUrl: response.url, emojiName: response.emojiName }); setTimeout(() => stickerToEmojiSessions.delete(response.id), 300000); } }
+        else if (interaction.commandName === 'sticker_to_image') { await safeDefer(); await showLoading('sticker_to_image'); await stickertoimage.execute(interaction, langCode); }
+        else if (interaction.commandName === 'delete_sticker') { await safeDefer(); await showLoading('delete_sticker'); const response = await deletesticker.execute(interaction, langCode); if (response && response.id) { stickerDeletionSessions.set(response.id, { guildId: interaction.guild.id, userId: interaction.user.id, langCode: langCode, messageId: response.id, channelId: response.channel.id, stickerId: response.stickerId }); setTimeout(() => stickerDeletionSessions.delete(response.id), 300000); } }
+        else if (interaction.commandName === 'rename_sticker') { await safeDefer(); await showLoading('rename_sticker'); const response = await renamesticker.execute(interaction, langCode); if (response && response.id) { stickerRenameSessions.set(response.id, { guildId: interaction.guild.id, userId: interaction.user.id, langCode: langCode, messageId: response.id, channelId: response.channel.id, stickerId: response.stickerId, newName: response.newName }); setTimeout(() => stickerRenameSessions.delete(response.id), 300000); } }
+        else if (interaction.commandName === 'update') {
+            if (interaction.user.id !== '815701106235670558') { return await interaction.reply({ content: 'Only the bot owner can use this command.', flags: MessageFlags.Ephemeral }); }
+            await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+            const { REST, Routes } = require('discord.js');
+            const rest = new REST({ version: '10' }).setToken(process.env.token);
+            try { await rest.put(Routes.applicationCommands(client.user.id), { body: COMMAND_DEFINITIONS }); await interaction.editReply('✅ Commands updated successfully!'); }
+            catch (error) { console.error(error); await interaction.editReply('❌ Failed to update commands.'); }
         }
     } catch (error) {
-        console.error('⚠️ Interaction error:', error.message);
-        try {
-            if (interaction.deferred || interaction.replied) {
-                await interaction.editReply({ content: '❌ An error occurred while executing this command.' }).catch(() => {});
-            } else {
-                await interaction.reply({ content: '❌ An error occurred while executing this command.', flags: 64 }).catch(() => {});
-            }
-        } catch (e) {}
+        console.error('Interaction error:', error);
+        const errMsg = '❌ ' + await t('An error occurred while processing this command.', langCode);
+        try { if (interaction.deferred || interaction.replied) { await interaction.editReply({ content: errMsg, embeds: [] }).catch(() => {}); } else { await interaction.reply({ content: errMsg, flags: MessageFlags.Ephemeral }).catch(() => {}); } } catch (e) {}
     }
 });
 
-client.on('messageCreate', async message => {
-    if (message.author.bot) return;
-    if (!message.guild) return;
-    const langCode = await db.getServerLanguage(message.guild.id);
-
+client.once('ready', async () => {
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log(`🤖 Bot: ${client.user.tag}`);
+    console.log('✅ Status: Online and Ready!');
+    console.log(`📊 Servers: ${client.guilds.cache.size}`);
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    
     try {
-        if (!message.stickers.size) {
-            // Check for sticker enhancement session
-            const stickerEnhanceSession = stickerEnhanceSessions.get(message.reference?.messageId);
-            if (stickerEnhanceSession && message.author.id === stickerEnhanceSession.userId) {
-                const embed = new EmbedBuilder()
-                    .setDescription('❌ ' + await t('Please send a sticker, not a message!', stickerEnhanceSession.langCode))
-                    .setColor('#FF0000');
-                message.reply({ embeds: [embed] });
-                return;
-            }
-
-            return;
-        }
-
-        const sticker = message.stickers.first();
-        const enhanceSession = stickerEnhanceSessions.get(message.reference?.messageId);
-        const deletionSession = stickerDeletionSessions.get(message.reference?.messageId);
-        const stToEmSession = activeStickerSessions.get(message.author.id);
-
-        if (stToEmSession && message.channelId === stToEmSession.channelId) {
-            if (stToEmSession.type === 'sticker_to_emoji') {
-                try {
-                    const emojiName = stToEmSession.data.name;
-                    const guildId = message.guildId;
-                    const db = require('./src/utils/database');
-                    const { t } = require('./src/utils/languages');
-                    const langCode = await db.getServerLanguage(guildId);
-
-                    // Check emoji limit
-                    const emojis = await message.guild.emojis.fetch();
-                    const premiumTier = message.guild.premiumTier;
-                    const maxEmojis = premiumTier === 3 ? 250 : premiumTier === 2 ? 150 : premiumTier === 1 ? 100 : 50;
-
-                    const isAnimated = sticker.format === 4 || (sticker.url && sticker.url.endsWith('.gif'));
-                    const animatedCount = emojis.filter(e => e.animated).size;
-                    const staticCount = emojis.filter(e => !e.animated).size;
-
-                    if ((isAnimated && animatedCount >= maxEmojis) || (!isAnimated && staticCount >= maxEmojis)) {
-                        const limitMsg = await t('Server emoji limit reached!', langCode);
-                        await message.reply('❌ ' + limitMsg);
-                        activeStickerSessions.delete(message.author.id);
-                        return;
-                    }
-
-                    const waitMsg = await t('Converting sticker to emoji...', langCode);
-                    const progressMsg = await message.reply('⏳ ' + waitMsg);
-
-                    const newEmoji = await message.guild.emojis.create({
-                        attachment: sticker.url,
-                        name: emojiName
-                    });
-
-                    await db.addEmojiRecord(guildId, newEmoji.id, newEmoji.name, message.author.tag);
-                    
-                    const successMsg = await t('Sticker converted to emoji successfully!', langCode);
-                    await progressMsg.edit('✅ ' + successMsg + ` ${newEmoji}`);
-                    activeStickerSessions.delete(message.author.id);
-                } catch (error) {
-                    console.error('Sticker to Emoji conversion error:', error);
-                    const errorMsg = await require('./src/utils/languages').t('Error converting sticker:', langCode) + ' ' + error.message;
-                    await message.reply('❌ ' + errorMsg);
-                    activeStickerSessions.delete(message.author.id);
-                }
-                return;
-            } else if (stToEmSession.type === 'delete_sticker') {
-                try {
-                    const guildId = message.guildId;
-                    const db = require('./src/utils/database');
-                    const { t } = require('./src/utils/languages');
-                    const langCode = stToEmSession.langCode || await db.getServerLanguage(guildId);
-
-                    const waitMsg = await t('Deleting sticker...', langCode);
-                    const progressMsg = await message.reply('⏳ ' + waitMsg);
-
-                    // Verify sticker is from THIS server
-                    const stickers = await message.guild.stickers.fetch();
-                    const targetSticker = stickers.get(sticker.id);
-
-                    if (!targetSticker) {
-                        const errorMsg = await t('That sticker does not belong to this server!', langCode);
-                        await progressMsg.edit('❌ ' + errorMsg);
-                        activeStickerSessions.delete(message.author.id);
-                        return;
-                    }
-
-                    await targetSticker.delete(`By ${message.author.tag}`);
-                    const successMsg = await t('Sticker deleted successfully!', langCode);
-                    await progressMsg.edit('✅ ' + successMsg);
-                    activeStickerSessions.delete(message.author.id);
-                } catch (error) {
-                    console.error('Sticker deletion error:', error);
-                    const errorMsg = await require('./src/utils/languages').t('Error deleting sticker:', stToEmSession.langCode) + ' ' + error.message;
-                    await message.reply('❌ ' + errorMsg);
-                    activeStickerSessions.delete(message.author.id);
-                }
-                return;
-            }
-        }
-
-        if (deletionSession && message.author.id === deletionSession.userId) {
-            if (!message.stickers.size) {
-                const errorText = await t('Please reply with a sticker, not an emoji or message!', deletionSession.langCode);
-                const embed = new EmbedBuilder().setDescription('❌ ' + errorText).setColor('#FF0000');
-                await message.reply({ embeds: [embed] }).catch(() => {});
-                return;
-            }
-
-            if (deletionSession.isIdRetrieval) {
-                stickerDeletionSessions.delete(message.reference.messageId);
-                const stickerId = message.stickers.first().id;
-                const embed = new EmbedBuilder()
-                    .setTitle('🆔 ' + await t('Sticker ID', deletionSession.langCode))
-                    .setDescription(`**ID:** \`${stickerId}\``)
-                    .setColor('#00FFFF');
-                await message.reply({ embeds: [embed] }).catch(() => {});
-                return;
-            }
-        }
-
-        if (enhanceSession && message.author.id === enhanceSession.userId) {
-            const sessionLang = enhanceSession.langCode;
-            stickerEnhanceSessions.delete(message.reference.messageId);
-
-            const waitEmbed = new EmbedBuilder()
-                .setDescription('⏳ ' + await t('Enhancing sticker... Please wait.', sessionLang))
-                .setColor('#FFFF00');
-            const statusMsg = await message.reply({ embeds: [waitEmbed] });
-
-            try {
-                const stickerUrl = sticker.url;
-                const stickerName = sticker.name.substring(0, 22) + '_enh';
-
-                const response = await axios.get(stickerUrl, { responseType: 'arraybuffer' });
-                const buffer = Buffer.from(response.data);
-
-                const enhancedBuffer = await sharp(buffer)
-                    .resize(512, 512, { 
-                        fit: 'contain', 
-                        background: { r: 0, g: 0, b: 0, alpha: 0 },
-                        kernel: sharp.kernel.lanczos3
-                    })
-                    .modulate({
-                        brightness: 1.05,
-                        saturation: 1.15
-                    })
-                    .sharpen({
-                        sigma: 1.5,
-                        m1: 0.5,
-                        m2: 10
-                    })
-                    .toBuffer();
-
-                let finalBuffer = enhancedBuffer;
-                if (finalBuffer.length > 512000) {
-                    finalBuffer = await sharp(enhancedBuffer)
-                        .png({ palette: true, colors: 256 })
-                        .toBuffer();
-                }
-
-                const newSticker = await message.guild.stickers.create({
-                    file: finalBuffer,
-                    name: stickerName,
-                    description: await t('Enhanced by ProEmoji', sessionLang),
-                    tags: 'enhanced',
-                    reason: `Enhanced by ${message.author.tag}`
-                });
-
-                const successText = await t('Sticker enhanced with maximum strength!', sessionLang);
-                const embed = new EmbedBuilder()
-                    .setDescription('✨ ' + successText + `\n**Name:** ${stickerName}`)
-                    .setColor('#ADD8E6')
-                    .setImage(newSticker.url)
-                    .setFooter({ text: `${message.author.displayName} (@${message.author.username})`, iconURL: message.author.displayAvatarURL() });
-                
-                await statusMsg.edit({ embeds: [embed] });
-            } catch (error) {
-                const errorPrefix = await t('Error:', sessionLang);
-                const embed = new EmbedBuilder()
-                    .setDescription('❌ ' + errorPrefix + ' ' + error.message)
-                    .setColor('#FF0000');
-                await statusMsg.edit({ embeds: [embed] });
-            }
-            return;
-        }
-
-        if (message.content === 'نعم' || message.content.toLowerCase() === 'yes') {
-            const suggestedEmojis = suggestemojis.getSuggestedEmojis();
-            if (suggestedEmojis.length > 0) {
-                for (const emoji of suggestedEmojis) {
-                    if (!message.guild.emojis.cache.find(e => e.name === emoji.name)) {
-                        try {
-                            await message.guild.emojis.create({ attachment: emoji.url, name: emoji.name });
-                        } catch (error) {
-                            console.error(`⚠️ Warning: Could not add emoji ${emoji.name}:`, error.message);
-                        }
-                    }
-                }
-                message.channel.send('✅ ' + await t('The suggested emojis have been added successfully!', langCode));
-                suggestemojis.setSuggestedEmojis([]);
-            }
-        } else if (message.content === 'لا' || message.content.toLowerCase() === 'no') {
-            const suggestedEmojis = suggestemojis.getSuggestedEmojis();
-            if (suggestedEmojis.length > 0) {
-                message.channel.send('❌ ' + await t('The suggested emojis were not added.', langCode));
-                suggestemojis.setSuggestedEmojis([]);
-            }
-        }
+        await db.initDatabase();
+        const { REST, Routes } = require('discord.js');
+        const rest = new REST({ version: '10' }).setToken(process.env.token);
+        const ownerId = '815701106235670558';
+        const targetGuildId = '1118153648938160191';
+        const restrictedCommands = COMMAND_DEFINITIONS.filter(cmd => ['update', 'add_to_pack', 'delete_from_pack'].includes(cmd.name));
+        await rest.put(Routes.applicationGuildCommands(client.user.id, targetGuildId), { body: restrictedCommands });
+        console.log('✅ Restricted commands (/update, /add_to_pack, /delete_from_pack) registered');
+        console.log('✅ Cache pre-warming in progress (non-blocking)');
+        preWarmCache().catch(err => console.error('Cache pre-warming error:', err));
     } catch (err) {
-        console.error('Error in messageCreate:', err.message);
+        console.error('Error during startup:', err);
     }
 });
 
-async function initializeBot() {
+async function startServer() {
     try {
         await db.initDatabase();
         console.log('✅ Database initialized');
+        const PORT = process.env.PORT || 5000;
+        app.listen(PORT, '0.0.0.0', () => {
+            console.log(`🌐 Web server running on port ${PORT}`);
+        });
+        await client.login(process.env.token);
     } catch (error) {
-        console.error('❌ Database initialization failed:', error.message);
+        console.error('❌ Failed to start bot:', error);
+        process.exit(1);
     }
 }
 
-initializeBot();
-
-function updateStatus() {
-    if (!client.user) return;
-    const serverCount = client.guilds.cache.size;
-    client.user.setPresence({
-        activities: [{
-            name: `ProEmoji | ${serverCount} Servers`,
-            type: 1, // STREAMING
-            url: 'https://m.twitch.tv/proemoji_bot/home'
-        }],
-        status: 'online'
-    });
-}
-
-client.on('clientReady', () => {
-    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-    console.log(`🤖 Bot: ${client.user.tag}`)
-    console.log(`✅ Status: Online and Ready!`);
-    console.log(`📊 Servers: ${client.guilds.cache.size}`);
-    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-
-    initializeDatabaseAndSync().catch(console.error);
-    
-    updateStatus();
-
-    try {
-        const globalCommands = COMMAND_DEFINITIONS.filter(cmd => !['update', 'add_to_pack', 'delete_from_pack'].includes(cmd.name));
-        client.application.commands.set(globalCommands);
-        
-        const restrictedServer = client.guilds.cache.get('1118153648938160191');
-        if (restrictedServer) {
-            const restrictedCommands = COMMAND_DEFINITIONS.filter(cmd => ['update', 'add_to_pack', 'delete_from_pack'].includes(cmd.name));
-            restrictedServer.commands.set(restrictedCommands);
-            console.log('✅ Restricted commands (/update, /add_to_pack, /delete_from_pack) registered');
-        }
-        
-        preWarmCache().catch(err => console.error('⚠️ Cache warming error:', err.message));
-    } catch (error) {
-        console.error('❌ Error registering commands:', error);
-    }
-});
-
-async function initializeDatabaseAndSync() {
-    await db.initDatabase();
-    for (const guild of client.guilds.cache.values()) {
-        const emojis = await guild.emojis.fetch();
-        for (const emoji of emojis.values()) {
-            await db.addEmojiRecord(guild.id, emoji.id, emoji.name, 'system_sync');
-        }
-        try {
-            const stickers = await guild.stickers.fetch();
-            for (const sticker of stickers.values()) {
-                await db.addStickerRecord(guild.id, sticker.id, sticker.name, 'system_sync');
-            }
-        } catch (e) {}
-    }
-}
-
-client.on('guildCreate', async guild => {
-    try {
-        await db.addServer(guild.id, guild.name);
-        updateStatus();
-    } catch (error) {
-        console.error('Error adding server:', error.message);
-    }
-});
-
-client.on('guildDelete', async guild => {
-    try {
-        await db.removeServer(guild.id);
-        updateStatus();
-    } catch (error) {
-        console.error('Error removi"ng server:', error.message);
-    }
-});
-
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🌐 Web server running on port ${PORT}`);
-});
-
-const TOKEN = process.env.token;
-
-if (!TOKEN) {
-    console.error('❌ DISCORD_BOT_TOKEN or token secret is missing!');
-    process.exit(1);
-}
-
-client.login(TOKEN).catch(err => {
-    console.error('❌ Failed to login to Discord:', err.message);
-});
+startServer();

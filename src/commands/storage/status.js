@@ -39,25 +39,23 @@ async function execute(interaction, langCode) {
     try {
         if (TOP_GG_API_KEY && TOP_GG_BOT_ID) {
             const axios = require('axios');
-            const response = await axios.get(`https://top.gg/api/bots/${TOP_GG_BOT_ID}/check?userId=${interaction.user.id}`, {
-                headers: { 'Authorization': TOP_GG_API_KEY }
-            });
-            const hasVoted = response.data.voted === 1;
+            const isVerified = await db.isUserVerifiedDb(interaction.user.id);
             
-            if (hasVoted) {
-                voteStatus = '✅ ' + await t('Voted (Active)', langCode);
-                // Since Top.gg doesn't give precise vote time in check endpoint usually, 
-                // we'll use a relative timestamp if we had it, but for now we'll 
-                // show it's active. For a real countdown, Top.gg webhooks or 
-                // individual vote endpoint is better.
-                // Assuming 12h cycle:
-                nextVoteText = '✅ ' + await t('Active for 12 hours', langCode);
+            if (isVerified) {
+                const verifiedUser = await db.getVerifiedUser(interaction.user.id);
+                const expiresAt = verifiedUser?.expires_at;
+                voteStatus = '✅ ' + await t('Verified (Active)', langCode);
+                if (expiresAt) {
+                    nextVoteText = '⏰ ' + await t('Expires', langCode) + `: <t:${Math.floor(new Date(expiresAt).getTime() / 1000)}:R>`;
+                } else {
+                    nextVoteText = '✅ ' + await t('Active for 12 hours', langCode);
+                }
             } else {
-                voteStatus = '❌ ' + await t('Not Voted', langCode);
-                nextVoteText = '❌ ' + await t('You have not voted yet!', langCode);
+                voteStatus = '❌ ' + await t('Not Verified', langCode);
+                nextVoteText = '❌ ' + await t('You need to vote and use /verify', langCode);
             }
         } else {
-            voteStatus = '⏩ ' + await t('Always Active', langCode);
+            voteStatus = '⏩ ' + await t('Verification Disabled', langCode);
             nextVoteText = '♾️ ' + await t('No voting required', langCode);
         }
     } catch (e) {

@@ -81,7 +81,8 @@ async function initDatabase() {
                 discord_id VARCHAR(255) UNIQUE NOT NULL,
                 discord_username VARCHAR(255),
                 discord_avatar VARCHAR(512),
-                verified_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                verified_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                expires_at TIMESTAMP
             );
 
             CREATE TABLE IF NOT EXISTS emojis_added (
@@ -351,15 +352,17 @@ async function deleteComment(id, discordId, isAdmin) {
 }
 
 async function verifyUserDb(discordId, username, avatar) {
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 12);
     await pool.query(
-        'INSERT INTO verified_users (discord_id, discord_username, discord_avatar, verified_at) VALUES ($1, $2, $3, CURRENT_TIMESTAMP) ON CONFLICT (discord_id) DO UPDATE SET discord_username = $2, discord_avatar = $3, verified_at = CURRENT_TIMESTAMP',
-        [discordId, username, avatar]
+        'INSERT INTO verified_users (discord_id, discord_username, discord_avatar, verified_at, expires_at) VALUES ($1, $2, $3, CURRENT_TIMESTAMP, $4) ON CONFLICT (discord_id) DO UPDATE SET discord_username = $2, discord_avatar = $3, verified_at = CURRENT_TIMESTAMP, expires_at = $4',
+        [discordId, username, avatar, expiresAt]
     );
 }
 
 async function isUserVerifiedDb(discordId) {
     const result = await pool.query(
-        "SELECT * FROM verified_users WHERE discord_id = $1 AND verified_at > NOW() - INTERVAL '5 hours'",
+        'SELECT * FROM verified_users WHERE discord_id = $1 AND expires_at > NOW()',
         [discordId]
     );
     return result.rows.length > 0;
