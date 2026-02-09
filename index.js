@@ -598,7 +598,7 @@ client.on('interactionCreate', async interaction => {
     }
 });
 
-client.once('ready', async () => {
+client.once('clientReady', async () => {
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log(`🤖 Bot: ${client.user.tag}`);
     console.log('✅ Status: Online and Ready!');
@@ -606,7 +606,6 @@ client.once('ready', async () => {
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     
     try {
-        await db.initDatabase();
         const { REST, Routes } = require('discord.js');
         const rest = new REST({ version: '10' }).setToken(process.env.token);
         const ownerId = '815701106235670558';
