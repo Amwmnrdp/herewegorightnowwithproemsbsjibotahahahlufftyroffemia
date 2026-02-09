@@ -2,7 +2,7 @@ const { Pool } = require('pg');
 
 const connectionString = process.env.DATABASE_URL;
 const pool = new Pool({
-    connectionString: connectionString,
+    connectionString: connectionString ? connectionString.replace('sslmode=require', 'sslmode=verify-full') : connectionString,
     ssl: {
         rejectUnauthorized: false
     }
