@@ -93,6 +93,25 @@ async function execute(interaction, langCode) {
 
     const response = await interaction.editReply({ embeds: [embed], fetchReply: true });
     
+    const indexFile = require('../../../index.js');
+    if (indexFile.activeStickerSessions) {
+        indexFile.activeStickerSessions.set(interaction.user.id, {
+            type: 'add_sticker',
+            userId: interaction.user.id,
+            channelId: interaction.channelId,
+            guildId: interaction.guildId,
+            langCode: langCode,
+            messageId: response.id,
+            stickerName: name
+        });
+        
+        setTimeout(() => {
+            if (indexFile.activeStickerSessions.get(interaction.user.id)?.messageId === response.id) {
+                indexFile.activeStickerSessions.delete(interaction.user.id);
+            }
+        }, 180000);
+    }
+    
     return response;
 }
 

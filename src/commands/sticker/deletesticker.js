@@ -21,8 +21,15 @@ async function execute(interaction, langCode) {
             userId: interaction.user.id,
             channelId: interaction.channelId,
             guildId: interaction.guildId,
-            langCode: langCode
+            langCode: langCode,
+            messageId: response.id
         });
+        
+        setTimeout(() => {
+            if (indexFile.activeStickerSessions.get(interaction.user.id)?.messageId === response.id) {
+                indexFile.activeStickerSessions.delete(interaction.user.id);
+            }
+        }, 180000);
     }
 
     return response;

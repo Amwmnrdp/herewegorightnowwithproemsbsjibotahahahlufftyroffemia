@@ -1,4 +1,4 @@
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
 const { t } = require('../../utils/languages');
 
 async function execute(interaction, langCode) {
@@ -12,6 +12,25 @@ async function execute(interaction, langCode) {
         .setFooter({ text: footerPrefix + ` • ${interaction.user.displayName} (@${interaction.user.username})`, iconURL: interaction.user.displayAvatarURL() });
 
     const response = await interaction.editReply({ embeds: [embed] });
+    
+    const indexFile = require('../../../index.js');
+    if (indexFile.activeStickerSessions) {
+        indexFile.activeStickerSessions.set(interaction.user.id, {
+            type: 'sticker_to_image',
+            userId: interaction.user.id,
+            channelId: interaction.channelId,
+            guildId: interaction.guildId,
+            langCode: langCode,
+            messageId: response.id
+        });
+        
+        setTimeout(() => {
+            if (indexFile.activeStickerSessions.get(interaction.user.id)?.messageId === response.id) {
+                indexFile.activeStickerSessions.delete(interaction.user.id);
+            }
+        }, 180000);
+    }
+    
     return response;
 }
 
