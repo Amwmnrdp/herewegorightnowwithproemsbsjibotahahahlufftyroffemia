@@ -215,9 +215,13 @@ async function checkPermissions(interaction, langCode) {
     if (commandName === 'suggest_emojis' || commandName === 'suggest_sticker') {
         if (!isVerified) {
             const TOP_GG_BOT_ID = process.env.TOP_GG_BOT_ID || client.user?.id;
+            const voteTitle = await t('Vote Required', langCode);
+            const hereText = await t('here', langCode);
+            const voteDesc = await t('To use this premium feature, you must vote for the bot [here]. After voting, use `/verify` to unlock access for 12 hours.', langCode);
+            
             const embed = new EmbedBuilder()
-                .setTitle('🗳️ ' + await t('Vote Required', langCode))
-                .setDescription(await t('To use this premium feature, you must vote for the bot [here]. After voting, use `/verify` to unlock access for 12 hours.', langCode).replace('[here]', `[${await t('here', langCode)}](https://top.gg/bot/${TOP_GG_BOT_ID}/vote)`))
+                .setTitle('🗳️ ' + voteTitle)
+                .setDescription(voteDesc.replace('[here]', `[${hereText}](https://top.gg/bot/${TOP_GG_BOT_ID}/vote)`))
                 .setColor('#FF6B6B');
             
             if (interaction.deferred || interaction.replied) {
@@ -266,21 +270,7 @@ client.on('interactionCreate', async interaction => {
         const commandName = interaction.commandName;
         
         if (commandName === 'verify') {
-            const TOP_GG_BOT_ID = process.env.TOP_GG_BOT_ID || client.user?.id;
-            const embed = new EmbedBuilder()
-                .setTitle('🛡️ ' + await t('Vote Verification', langCode))
-                .setDescription(await t('Click the button below to verify your vote on Top.gg and unlock premium features for 12 hours.', langCode) + 
-                    `\n\n🔗 [${await t('Vote here', langCode)}](https://top.gg/bot/${TOP_GG_BOT_ID}/vote)`)
-                .setColor('#0099ff');
-            
-            const row = new ActionRowBuilder().addComponents(
-                new ButtonBuilder()
-                    .setCustomId('verify_vote')
-                    .setLabel(await t('Verify', langCode))
-                    .setStyle(ButtonStyle.Success)
-            );
-
-            return await interaction.reply({ embeds: [embed], components: [row], flags: MessageFlags.Ephemeral });
+            // Already handled in the switch below, but we need to ensure it's defined
         }
 
         const userId = interaction.user.id;
@@ -547,7 +537,7 @@ client.on('interactionCreate', async interaction => {
         }
         else if (interaction.commandName === 'verify') {
             await interaction.deferReply({ flags: 64 });
-            await verify.execute(interaction, langCode).catch(async err => {
+            await verify.execute(interaction, langCode, client).catch(async err => {
                 console.error(`Error in verify: ${err.message}`);
                 try { await interaction.editReply({ content: '❌ ' + await t('An error occurred while executing this command.', langCode) }).catch(() => {}); } catch (e) {}
             });
