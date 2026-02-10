@@ -324,10 +324,11 @@ client.on('interactionCreate', async interaction => {
                     .setColor('#00FF00');
                 return await interaction.editReply({ embeds: [embed], components: [] });
             } else {
+                const voteLinkText = await t('Vote from here', langCode);
                 const embed = new EmbedBuilder()
                     .setTitle('❌ ' + await t('Not Voted', langCode))
                     .setDescription(await t('Verification failed. You must vote on Top.gg first before verifying.', langCode) + 
-                        `\n\n🔗 [${await t('Vote here', langCode)}](https://top.gg/bot/${TOP_GG_BOT_ID}/vote)`)
+                        `\n\n🔗 [${voteLinkText}](https://top.gg/bot/${TOP_GG_BOT_ID}/vote)`)
                     .setColor('#FF0000');
                 return await interaction.editReply({ embeds: [embed] });
             }
@@ -692,6 +693,11 @@ async function startServer() {
         server = app.listen(PORT, '0.0.0.0', () => {
             console.log(`🌐 Web server running on port ${PORT}`);
         });
+
+        // Set up cleanup interval for expired verifications every hour
+        setInterval(() => {
+            db.cleanupExpiredVerifications();
+        }, 60 * 60 * 1000);
         
         await client.login(process.env.DISCORD_BOT_TOKEN || process.env.token || process.env.DISCORD_TOKEN);
     } catch (error) {

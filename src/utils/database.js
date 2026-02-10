@@ -470,9 +470,21 @@ async function removeEmojiFromPacksById(emojiId) {
     await pool.query('DELETE FROM emoji_packs WHERE emoji_id = $1', [emojiId]);
 }
 
+async function cleanupExpiredVerifications() {
+    try {
+        const result = await pool.query('DELETE FROM verified_users WHERE expires_at < NOW()');
+        if (result.rowCount > 0) {
+            console.log(`🧹 Cleaned up ${result.rowCount} expired verifications.`);
+        }
+    } catch (error) {
+        console.error('❌ Error cleaning up expired verifications:', error.message);
+    }
+}
+
 module.exports = {
     pool,
     initDatabase,
+    cleanupExpiredVerifications,
     getServer,
     addServer,
     removeServer,
