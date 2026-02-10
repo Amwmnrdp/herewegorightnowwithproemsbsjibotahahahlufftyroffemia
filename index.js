@@ -211,8 +211,8 @@ async function checkPermissions(interaction, langCode) {
         return true;
     }
 
+    const isVerified = await db.isUserVerifiedDb(interaction.user.id);
     if (commandName === 'suggest_emojis' || commandName === 'suggest_sticker') {
-        const isVerified = await db.isUserVerifiedDb(interaction.user.id);
         if (!isVerified) {
             const TOP_GG_BOT_ID = process.env.TOP_GG_BOT_ID || client.user?.id;
             const embed = new EmbedBuilder()
@@ -290,8 +290,9 @@ client.on('interactionCreate', async interaction => {
             const expirationTime = cooldowns.get(userId) + cooldownAmount;
             if (now < expirationTime) {
                 const timeLeft = (expirationTime - now) / 1000;
+                const cooldownText = await t('❌ Please wait {time} more second(s) before using commands again.', langCode);
                 const cooldownEmbed = new EmbedBuilder()
-                    .setDescription(await t(`❌ Please wait {time} more second(s) before using commands again.`, langCode).then(text => text.replace('{time}', timeLeft.toFixed(1))))
+                    .setDescription(cooldownText.replace('{time}', timeLeft.toFixed(1)))
                     .setColor('#FF0000');
                 
                 try {
@@ -687,18 +688,30 @@ client.once('clientReady', async () => {
     }
 });
 
+// Start Server securely
+let server;
 async function startServer() {
     try {
         await db.initDatabase();
         console.log('✅ Database initialized');
+        
         const PORT = process.env.PORT || 5000;
-        app.listen(PORT, '0.0.0.0', () => {
+        if (server) {
+            server.close();
+        }
+        server = app.listen(PORT, '0.0.0.0', () => {
             console.log(`🌐 Web server running on port ${PORT}`);
         });
+        
         await client.login(process.env.DISCORD_BOT_TOKEN || process.env.token || process.env.DISCORD_TOKEN);
     } catch (error) {
-        console.error('❌ Failed to start bot:', error);
-        process.exit(1);
+        if (error.code === 'EADDRINUSE') {
+            console.error(`❌ Port ${process.env.PORT || 5000} is already in use. Retrying in 5 seconds...`);
+            setTimeout(startServer, 5000);
+        } else {
+            console.error('❌ Failed to start bot:', error);
+            process.exit(1);
+        }
     }
 }
 

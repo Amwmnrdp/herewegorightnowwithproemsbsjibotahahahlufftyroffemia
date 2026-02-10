@@ -37,26 +37,21 @@ async function execute(interaction, langCode) {
     let nextVoteText = '⚪ ' + await t('Checking...', langCode);
     
     try {
-        if (TOP_GG_API_KEY && TOP_GG_BOT_ID) {
-            const axios = require('axios');
-            const isVerified = await db.isUserVerifiedDb(interaction.user.id);
-            
-            if (isVerified) {
-                const verifiedUser = await db.getVerifiedUser(interaction.user.id);
-                const expiresAt = verifiedUser?.expires_at;
-                voteStatus = '✅ ' + await t('Verified (Active)', langCode);
-                if (expiresAt) {
-                    nextVoteText = '⏰ ' + await t('Expires', langCode) + `: <t:${Math.floor(new Date(expiresAt).getTime() / 1000)}:R>`;
-                } else {
-                    nextVoteText = '✅ ' + await t('Active for 12 hours', langCode);
-                }
+        const isVerified = await db.isUserVerifiedDb(interaction.user.id);
+        
+        if (isVerified) {
+            const verifiedUser = await db.getVerifiedUser(interaction.user.id);
+            const expiresAt = verifiedUser?.expires_at;
+            voteStatus = '✅ ' + await t('Verified (Active)', langCode);
+            if (expiresAt) {
+                nextVoteText = '⏰ ' + await t('Expires', langCode) + `: <t:${Math.floor(new Date(expiresAt).getTime() / 1000)}:R>`;
             } else {
                 voteStatus = '❌ ' + await t('Not Verified', langCode);
                 nextVoteText = '❌ ' + await t('You need to vote and use /verify', langCode);
             }
         } else {
-            voteStatus = '⏩ ' + await t('Verification Disabled', langCode);
-            nextVoteText = '♾️ ' + await t('No voting required', langCode);
+            voteStatus = '❌ ' + await t('Not Verified', langCode);
+            nextVoteText = '❌ ' + await t('You need to vote and use /verify', langCode);
         }
     } catch (e) {
         voteStatus = '⚠️ ' + await t('Status Unavailable', langCode);
